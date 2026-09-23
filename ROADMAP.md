@@ -23,8 +23,8 @@
 
 ## Фаза 1 — Фундамент (недели 1–6)
 
-### ⬜ 00 · Just enough: CLI, Git, Docker, Make — [модуль](modules/00_just_enough/README.md)
-- [ ] `make up` поднимает core, `make check` — все проверки OK
+### 🟨 00 · Just enough: CLI, Git, Docker, Make — [модуль](modules/00_just_enough/README.md)
+- [x] `make up` поднимает core, `make check` — все проверки OK
 - [ ] Разобран каждый сервис в `infra/docker/core.yaml`: что делает, порты, тома, healthcheck
 - [ ] Датасет скачан (`make data`); расхождения фактической статистики с описанием (863 vs 865 SKU, период) объяснены
 - [ ] Шпаргалка `cheatsheets/docker-compose.md` своими словами

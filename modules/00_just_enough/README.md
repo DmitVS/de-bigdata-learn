@@ -28,9 +28,9 @@ Docker Compose, Make, git, Silo (S3), Postgres, Lakekeeper, контейнер w
 
 Каждая лаба — папка `labs/<номер>_<название>/` с README по [шаблону](../../templates/lab_README.md).
 
-- [ ] 00.1 — разбор `infra/docker/core.yaml`: схема сервисов, портов и томов
-- [ ] 00.2 — `make up` / `make check` / `make logs`: сломать и починить (неверный пароль в .env, занятый порт)
-- [ ] 00.3 — `make data`: скачать FreshRetailNet-50K и проверить статистику в DuckDB CLI
+- [ ] [00.1 — анатомия слоя core](labs/00.1_compose_anatomy/README.md): сервисы, порядок запуска, сети, тома, образ workspace
+- [ ] [00.2 — сломать и починить](labs/00.2_break_and_fix/README.md): 5 сценариев сбоев в формате мини-постмортема
+- [ ] [00.3 — знакомство с датасетом](labs/00.3_dataset_profiling/README.md): схема, grain, расхождения с документацией, проверки качества
 
 ## Мини-проект (вклад в capstone)
 
