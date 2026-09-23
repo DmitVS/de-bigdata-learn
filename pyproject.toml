@@ -1,0 +1,42 @@
+[project]
+name = "de-bigdata-learn"
+version = "0.1.0"
+description = "Самообучение Data Engineering на Modern Data Stack (датасет FreshRetailNet-50K)"
+requires-python = ">=3.12,<3.13"
+# Зависимости ставятся только внутри контейнера workspace (infra/docker/workspace/Dockerfile).
+# Инструменты следующих модулей добавляются группами по мере прохождения курса:
+#   make uv ARGS="add --group <модуль> <пакет>" && make build
+dependencies = [
+    "duckdb>=1.5",
+    "polars>=1.44",
+    "pyarrow>=25.0",
+    "pyiceberg[pyarrow,s3fs,sql-postgres]>=0.12",
+    "dlt[duckdb,filesystem,postgres]>=1.30",
+    "dbt-core>=1.11",
+    "dbt-duckdb>=1.11",
+    "psycopg[binary]>=3.3",
+    "huggingface-hub>=1.32",
+    "jupyterlab>=4.6",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16",
+    "shandy-sqlfmt>=0.32",
+    "pytest>=9.1",
+    "yamllint>=1.37",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.sqlfmt]
+line_length = 100
+exclude = ["**/target/**", "**/dbt_packages/**"]

@@ -1,0 +1,27 @@
+# Секреты
+.env
+
+# Данные (скачиваются скриптами из datasets/, живут в S3/Iceberg)
+data/*
+!data/.gitkeep
+*.parquet
+*.duckdb
+*.duckdb.wal
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# dbt / sqlmesh
+target/
+dbt_packages/
+logs/
+.user.yml
+
+# IDE / OS
+.idea/
+.DS_Store

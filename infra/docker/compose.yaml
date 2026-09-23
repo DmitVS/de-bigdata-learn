@@ -1,0 +1,15 @@
+# Точка входа Docker Compose для всего учебного стека.
+# Запуск — только через Makefile (make up, make up-<слой>), он подставляет --env-file ../../.env.
+#
+# Слои подключаются через include. Сервисы core работают всегда, остальные слои
+# включаются профилями (profiles) по мере прохождения модулей — см. infra/README.md.
+name: debd
+
+include:
+  - core.yaml
+  # Добавляются по мере прохождения курса (файлы создаются в соответствующем модуле):
+  # - orchestration.yaml   # модуль 06: Dagster (+ Airflow для сравнения)
+  # - spark.yaml           # модуль 07: Spark master/workers
+  # - streaming.yaml       # модуль 08: Redpanda, Schema Registry, Kafka Connect/Debezium, Flink
+  # - serving.yaml         # модуль 10: ClickHouse, Trino, Superset
+  # - governance.yaml      # модуль 11: OpenMetadata
