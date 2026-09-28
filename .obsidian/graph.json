@@ -1,0 +1,17 @@
+{
+  "search": "-path:infra -path:datasets -path:scripts",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": true,
+  "showOrphans": false,
+  "colorGroups": [
+    { "query": "path:theory", "color": { "a": 1, "rgb": 3900150 } },
+    { "query": "path:modules", "color": { "a": 1, "rgb": 15105570 } },
+    { "query": "path:memory", "color": { "a": 1, "rgb": 10181046 } },
+    { "query": "path:capstone OR path:interview", "color": { "a": 1, "rgb": 3066993 } },
+    { "query": "path:maps", "color": { "a": 1, "rgb": 15844367 } }
+  ],
+  "showArrow": true,
+  "lineSizeMultiplier": 1,
+  "nodeSizeMultiplier": 1
+}

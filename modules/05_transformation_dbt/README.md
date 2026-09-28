@@ -45,6 +45,17 @@ dbt-core + dbt-duckdb (Iceberg через DuckDB), SQLMesh
 - [Surfalytics: SQLMesh intro](https://github.com/surfalytics/data-projects/tree/main/de-projects/19_sqlmesh_intro)
 - [dbt best practices](https://docs.getdbt.com/best-practices)
 
+## Книга и видео
+
+Полная таблица с пояснениями, зачем читать и что пропустить — в [карте чтения](../../reading_map.md#05--трансформации-dbt).
+
+- 📖 Клеппман, гл. 3 — материализованные представления (по желанию)
+- 🎬 [Zoomcamp `04-analytics-engineering`](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/04-analytics-engineering) — модуль целиком: dbt + DuckDB
+
+## Домашка-чекпоинт
+
+После всех лаб — `homework.md` по [шаблону](../../templates/homework.md).
+
 ## Заметки
 
-Конспект и выводы — в [`notes.md`](notes.md).
+Конспект, тезисы по книге и выводы — в [`notes.md`](notes.md).

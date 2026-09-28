@@ -18,6 +18,7 @@
 - идемпотентность, повторные запуски, backfill
 - schema contracts и эволюция схем источника
 - загрузка из API: пагинация, rate limits, ретраи
+- нормализация вложенного JSON: как dlt раскладывает вложенные структуры в дочерние таблицы
 - Polars vs pandas vs SQL для трансформаций на лету
 
 ## Инструменты
@@ -45,6 +46,17 @@ dlt, Postgres (retail_oltp), Polars, DuckDB
 - [dlt docs](https://dlthub.com/docs/intro)
 - [Polars user guide](https://docs.pola.rs/user-guide/)
 
+## Книга и видео
+
+Полная таблица с пояснениями, зачем читать и что пропустить — в [карте чтения](../../reading_map.md#04--ingestion-el).
+
+- 📖 Клеппман, гл. 4 — совместимость схем (повтор)
+- 🎬 [Zoomcamp `workshops/dlt`](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/cohorts/2026/workshops/dlt.md) — воркшоп по dlt
+
+## Домашка-чекпоинт
+
+После всех лаб — `homework.md` по [шаблону](../../templates/homework.md).
+
 ## Заметки
 
-Конспект и выводы — в [`notes.md`](notes.md).
+Конспект, тезисы по книге и выводы — в [`notes.md`](notes.md).

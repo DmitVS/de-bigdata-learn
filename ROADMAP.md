@@ -4,8 +4,9 @@
 над датасетом **FreshRetailNet-50K** (сеть Dingdong: 898 магазинов, 863 SKU, почасовые продажи,
 остатки, промо, погода). Всё работает локально в Docker Compose.
 
-**Принципы** (взяты из [Data-Learn DE-101](https://github.com/Data-Learn/data-engineering) и
-[Surfalytics](https://github.com/surfalytics/data-projects), подробнее — [`memory/decisions/course-methodology.md`](memory/decisions/course-methodology.md)):
+**Принципы** (взяты из [Data-Learn DE-101](https://github.com/Data-Learn/data-engineering),
+[Surfalytics](https://github.com/surfalytics/data-projects),
+[DE Zoomcamp](https://github.com/DataTalksClub/data-engineering-zoomcamp) и книги Клеппмана, подробнее — [`memory/decisions/course-methodology.md`](memory/decisions/course-methodology.md)):
 
 1. **Сначала бизнес-вопрос, потом инструмент.** Каждый модуль начинается с вопроса к данным сети.
 2. **Репозиторий — учебник и портфолио.** Каждая лаба — папка с README по
@@ -16,6 +17,11 @@
 5. **Мини-проект в конце модуля** наращивает [capstone](capstone/README.md).
 6. **Еженедельное ретро** в [`plans/weekly/`](plans/weekly/) и **публикация** по итогам модуля в [`blog/`](blog/).
 7. **Собеседования начинаются рано**: с фазы 2 — take-home и mock-интервью из [`interview/`](interview/).
+8. **Домашка-чекпоинт в конце модуля** (из Zoomcamp): 5–7 вопросов с однозначным ответом,
+   который получается запросом к нашему стеку — [шаблон](templates/homework.md).
+9. **Книга и видео параллельно**: к каждому модулю — главы Клеппмана и разделы Zoomcamp по
+   [карте чтения](reading_map.md); 3–5 тезисов своими словами — в `notes.md` модуля.
+10. **Capstone оценивается по рубрике** и проходит peer review — [`capstone/rubric.md`](capstone/rubric.md).
 
 Отметка `[x]` ставится, когда выполнен пункт DoD. Статус модуля: ⬜ не начат · 🟨 в работе · ✅ закрыт.
 
@@ -27,7 +33,7 @@
 - [x] `make up` поднимает core, `make check` — все проверки OK
 - [ ] Разобран каждый сервис в `infra/docker/core.yaml`: что делает, порты, тома, healthcheck
 - [ ] Датасет скачан (`make data`); расхождения фактической статистики с описанием (863 vs 865 SKU, период) объяснены
-- [ ] Шпаргалка `cheatsheets/docker-compose.md` своими словами
+- [ ] Шпаргалка [`cheatsheet.md`](modules/00_just_enough/README.md) модуля своими словами
 
 ### ⬜ 01 · Роль DE и архитектура решения — [модуль](modules/01_role_and_architecture/README.md)
 - [ ] 5–10 бизнес-вопросов сети к данным зафиксированы в `capstone/README.md`
@@ -44,6 +50,7 @@
 - [ ] PyArrow: схема, row groups, статистики Parquet; сравнение CSV/Parquet/сжатий
 - [ ] Iceberg: таблица bronze в Lakekeeper, snapshots, time travel, schema evolution, hidden partitioning
 - [ ] Разворот почасовых массивов → ~116 млн строк; партиционирование и замер скорости запросов
+- [ ] Порядок сортировки (sort order) в Iceberg: замер прочитанных файлов и байт с ним и без него
 - [ ] Мини-проект: bronze-слой FreshRetail в Iceberg, читается из DuckDB
 
 ### ⬜ 04 · Ingestion (EL) — [модуль](modules/04_ingestion/README.md)
@@ -69,6 +76,7 @@
 ### ⬜ 07 · Батч-обработка: Spark — [модуль](modules/07_batch_spark/README.md)
 - [ ] Spark-кластер в compose + Iceberg; чтение/запись через Lakekeeper
 - [ ] Партиционирование, shuffle, skew, broadcast join, AQE — разбор Spark UI
+- [ ] GroupBy и join изнутри: двухфазная агрегация, sort-merge vs broadcast hash join — предсказать план, проверить в UI
 - [ ] Трансформации через тесты: pytest + chispa
 - [ ] Одна задача: DuckDB vs Polars vs PySpark на 116 млн строк (и ×10 синтетике) — выводы
 - [ ] Мини-проект: тяжёлая витрина (восстановление спроса при out-of-stock) на Spark
@@ -88,7 +96,7 @@
 ### ⬜ 10 · Витрины и BI — [модуль](modules/10_serving_bi/README.md)
 - [ ] ClickHouse: витрины, MergeTree, materialized views
 - [ ] Trino: федеративные запросы Iceberg + Postgres + ClickHouse
-- [ ] Superset: дашборд сети (продажи, out-of-stock, промо, погода)
+- [ ] Superset: дашборд сети (продажи, out-of-stock, промо, погода) — минимум график по категориям и график динамики во времени
 - [ ] Семантический слой: метрики в одном месте
 
 ## Фаза 3 — Production и карьера (недели 14–18)
@@ -107,6 +115,7 @@
 
 ### ⬜ Capstone и карьера — [capstone](capstone/README.md) · [interview](interview/README.md)
 - [ ] Capstone: README с архитектурой, запуск одной командой, скриншоты дашбордов
+- [ ] Самооценка по [рубрике](capstone/rubric.md) ≥ 32/40 без нулей; ревью 3 чужих проектов и 1 внешнее ревью своего
 - [ ] 3 take-home задания и 3 mock-интервью (SQL, моделирование, system design)
 - [ ] 3+ публикации по итогам модулей
 - [ ] Резюме и профиль LinkedIn отражают проект

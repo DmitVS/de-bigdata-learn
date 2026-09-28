@@ -19,6 +19,8 @@
 - ETL vs ELT, lakehouse vs warehouse, batch vs streaming
 - архитектура аналитического решения (слои bronze/silver/gold)
 - рынок: что требуют в вакансиях
+- нефункциональные требования (Клеппман, гл. 1): надёжность, масштабируемость, сопровождаемость; описание нагрузки и перцентили
+- системы записи vs производные данные; lambda vs kappa
 
 ## Инструменты
 
@@ -41,6 +43,17 @@ Mermaid (диаграммы в markdown), DuckDB для первичного EDA
 - [Data-Learn: модуль 1 — роль аналитики](https://github.com/Data-Learn/data-engineering/blob/master/DE-101%20Modules/Module01/readme.md)
 - [Fundamentals of Data Engineering (Reis, Housley) — гл. 1–3](https://www.oreilly.com/library/view/fundamentals-of-data/9781098108298/)
 
+## Книга и видео
+
+Полная таблица с пояснениями, зачем читать и что пропустить — в [карте чтения](../../reading_map.md#01--роль-de-и-архитектура-решения).
+
+- 📖 Клеппман, гл. 1 — надёжность, масштабируемость, сопровождение, перцентили
+- 🎬 [Zoomcamp `02-workflow-orchestration`](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/02-workflow-orchestration) — вступление про Data Lake
+
+## Домашка-чекпоинт
+
+После всех лаб — `homework.md` по [шаблону](../../templates/homework.md).
+
 ## Заметки
 
-Конспект и выводы — в [`notes.md`](notes.md).
+Конспект, тезисы по книге и выводы — в [`notes.md`](notes.md).

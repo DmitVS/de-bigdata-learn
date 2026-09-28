@@ -1,0 +1,18 @@
+{
+  "useMarkdownLinks": true,
+  "newLinkFormat": "relative",
+  "alwaysUpdateLinks": true,
+  "attachmentFolderPath": "./img",
+  "showUnsupportedFiles": false,
+  "propertiesInDocument": "visible",
+  "userIgnoreFilters": [
+    "data/",
+    "notebooks/.ipynb_checkpoints/",
+    ".venv/",
+    ".ruff_cache/",
+    ".pytest_cache/",
+    "uv.lock",
+    "CLAUDE.md"
+  ],
+  "readableLineLength": false
+}

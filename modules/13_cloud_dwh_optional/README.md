@@ -38,6 +38,16 @@ Snowflake trial (единственный модуль вне локальног
 - [Data-Learn: модуль 6 — аналитические хранилища](https://github.com/Data-Learn/data-engineering/blob/master/DE-101%20Modules/Module06/readme.md)
 - [Surfalytics: Snowflake and Iceberg lakehouse](https://github.com/surfalytics/data-projects/tree/main/de-projects/16_snowflake_and_iceberg_lakehouse)
 
+## Книга и видео
+
+Полная таблица с пояснениями, зачем читать и что пропустить — в [карте чтения](../../reading_map.md#13--опц-облачное-хранилище).
+
+- 🎬 [Zoomcamp `03-data-warehouse`](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/03-data-warehouse) — BigQuery для сравнения со Snowflake
+
+## Домашка-чекпоинт
+
+После всех лаб — `homework.md` по [шаблону](../../templates/homework.md).
+
 ## Заметки
 
-Конспект и выводы — в [`notes.md`](notes.md).
+Конспект, тезисы по книге и выводы — в [`notes.md`](notes.md).

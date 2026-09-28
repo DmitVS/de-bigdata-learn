@@ -53,12 +53,13 @@ make help    # все команды
 ├── Makefile                единая точка входа
 ├── pyproject.toml, uv.lock зависимости контейнера workspace
 ├── infra/docker/           compose.yaml (+ слои), Dockerfile workspace, init-скрипты
-├── modules/NN_*/           теория (README), labs/, notes.md
+├── glossary/               словарь терминов (общий на весь курс, всплывает в Obsidian)
+├── reading_map.md          карта чтения: Клеппман и DE Zoomcamp по модулям
+├── modules/NN_*/           цели модуля (README), labs/, notes.md
 ├── capstone/               сквозной проект: ingestion, transform, orchestration, streaming, quality, serving
 ├── datasets/               скрипты скачивания (сами данные — в data/, вне git)
 ├── scripts/                служебные скрипты (smoke-тест)
 ├── notebooks/              эксперименты
-├── cheatsheets/            шпаргалки
 ├── interview/              рынок, take-home, mock-интервью
 ├── ops/                    SLO, журнал инцидентов
 ├── blog/                   черновики публикаций

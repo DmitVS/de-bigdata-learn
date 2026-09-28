@@ -4,12 +4,13 @@
 COMPOSE  := docker compose --env-file .env -f infra/docker/compose.yaml
 EXEC     := $(COMPOSE) exec workspace
 UV_IMAGE := ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+CURL_IMAGE := curlimages/curl:8.22.0
 # uv в одноразовом контейнере — для изменения зависимостей (pyproject.toml / uv.lock)
 UV_RUN   := docker run --rm -u $$(id -u):$$(id -g) -v $(CURDIR):/w -w /w \
             -e UV_CACHE_DIR=/tmp/uv-cache $(UV_IMAGE) uv
 
 .DEFAULT_GOAL := help
-.PHONY: help init lock uv build up down restart ps logs shell sql check data lint fmt test clean
+.PHONY: help init lock uv build up down restart ps logs shell sql check data lint fmt test obsidian clean
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n",$$1,$$2}'
@@ -62,6 +63,10 @@ fmt: ## Автоформатирование Python и SQL
 
 test: ## pytest
 	$(EXEC) pytest -q
+
+obsidian: ## Поставить плагины Obsidian (версии — в scripts/obsidian_plugins.sh)
+	docker run --rm -u $$(id -u):$$(id -g) -v $(CURDIR):/w -w /w $(CURL_IMAGE) \
+	  sh scripts/obsidian_plugins.sh
 
 clean: ## ОПАСНО: остановить всё и удалить тома с данными (Postgres, S3)
 	@read -p "Удалить все тома с данными? [y/N] " a && [ "$$a" = y ]

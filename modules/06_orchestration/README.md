@@ -18,6 +18,7 @@
 - Dagster: assets, resources, schedules, sensors, интеграции dbt и dlt
 - Airflow 3: DAG, operators, TaskFlow — для сравнения
 - где хранить состояние и секреты
+- неизменяемые входы и перерасчёт как способ «отката» (Клеппман, гл. 10)
 
 ## Инструменты
 
@@ -41,6 +42,17 @@ Pipeline 03–05 запускается по расписанию, падени�
 - [Dagster docs](https://docs.dagster.io/)
 - [Surfalytics: Airflow intro](https://github.com/surfalytics/data-projects/tree/main/de-projects/22_airflow_intro)
 
+## Книга и видео
+
+Полная таблица с пояснениями, зачем читать и что пропустить — в [карте чтения](../../reading_map.md#06--оркестрация).
+
+- 📖 Клеппман, гл. 10 — результаты пакетной обработки, идемпотентность
+- 🎬 [Zoomcamp `02-workflow-orchestration`](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/02-workflow-orchestration) — Kestra: концепции расписаний и backfill
+
+## Домашка-чекпоинт
+
+После всех лаб — `homework.md` по [шаблону](../../templates/homework.md).
+
 ## Заметки
 
-Конспект и выводы — в [`notes.md`](notes.md).
+Конспект, тезисы по книге и выводы — в [`notes.md`](notes.md).

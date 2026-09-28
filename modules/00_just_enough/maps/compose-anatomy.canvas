@@ -1,0 +1,33 @@
+{
+	"nodes":[
+		{"id":"g_plan","type":"group","x":0,"y":-80,"width":340,"height":620,"label":"📋 План (compose)"},
+		{"id":"g_img","type":"group","x":400,"y":-80,"width":360,"height":560,"label":"🧱 Образ postgres:17.11 — только чтение"},
+		{"id":"g_ct","type":"group","x":820,"y":-80,"width":340,"height":560,"color":"5","label":"📦 Контейнер debd-postgres-1"},
+		{"id":"g_life","type":"group","x":1220,"y":-80,"width":280,"height":560,"label":"⏱️ Жизненный цикл"},
+		{"id":"title","type":"text","text":"# Из чего собран стек\nУрок: [01 · Образы, контейнеры и compose-файл](../theory/01_docker_and_compose_basics.md) · Аналогия: образ = типовой проект кабинета, контейнер = обставленный кабинет, слой записи = бумаги на столе, том = сейф в архиве, compose = план этажа.","x":0,"y":-260,"width":1500,"height":130,"color":"6"},
+		{"id":"mk","type":"text","text":"**make up**\n`docker compose --env-file .env -f compose.yaml up -d --wait`","x":20,"y":-40,"width":300,"height":120},
+		{"id":"l4","type":"text","text":"слой: docker-entrypoint.sh, ENTRYPOINT, CMD","x":420,"y":-40,"width":320,"height":70},
+		{"id":"l3","type":"text","text":"слой: PostgreSQL 17 (327 МБ)","x":420,"y":50,"width":320,"height":70},
+		{"id":"l2","type":"text","text":"слой: системные библиотеки","x":420,"y":140,"width":320,"height":70},
+		{"id":"l1","type":"text","text":"слой: Debian (79 МБ)","x":420,"y":230,"width":320,"height":70},
+		{"id":"imgnote","type":"text","text":"Слои неизменяемы и переиспользуются.\nИмя: `реестр/репозиторий:тег`, тег фиксированный — никаких `latest`.\n[образ](../../../glossary/docker-image.md) · [слой](../../../glossary/image-layer.md)","x":420,"y":320,"width":320,"height":130},
+		{"id":"rw","type":"text","text":"✏️ **Слой записи** (upperdir)\ncopy-on-write\nудаляется при `make down`","x":840,"y":-40,"width":300,"height":120,"color":"3"},
+		{"id":"merged","type":"text","text":"Процесс видит слои наложенными (merged)\n`docker diff` — что записал","x":840,"y":110,"width":300,"height":90},
+		{"id":"mnt","type":"text","text":"`/var/lib/postgresql/data` — не в слоях, а в томе","x":840,"y":230,"width":300,"height":90},
+		{"id":"vol","type":"text","text":"🗄️ **Том debd_postgres-data**\nживёт отдельно, удаляется только `down -v`\n[том](../../../glossary/volume.md)","x":840,"y":350,"width":300,"height":100,"color":"4"},
+		{"id":"long","type":"text","text":"**Долгоживущие** `restart: unless-stopped`\npostgres · silo · lakekeeper · workspace\nнорма: `Up (healthy)`","x":1240,"y":-40,"width":240,"height":190,"color":"4"},
+		{"id":"once","type":"text","text":"**One-shot** `restart: \"no\"`\nsilo-init · lakekeeper-migrate · lakekeeper-init\nнорма: `Exited (0)`\nзапускаются при каждом `up` → [идемпотентность](../../../glossary/idempotency.md)","x":1240,"y":180,"width":240,"height":200,"color":"3"},
+		{"id":"exit","type":"text","text":"[код выхода](../../../glossary/exit-code.md): 0 — успех","x":1240,"y":400,"width":240,"height":60},
+		{"id":"env","type":"text","text":"**.env** (не в git)\nпароли и ключи → `${...}`","x":20,"y":405,"width":300,"height":90,"color":"2"},
+		{"id":"core","type":"text","text":"**core.yaml**\n7 сервисов · 2 тома · сеть\n`${VAR}` ← .env · `$${VAR}` → shell","x":20,"y":245,"width":300,"height":110},
+		{"id":"root","type":"text","text":"**compose.yaml**\n`name: debd` · `include: core.yaml`","x":20,"y":105,"width":300,"height":90}
+	],
+	"edges":[
+		{"id":"e1","fromNode":"mk","fromSide":"bottom","toNode":"root","toSide":"top"},
+		{"id":"e2","fromNode":"root","fromSide":"bottom","toNode":"core","toSide":"top","label":"include"},
+		{"id":"e3","fromNode":"env","fromSide":"top","toNode":"core","toSide":"bottom","label":"подстановка"},
+		{"id":"e4","fromNode":"core","fromSide":"right","toNode":"g_img","toSide":"left","label":"image:"},
+		{"id":"e5","fromNode":"g_img","fromSide":"right","toNode":"g_ct","toSide":"left","label":"compose up создаёт контейнер"},
+		{"id":"e6","fromNode":"vol","fromSide":"top","toNode":"mnt","toSide":"bottom","label":"монтирование"}
+	]
+}

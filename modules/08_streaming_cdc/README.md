@@ -14,9 +14,11 @@
 
 ## Темы
 
+- брокер сообщений vs лог (Клеппман, гл. 11); двойственность потока и таблицы
 - Kafka: топики, партиции, offsets, consumer groups, retention, compaction
 - Schema Registry: Avro/Protobuf, совместимость схем
-- Kafka Connect, Debezium CDC
+- Kafka Connect, Debezium CDC; логическая репликация и WAL Postgres как основа CDC
+- время события vs время обработки
 - Flink SQL: окна, watermarks, late data, exactly-once, state
 - стриминг в lakehouse: Iceberg sink
 
@@ -42,6 +44,18 @@ Redpanda + Console, Schema Registry, Kafka Connect/Debezium, Flink (слой `st
 - [Surfalytics: Data Streaming Mastery](https://github.com/surfalytics/data-projects/tree/main/async-projects/data-streaming-mastery)
 - [Designing Data-Intensive Applications (Kleppmann) — гл. 11](https://dataintensive.net/)
 
+## Книга и видео
+
+Полная таблица с пояснениями, зачем читать и что пропустить — в [карте чтения](../../reading_map.md#08--стриминг-и-cdc).
+
+- 📖 Клеппман, гл. 11 целиком — потоковая обработка
+- 📖 Клеппман, гл. 5 — журналы репликации (основа CDC)
+- 🎬 [Zoomcamp `07-streaming`](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/07-streaming) — Kafka, Avro и Schema Registry; Kafka Streams — ради идей
+
+## Домашка-чекпоинт
+
+После всех лаб — `homework.md` по [шаблону](../../templates/homework.md).
+
 ## Заметки
 
-Конспект и выводы — в [`notes.md`](notes.md).
+Конспект, тезисы по книге и выводы — в [`notes.md`](notes.md).

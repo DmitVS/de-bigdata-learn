@@ -25,3 +25,10 @@ logs/
 # IDE / OS
 .idea/
 .DS_Store
+
+# Obsidian: в git — общие настройки хранилища и настройки плагинов (data.json),
+# без личного состояния окон и без кода плагинов (ставится через make obsidian)
+.obsidian/workspace*.json
+.obsidian/plugins/*/*
+!.obsidian/plugins/*/data.json
+.trash/

@@ -1,0 +1,16 @@
+/* Текст по ширине окна с небольшими полями (вместе с выключенной
+   настройкой Editor → Readable line length). Поля меняются в --page-padding. */
+body {
+  --page-padding: 24px;
+}
+
+.markdown-preview-view,
+.markdown-source-view.mod-cm6 .cm-scroller {
+  padding-left: var(--page-padding) !important;
+  padding-right: var(--page-padding) !important;
+}
+
+/* Широкие таблицы (как в лабах) — на всю ширину, без обрезки справа */
+.markdown-rendered table {
+  width: 100%;
+}

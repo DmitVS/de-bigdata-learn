@@ -19,6 +19,8 @@
 - Iceberg: metadata → manifest list → manifests → data files; snapshots, time travel
 - schema evolution, hidden partitioning, compaction, expire snapshots
 - Iceberg vs Delta vs Hudi; зачем REST-каталог (Lakekeeper)
+- партиционирование vs сортировка/кластеризация (sort order): pruning по партициям и по min/max статистикам; «платишь за прочитанные байты»
+- совместимость схем назад и вперёд: какие изменения безопасны
 
 ## Инструменты
 
@@ -31,7 +33,7 @@ PyArrow, PyIceberg, DuckDB iceberg, Silo (S3), Lakekeeper
 - [ ] 03.1 — PyArrow: разобрать метаданные Parquet датасета
 - [ ] 03.2 — CSV vs Parquet (snappy/zstd): размер и скорость
 - [ ] 03.3 — Iceberg: create/append/overwrite, snapshots, time travel, schema evolution
-- [ ] 03.4 — 116 млн почасовых строк: партиционирование по дню/городу, замеры
+- [ ] 03.4 — 116 млн почасовых строк: партиционирование по дню/городу и sort order, замеры времени, прочитанных файлов и байт
 
 ## Мини-проект (вклад в capstone)
 
@@ -44,6 +46,18 @@ Bronze-слой FreshRetail в Iceberg (`lakehouse.bronze.*`), читается 
 - [Iceberg spec](https://iceberg.apache.org/spec/)
 - [Lakekeeper docs](https://docs.lakekeeper.io/)
 
+## Книга и видео
+
+Полная таблица с пояснениями, зачем читать и что пропустить — в [карте чтения](../../reading_map.md#03--форматы-хранения-и-lakehouse).
+
+- 📖 Клеппман, гл. 3 — столбцовое хранение
+- 📖 Клеппман, гл. 4 — кодирование и эволюция схем
+- 🎬 [Zoomcamp `03-data-warehouse`](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/03-data-warehouse) — партиционирование и кластеризация
+
+## Домашка-чекпоинт
+
+После всех лаб — `homework.md` по [шаблону](../../templates/homework.md).
+
 ## Заметки
 
-Конспект и выводы — в [`notes.md`](notes.md).
+Конспект, тезисы по книге и выводы — в [`notes.md`](notes.md).

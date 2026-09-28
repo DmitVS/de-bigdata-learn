@@ -43,6 +43,18 @@ SQL-ответы на 3 бизнес-вопроса из модуля 01 пов�
 - [The Data Warehouse Toolkit (Kimball) — гл. 1–4](https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/books/data-warehouse-dw-toolkit/)
 - [DuckDB SQL docs](https://duckdb.org/docs/stable/sql/introduction)
 
+## Книга и видео
+
+Полная таблица с пояснениями, зачем читать и что пропустить — в [карте чтения](../../reading_map.md#02--sql-и-моделирование-данных).
+
+- 📖 Клеппман, гл. 2 — модели данных
+- 📖 Клеппман, гл. 3 — OLTP vs OLAP, звезда и снежинка
+- 🎬 [Zoomcamp `04-analytics-engineering`](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/04-analytics-engineering) — видео про моделирование данных
+
+## Домашка-чекпоинт
+
+После всех лаб — `homework.md` по [шаблону](../../templates/homework.md).
+
 ## Заметки
 
-Конспект и выводы — в [`notes.md`](notes.md).
+Конспект, тезисы по книге и выводы — в [`notes.md`](notes.md).

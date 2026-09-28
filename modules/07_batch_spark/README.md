@@ -16,6 +16,8 @@
 
 - driver/executors, jobs/stages/tasks, lazy evaluation
 - партиционирование, shuffle, skew, broadcast join, AQE
+- groupBy изнутри: частичная агрегация до shuffle и финальная после
+- join изнутри: sort-merge vs broadcast hash vs shuffle hash; связь с MapReduce (Клеппман, гл. 10)
 - Spark SQL и DataFrame API; Spark + Iceberg (MERGE, compaction)
 - тестирование трансформаций: pytest + chispa
 - когда Spark не нужен: DuckDB/Polars на одной машине
@@ -30,7 +32,7 @@ Apache Spark (слой `spark.yaml`), PySpark, chispa
 
 - [ ] 07.1 — кластер Spark в compose + Iceberg через Lakekeeper
 - [ ] 07.2 — трансформации через тесты (по мотивам Surfalytics #10)
-- [ ] 07.3 — разбор Spark UI: shuffle и skew на почасовых данных
+- [ ] 07.3 — разбор Spark UI: предсказать план groupBy/join, проверить в UI; shuffle и skew на почасовых данных
 - [ ] 07.4 — одна задача: DuckDB vs Polars vs PySpark на 116 млн и ×10 строк
 
 ## Мини-проект (вклад в capstone)
@@ -43,6 +45,18 @@ Apache Spark (слой `spark.yaml`), PySpark, chispa
 - [Surfalytics: Spark transformations with tests](https://github.com/surfalytics/data-projects/tree/main/de-projects/10_spark_transformations_with_tests_framework)
 - [Learning Spark 2.0 (есть в репо Data-Learn)](https://github.com/Data-Learn/data-engineering/blob/master/DE-101%20Modules/Module07)
 
+## Книга и видео
+
+Полная таблица с пояснениями, зачем читать и что пропустить — в [карте чтения](../../reading_map.md#07--батч-обработка-spark).
+
+- 📖 Клеппман, гл. 10 целиком — пакетная обработка и алгоритмы соединений
+- 📖 Клеппман, гл. 6 — перекосы и горячие ключи
+- 🎬 [Zoomcamp `06-batch`](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/06-batch) — особенно анатомия кластера, GroupBy и Join изнутри
+
+## Домашка-чекпоинт
+
+После всех лаб — `homework.md` по [шаблону](../../templates/homework.md).
+
 ## Заметки
 
-Конспект и выводы — в [`notes.md`](notes.md).
+Конспект, тезисы по книге и выводы — в [`notes.md`](notes.md).

@@ -41,6 +41,17 @@ GitHub Actions, pre-commit, Terraform (обзор)
 - [Surfalytics: Git and CI/CD](https://github.com/surfalytics/data-projects/tree/main/dataops-projects/01_git_and_ci_cd)
 - [Surfalytics: Terraform 101](https://github.com/surfalytics/data-projects/tree/main/dataops-projects/02_terraform_101)
 
+## Книга и видео
+
+Полная таблица с пояснениями, зачем читать и что пропустить — в [карте чтения](../../reading_map.md#12--dataops-и-cicd).
+
+- 📖 Клеппман, гл. 1 — удобство сопровождения
+- 🎬 [Zoomcamp `01-docker-terraform`](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/01-docker-terraform) — часть Terraform
+
+## Домашка-чекпоинт
+
+После всех лаб — `homework.md` по [шаблону](../../templates/homework.md).
+
 ## Заметки
 
-Конспект и выводы — в [`notes.md`](notes.md).
+Конспект, тезисы по книге и выводы — в [`notes.md`](notes.md).

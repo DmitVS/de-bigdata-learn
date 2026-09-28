@@ -18,7 +18,8 @@
 - dbt tests vs Soda vs Great Expectations
 - data contracts
 - observability: Elementary, аномалии объёма и свежести
-- SLA/SLO/SLI, MTTD/MTTR, постмортемы
+- SLA/SLO/SLI через перцентили (p95 свежести), MTTD/MTTR, постмортемы
+- reconciliation: сверка источника и витрины
 
 ## Инструменты
 
@@ -42,6 +43,18 @@ dbt tests, Soda Core, Elementary
 - [Surfalytics: Soda Core](https://github.com/surfalytics/data-projects/tree/main/de-projects/07_soda_core_snowflake)
 - [Soda docs](https://docs.soda.io/)
 
+## Книга и видео
+
+Полная таблица с пояснениями, зачем читать и что пропустить — в [карте чтения](../../reading_map.md#09--качество-и-наблюдаемость).
+
+- 📖 Клеппман, гл. 1 — перцентили (повтор)
+- 📖 Клеппман, гл. 12 — проверка целостности (по желанию)
+- 🎬 [Zoomcamp `05-data-platforms`](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/05-data-platforms) — часть про качество данных (по желанию)
+
+## Домашка-чекпоинт
+
+После всех лаб — `homework.md` по [шаблону](../../templates/homework.md).
+
 ## Заметки
 
-Конспект и выводы — в [`notes.md`](notes.md).
+Конспект, тезисы по книге и выводы — в [`notes.md`](notes.md).

@@ -1,0 +1,145 @@
+{
+ "nodes": [
+  {
+   "id": "title",
+   "type": "text",
+   "x": 0,
+   "y": -300,
+   "width": 1500,
+   "height": 130,
+   "text": "# check_stack.py — утренний обход стека\nУрок: [05 · Python и check_stack.py](../theory/05_python_check_stack.md) · [smoke-тест](../../../glossary/smoke-test.md) · [переменные окружения](../../../glossary/environment-variable.md) · [исключения](../../../glossary/exception.md) · [код выхода](../../../glossary/exit-code.md)",
+   "color": "6"
+  },
+  {
+   "id": "env",
+   "type": "text",
+   "x": 0,
+   "y": -120,
+   "width": 420,
+   "height": 200,
+   "text": "**Окружение workspace** (`os.environ`)\n`POSTGRES_HOST=postgres`\n`S3_ENDPOINT=http://silo:9000` + `AWS_*`\n`ICEBERG_CATALOG_URI=…/catalog`\n`ICEBERG_WAREHOUSE=lakehouse`\n\nподмена: `ИМЯ=… cmd` · `env -u ИМЯ cmd`"
+  },
+  {
+   "id": "g_main",
+   "type": "group",
+   "x": 500,
+   "y": -120,
+   "width": 560,
+   "height": 620,
+   "label": "main(): цикл по CHECKS, у каждой проверки свой try/except"
+  },
+  {
+   "id": "p",
+   "type": "text",
+   "x": 520,
+   "y": -80,
+   "width": 520,
+   "height": 120,
+   "text": "**check_postgres**\n`psycopg.connect` → `pg_database`\n{lakekeeper, retail_oltp} − dbs → assert"
+  },
+  {
+   "id": "s",
+   "type": "text",
+   "x": 520,
+   "y": 60,
+   "width": 520,
+   "height": 120,
+   "text": "**check_s3** (путь ①)\n`s3fs.S3FileSystem(endpoint_url=S3_ENDPOINT)` · ключи из `AWS_*` сами\n{landing, warehouse} − buckets → assert",
+   "color": "2"
+  },
+  {
+   "id": "i",
+   "type": "text",
+   "x": 520,
+   "y": 200,
+   "width": 520,
+   "height": 160,
+   "text": "**check_iceberg_and_duckdb** (путь ②)\n`load_catalog(uri, warehouse)` — об S3 ни слова\ncreate_table → append → scan (3 строки) → DuckDB ATTACH → count(*)\n`finally`: purge_table, drop_namespace — без `except`!",
+   "color": "5"
+  },
+  {
+   "id": "res",
+   "type": "text",
+   "x": 520,
+   "y": 390,
+   "width": 520,
+   "height": 90,
+   "text": "нет исключения → `OK` · исключение → `FAIL <класс>: <текст>`, failed += 1\nитог: `sys.exit(1 if failed else 0)`"
+  },
+  {
+   "id": "g_err",
+   "type": "group",
+   "x": 1120,
+   "y": -120,
+   "width": 380,
+   "height": 620,
+   "label": "🔎 Класс ошибки → этап",
+   "color": "1"
+  },
+  {
+   "id": "k",
+   "type": "text",
+   "x": 1140,
+   "y": -80,
+   "width": 340,
+   "height": 80,
+   "text": "`KeyError` — переменной нет (запуск вне workspace)"
+  },
+  {
+   "id": "ec",
+   "type": "text",
+   "x": 1140,
+   "y": 20,
+   "width": 340,
+   "height": 90,
+   "text": "`EndpointConnectionError` — S3 не отвечает по адресу"
+  },
+  {
+   "id": "nc",
+   "type": "text",
+   "x": 1140,
+   "y": 130,
+   "width": 340,
+   "height": 90,
+   "text": "`NoCredentialsError` — нечем подписать запрос"
+  },
+  {
+   "id": "pe",
+   "type": "text",
+   "x": 1140,
+   "y": 240,
+   "width": 340,
+   "height": 90,
+   "text": "`PermissionError … signature` — ключи неверные"
+  },
+  {
+   "id": "oe",
+   "type": "text",
+   "x": 1140,
+   "y": 350,
+   "width": 340,
+   "height": 110,
+   "text": "`OperationalError` — Postgres: недоступен или неверный пароль\n`AssertionError` — сервис жив, объектов нет"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e1",
+   "fromNode": "env",
+   "fromSide": "right",
+   "toNode": "g_main",
+   "toSide": "left",
+   "toEnd": "arrow",
+   "label": "читает"
+  },
+  {
+   "id": "e2",
+   "fromNode": "res",
+   "fromSide": "right",
+   "toNode": "g_err",
+   "toSide": "left",
+   "toEnd": "arrow",
+   "label": "читать FAIL"
+  }
+ ]
+}
