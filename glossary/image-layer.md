@@ -23,4 +23,4 @@ tags: [docker]
 
 **Посмотреть:** `docker image history <образ>`, `docker diff <контейнер>`.
 
-Связано: [образ](docker-image.md) · [контейнер](container.md)
+Связано: [образ](docker-image.md) · [контейнер](container.md) · [Dockerfile](dockerfile.md) · [кэш сборки](build-cache.md)

@@ -20,4 +20,4 @@ tags: [docker]
 
 **Посмотреть:** `docker inspect <контейнер> --format '{{json .Mounts}}'`.
 
-Связано: [том](volume.md)
+Связано: [том](volume.md) · [UID и GID](uid-gid.md)

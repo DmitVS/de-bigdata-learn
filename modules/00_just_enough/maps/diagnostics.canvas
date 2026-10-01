@@ -1,0 +1,26 @@
+{
+	"nodes":[
+		{"id":"title","type":"text","x":0,"y":-300,"width":1600,"height":140,"text":"# Диагностика: от симптома к причине\nУрок: [08 · Диагностика](../theory/08_diagnostics.md) · Маршрут от общего к частному. Чинить причину, а не симптом. После — [постмортем](../../../glossary/postmortem.md).","color":"6"},
+		{"id":"g1","type":"group","x":0,"y":-120,"width":1600,"height":220,"label":"Маршрут"},
+		{"id":"r1","type":"text","x":20,"y":-80,"width":280,"height":150,"text":"**1. Статусы**\n`make ps`\nCreated · Exited (N) · Restarting · unhealthy"},
+		{"id":"r2","type":"text","x":340,"y":-80,"width":280,"height":150,"text":"**2. inspect**\n`.State`: ExitCode, OOMKilled, RestartCount, Health"},
+		{"id":"r3","type":"text","x":660,"y":-80,"width":280,"height":150,"text":"**3. Логи**\n`docker logs` — **первая** ошибка\nчитать до `make restart`"},
+		{"id":"r4","type":"text","x":980,"y":-80,"width":280,"height":150,"text":"**4. Изнутри**\n`docker exec -it <c> sh`\ncurl, getent, psql"},
+		{"id":"r5","type":"text","x":1300,"y":-80,"width":280,"height":150,"text":"**Причина**\nсвойство системы, а не триггер","color":"4"},
+		{"id":"g2","type":"group","x":0,"y":140,"width":780,"height":400,"label":"Коды выхода"},
+		{"id":"c1","type":"text","x":20,"y":180,"width":740,"height":340,"text":"| Код | Значит |\n|---|---|\n| 0 | успех |\n| 1, 2, 3… | ошибка программы → логи |\n| 125 | ошибка Docker: нет образа, порт занят |\n| 126 | нельзя исполнить |\n| 127 | команда не найдена |\n| 137 | SIGKILL: stop без обработки SIGTERM или OOM |\n| 143 | SIGTERM: штатный stop |\n\n[сигналы](../../../glossary/signal.md): PID 1 игнорирует SIGTERM без обработчика → `init: true`"},
+		{"id":"g3","type":"group","x":820,"y":140,"width":780,"height":400,"label":"Политики restart и ошибки make up"},
+		{"id":"p1","type":"text","x":840,"y":180,"width":740,"height":150,"text":"[restart](../../../glossary/restart-policy.md): `no` · `on-failure` · `always` · `unless-stopped`\nручной stop уважается всеми · пауза 100 мс·2ⁿ → `Restarting`\nперезапуск лечит временное, постоянное — прячет"},
+		{"id":"p2","type":"text","x":840,"y":350,"width":740,"height":170,"text":"`didn't complete successfully: exit N` → one-shot, `docker logs`\n`is unhealthy` → `.State.Health`\n`port is already allocated` → `docker ps --filter publish=P`, `ss -ltn`"},
+		{"id":"g4","type":"group","x":0,"y":580,"width":1600,"height":220,"label":"Дрейф конфигурации","color":"1"},
+		{"id":"d1","type":"text","x":20,"y":620,"width":760,"height":150,"text":"`.env` → процессы при **каждом** старте ✅\n`.env` → init → **состояние** (база, каталог) один раз ⚠️\nидемпотентный init не перезаписывает"},
+		{"id":"d2","type":"text","x":820,"y":620,"width":760,"height":150,"text":"Чинить API/SQL сервиса, а не `make clean`\nPostgres: `ALTER USER`\nLakekeeper: http://localhost:8181/swagger-ui/","color":"4"}
+	],
+	"edges":[
+		{"id":"a","fromNode":"r1","fromSide":"right","toNode":"r2","toSide":"left","toEnd":"arrow"},
+		{"id":"b","fromNode":"r2","fromSide":"right","toNode":"r3","toSide":"left","toEnd":"arrow"},
+		{"id":"c","fromNode":"r3","fromSide":"right","toNode":"r4","toSide":"left","toEnd":"arrow"},
+		{"id":"d","fromNode":"r4","fromSide":"right","toNode":"r5","toSide":"left","toEnd":"arrow"},
+		{"id":"e","fromNode":"d1","fromSide":"right","toNode":"d2","toSide":"left","toEnd":"arrow","label":"починка"}
+	]
+}

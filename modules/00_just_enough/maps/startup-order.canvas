@@ -1,213 +1,28 @@
 {
- "nodes": [
-  {
-   "id": "title",
-   "type": "text",
-   "x": 0,
-   "y": -280,
-   "width": 1600,
-   "height": 130,
-   "text": "# Порядок запуска стека\nУрок: [02 · Порядок запуска](../theory/02_startup_order.md) · Три вопроса: готов ли сервис? ([healthcheck](../../../glossary/healthcheck.md)) · кого ждать? ([depends_on](../../../glossary/depends-on.md)) · когда можно пользоваться? (`up --wait`)",
-   "color": "6"
-  },
-  {
-   "id": "g1",
-   "type": "group",
-   "x": 0,
-   "y": -100,
-   "width": 1600,
-   "height": 420,
-   "label": "Граф зависимостей: стрелка A → B = «B ждёт A»"
-  },
-  {
-   "id": "pg",
-   "type": "text",
-   "x": 30,
-   "y": -50,
-   "width": 220,
-   "height": 110,
-   "text": "🟦 **postgres**\nhealthcheck: `pg_isready`\n~5 с",
-   "color": "5"
-  },
-  {
-   "id": "si",
-   "type": "text",
-   "x": 30,
-   "y": 160,
-   "width": 220,
-   "height": 110,
-   "text": "🟦 **silo**\nhealthcheck: `mc ready local`\n~5 с",
-   "color": "5"
-  },
-  {
-   "id": "mg",
-   "type": "text",
-   "x": 330,
-   "y": -50,
-   "width": 240,
-   "height": 110,
-   "text": "⬜ **lakekeeper-migrate**\nразмечает базу\n<1 с → exit 0"
-  },
-  {
-   "id": "sinit",
-   "type": "text",
-   "x": 330,
-   "y": 160,
-   "width": 240,
-   "height": 110,
-   "text": "⬜ **silo-init**\n`mc mb --ignore-existing`\n<1 с → exit 0"
-  },
-  {
-   "id": "lk",
-   "type": "text",
-   "x": 660,
-   "y": 50,
-   "width": 240,
-   "height": 110,
-   "text": "🟦 **lakekeeper**\nhealthcheck: `lakekeeper healthcheck`\n+5 с",
-   "color": "5"
-  },
-  {
-   "id": "li",
-   "type": "text",
-   "x": 990,
-   "y": 50,
-   "width": 240,
-   "height": 110,
-   "text": "⬜ **lakekeeper-init**\n`init.sh`: bootstrap, warehouse\n→ exit 0"
-  },
-  {
-   "id": "ws",
-   "type": "text",
-   "x": 1320,
-   "y": 50,
-   "width": 240,
-   "height": 110,
-   "text": "🟦 **workspace**\nJupyter, make shell\n~13 с от старта",
-   "color": "5"
-  },
-  {
-   "id": "g2",
-   "type": "group",
-   "x": 0,
-   "y": 360,
-   "width": 780,
-   "height": 330,
-   "label": "⚠️ Ловушки",
-   "color": "1"
-  },
-  {
-   "id": "t1",
-   "type": "text",
-   "x": 20,
-   "y": 400,
-   "width": 360,
-   "height": 130,
-   "text": "**Гонка** — нет `depends_on` на migrate → Lakekeeper падает только на чистой установке\n[гонка](../../../glossary/race-condition.md)"
-  },
-  {
-   "id": "t2",
-   "type": "text",
-   "x": 400,
-   "y": 400,
-   "width": 360,
-   "height": 130,
-   "text": "**One-shot через service_healthy** → статуса healthy не будет, `up` падает"
-  },
-  {
-   "id": "t3",
-   "type": "text",
-   "x": 20,
-   "y": 550,
-   "width": 740,
-   "height": 120,
-   "text": "**Проверка не тем путём**: `pg_isready` без `-h` идёт через сокет и отвечает «готов» во время init, хотя TCP ещё закрыт. Проверять тем же путём, что и соседи."
-  },
-  {
-   "id": "g3",
-   "type": "group",
-   "x": 820,
-   "y": 360,
-   "width": 780,
-   "height": 330,
-   "label": "👀 Как наблюдать"
-  },
-  {
-   "id": "o1",
-   "type": "text",
-   "x": 840,
-   "y": 400,
-   "width": 740,
-   "height": 120,
-   "text": "`docker events --filter label=com.docker.compose.project=debd --filter type=container`\ncreate → start → health_status / die; exec_* — каждая проверка"
-  },
-  {
-   "id": "o2",
-   "type": "text",
-   "x": 840,
-   "y": 540,
-   "width": 740,
-   "height": 120,
-   "text": "`docker inspect <c> --format '{{json .State.Health}}'` — статус, FailingStreak, 5 последних проверок\n`make up` = `up -d --wait`: вернёт управление только на готовом стеке"
-  }
- ],
- "edges": [
-  {
-   "id": "a",
-   "fromNode": "pg",
-   "fromSide": "right",
-   "toNode": "mg",
-   "toSide": "left",
-   "toEnd": "arrow",
-   "label": "healthy",
-   "color": "5"
-  },
-  {
-   "id": "b",
-   "fromNode": "si",
-   "fromSide": "right",
-   "toNode": "sinit",
-   "toSide": "left",
-   "toEnd": "arrow",
-   "label": "healthy",
-   "color": "5"
-  },
-  {
-   "id": "c",
-   "fromNode": "mg",
-   "fromSide": "right",
-   "toNode": "lk",
-   "toSide": "left",
-   "toEnd": "arrow",
-   "label": "completed"
-  },
-  {
-   "id": "d",
-   "fromNode": "sinit",
-   "fromSide": "right",
-   "toNode": "lk",
-   "toSide": "left",
-   "toEnd": "arrow",
-   "label": "completed"
-  },
-  {
-   "id": "e",
-   "fromNode": "lk",
-   "fromSide": "right",
-   "toNode": "li",
-   "toSide": "left",
-   "toEnd": "arrow",
-   "label": "healthy",
-   "color": "5"
-  },
-  {
-   "id": "f",
-   "fromNode": "li",
-   "fromSide": "right",
-   "toNode": "ws",
-   "toSide": "left",
-   "toEnd": "arrow",
-   "label": "completed"
-  }
- ]
+	"nodes":[
+		{"id":"title","type":"text","x":0,"y":-280,"width":1600,"height":130,"text":"# Порядок запуска стека\nУрок: [02 · Порядок запуска](../theory/02_startup_order.md) · Три вопроса: готов ли сервис? ([healthcheck](../../../glossary/healthcheck.md)) · кого ждать? ([depends_on](../../../glossary/depends-on.md)) · когда можно пользоваться? (`up --wait`)","color":"6"},
+		{"id":"g1","type":"group","x":0,"y":-100,"width":1600,"height":420,"label":"Граф зависимостей: стрелка A → B = «B ждёт A»"},
+		{"id":"pg","type":"text","x":30,"y":-50,"width":220,"height":110,"text":"🟦 **postgres**\nhealthcheck: `pg_isready`\n~5 с","color":"5"},
+		{"id":"si","type":"text","x":30,"y":160,"width":220,"height":110,"text":"🟦 **silo**\nhealthcheck: `mc ready local`\n~5 с","color":"5"},
+		{"id":"mg","type":"text","x":330,"y":-50,"width":240,"height":110,"text":"⬜ **lakekeeper-migrate**\nразмечает базу\n<1 с → exit 0"},
+		{"id":"sinit","type":"text","x":330,"y":160,"width":240,"height":110,"text":"⬜ **silo-init**\n`mc mb --ignore-existing`\n<1 с → exit 0"},
+		{"id":"lk","type":"text","x":660,"y":50,"width":240,"height":110,"text":"🟦 **lakekeeper**\nhealthcheck: `lakekeeper healthcheck`\n+5 с","color":"5"},
+		{"id":"li","type":"text","x":990,"y":50,"width":240,"height":110,"text":"⬜ **lakekeeper-init**\n`init.sh`: bootstrap, warehouse\n→ exit 0"},
+		{"id":"ws","type":"text","x":1320,"y":50,"width":240,"height":110,"text":"🟦 **workspace**\nJupyter, make shell\n~13 с от старта","color":"5"},
+		{"id":"g2","type":"group","x":0,"y":360,"width":780,"height":330,"label":"⚠️ Ловушки","color":"1"},
+		{"id":"t1","type":"text","x":20,"y":400,"width":360,"height":130,"text":"**Гонка** — нет `depends_on` на migrate → Lakekeeper падает только на чистой установке\n[гонка](../../../glossary/race-condition.md)"},
+		{"id":"t2","type":"text","x":400,"y":400,"width":360,"height":130,"text":"**One-shot через service_healthy** → статуса healthy не будет, `up` падает"},
+		{"id":"t3","type":"text","x":20,"y":550,"width":740,"height":120,"text":"**Проверка не тем путём**: `pg_isready` без `-h` идёт через сокет и отвечает «готов» во время init, хотя TCP ещё закрыт. Проверять тем же путём, что и соседи."},
+		{"id":"g3","type":"group","x":820,"y":360,"width":780,"height":330,"label":"👀 Как наблюдать"},
+		{"id":"o1","type":"text","x":840,"y":400,"width":740,"height":120,"text":"`docker events --filter label=com.docker.compose.project=debd --filter type=container`\ncreate → start → health_status / die; exec_* — каждая проверка"},
+		{"id":"o2","type":"text","x":840,"y":540,"width":740,"height":120,"text":"`docker inspect <c> --format '{{json .State.Health}}'` — статус, FailingStreak, 5 последних проверок\n`make up` = `up -d --wait`: вернёт управление только на готовом стеке"}
+	],
+	"edges":[
+		{"id":"a","fromNode":"pg","fromSide":"right","toNode":"mg","toSide":"left","toEnd":"arrow","label":"healthy","color":"5"},
+		{"id":"b","fromNode":"si","fromSide":"right","toNode":"sinit","toSide":"left","toEnd":"arrow","label":"healthy","color":"5"},
+		{"id":"c","fromNode":"mg","fromSide":"right","toNode":"lk","toSide":"left","toEnd":"arrow","label":"completed"},
+		{"id":"d","fromNode":"sinit","fromSide":"right","toNode":"lk","toSide":"left","toEnd":"arrow","label":"completed"},
+		{"id":"e","fromNode":"lk","fromSide":"right","toNode":"li","toSide":"left","toEnd":"arrow","label":"healthy","color":"5"},
+		{"id":"f","fromNode":"li","fromSide":"right","toNode":"ws","toSide":"left","toEnd":"arrow","label":"completed"}
+	]
 }

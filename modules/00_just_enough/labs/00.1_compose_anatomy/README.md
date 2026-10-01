@@ -26,7 +26,7 @@ _(заполни своими словами по ходу лабы)_
 
 ## Prerequisites
 
-- Теория к лабе — [`theory/`](../../README.md#маршрут-прохождения) модуля (темы 01–05)
+- Теория к лабе — [`theory/`](../../README.md#маршрут-прохождения) модуля (темы 01–07)
 - `make up` выполнен, `make check` — все OK
 - Прочитано: [Compose file reference — services](https://docs.docker.com/reference/compose-file/services/),
   [Networking in Compose](https://docs.docker.com/compose/how-tos/networking/),
@@ -275,6 +275,20 @@ warehouse каталога, а не в `.env` клиентов.
 (2) что было бы на машине без VPN; (3) какие ключи в compose это решают и что делает каждый.
 После проверки — `down`, чтобы не остался мусор.
 
+**Steps:**
+1. Убедись, что стек поднят: `make ps` — `lakekeeper` в статусе `healthy`.
+2. Создай `nettest.yaml` с ключом `name:`, одним сервисом, `image:`, `command:` в форме списка
+   и `restart: "no"` (урок 03, шаг 9). Блок `networks` пока **не** добавляй.
+3. С хоста, из корня репозитория:
+   `docker compose -f modules/00_just_enough/labs/00.1_compose_anatomy/nettest.yaml up --exit-code-from <сервис>`.
+   Запиши ошибку дословно.
+4. Найди в уроке 03 (шаги 6 и 8.3), какая ветка дерева решений сработала, и добавь в файл
+   нужный блок `networks`.
+5. Повтори команду из шага 3, затем `echo $?`. Нужны JSON с `"health":"ok"` и `0`.
+6. `docker compose -f …/nettest.yaml down`, затем проверь, что сеть `debd_default` на месте:
+   `docker network ls | grep debd`.
+7. Запиши в README ответы (1)–(3).
+
 **3.4. Предскажи и проверь: откуда ключи S3 у Iceberg.**
 Предскажи результат трёх проверок в
 `env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY python scripts/check_stack.py` (в `make shell`).
@@ -282,6 +296,13 @@ warehouse каталога, а не в `.env` клиентов.
 **Definition of Done:** предсказание до запуска; объяснение результата через `sts-enabled` в
 [`init.sh`](../../../../infra/docker/lakekeeper/init.sh); ответ, чем это лучше раздачи
 root-ключей Silo каждому клиенту.
+
+**Steps:**
+1. Запиши в README предсказание: OK или FAIL для каждой из трёх проверок и почему.
+2. `make shell`, затем команда из условия. `env -u ИМЯ` запускает программу без этой переменной.
+3. Сравни с предсказанием. Для объяснения перечитай урок 04, шаги 5–6, и `storage-profile`
+   в `init.sh`.
+4. Запиши объяснение и ответ про root-ключи.
 
 **3.5. Обоснуй: публикация портов.**
 Ответы: что изменится, если в `ports` убрать `127.0.0.1:` (кто сможет подключиться к Postgres и
@@ -291,7 +312,14 @@ root-ключей Silo каждому клиенту.
 **Definition of Done:** ответы + одна команда, подтверждающая твой ответ про адрес привязки
 (например, `ss -ltn` на хосте или `docker port`).
 
+**Steps:**
+1. Ответь письменно на три вопроса, опираясь на урок 03, шаги 4–6. `core.yaml` не меняй.
+2. На хосте выполни одну из команд из DoD и найди в выводе адрес, на котором слушают наши порты.
+3. Вставь команду и нужные строки вывода в README рядом с ответом.
+
 ### Task 4. Состояние и тома
+
+Теория: [06 · Тома и состояние](../../theory/06_volumes_and_state.md).
 
 **Expected result / Definition of Done:**
 - Эксперимент: создал бакет `scratch` в консоли Silo (http://localhost:9001) → `make restart` → бакет на месте
@@ -300,7 +328,21 @@ root-ключей Silo каждому клиенту.
   А `lakekeeper/init.sh` — при каждом `make up`, и почему это безопасно?
 - Ответ: почему данные датасета (`data/`) переживут `make clean`, а бакеты — нет?
 
+**Steps:**
+1. Запиши предсказание: будет ли бакет `scratch` на месте после `make restart` и почему.
+2. Открой http://localhost:9001 (логин и пароль — `S3_ACCESS_KEY` / `S3_SECRET_KEY` из `.env`),
+   создай бакет `scratch`.
+3. `make restart`, снова открой консоль и проверь бакет.
+4. Найди, где лежит том Silo, и загляни в него через одноразовый контейнер (урок 06, шаг 3,
+   «Попробуй сам»). Сделай то же для тома Postgres.
+5. Найди в логах Postgres и `lakekeeper-init` следы того, выполнялась ли инициализация
+   (урок 06, шаг 6).
+6. Ответь на вопросы. `make clean` **не** запускай: он понадобится в сценарии 5 лабы 00.2.
+   Ответ про `data/` дай рассуждением по таблице из урока 06, шаг 2.
+
 ### Task 5. Образ workspace
+
+Теория: [07 · Dockerfile и слои образа](../../theory/07_dockerfile_and_layers.md).
 
 **Expected result / Definition of Done:**
 - Ответы с опорой на [`Dockerfile`](../../../../infra/docker/workspace/Dockerfile) и `docker history debd/workspace:local`:
@@ -310,6 +352,19 @@ root-ключей Silo каждому клиенту.
   4. Какой слой образа самый тяжёлый и почему образ весит ~2,4 ГБ?
 - Эксперимент: добавил пакет (например, `rich`) через `make uv ARGS="add --group dev rich"`,
   пересобрал `make build`, убедился, что он доступен в `make shell`, откатил изменения (`git restore`)
+
+**Steps:**
+1. Открой Dockerfile и сопоставь каждую инструкцию с разбором в уроке 07, шаг 1.
+2. `docker history debd/workspace:local --format '{{.Size}}\t{{.CreatedBy}}' | cut -c1-90` —
+   найди самый тяжёлый слой.
+3. Загляни внутрь образа командой из урока 07, шаг 5 («где место внутри workspace»), и найди
+   большие папки. Для каждой реши, нужна ли она работающему контейнеру.
+4. Ответь на вопросы 1–4.
+5. Эксперимент: `make uv ARGS="add --group dev rich"` → `git diff --stat` (какие файлы
+   изменились) → `make build` (какие шаги не `CACHED`) → `make up` →
+   `make shell` → `python -c "import rich; print(rich.__name__)"`.
+6. Откат: `git restore pyproject.toml uv.lock` → `make build` → `make up`. Проверь, что
+   `git status` не показывает этих файлов, а `import rich` снова падает.
 
 ## Результат
 

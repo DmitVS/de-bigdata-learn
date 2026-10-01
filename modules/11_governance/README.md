@@ -15,6 +15,8 @@
 ## Темы
 
 - каталог и glossary, владельцы данных
+- теория lineage: по таблицам и по колонкам, статический (из кода) и рантайм (из запусков); анализ влияния и поиск причины
+- стандарт OpenLineage: события запусков из Spark, dbt, Dagster в одном формате
 - column-level lineage из dbt/Dagster
 - RBAC, маскирование, PII
 - этика данных и ответственность инженера (Клеппман, гл. 12)
@@ -28,7 +30,7 @@ OpenMetadata (слой `governance.yaml`, запускать отдельно �
 Каждая лаба — папка `labs/<номер>_<название>/` с README по [шаблону](../../templates/lab_README.md).
 
 - [ ] 11.1 — OpenMetadata: подключить Iceberg, Postgres, dbt
-- [ ] 11.2 — lineage и glossary
+- [ ] 11.2 — lineage и glossary; приём lineage из Spark через OpenLineage — граф от источника через Spark и dbt до дашборда
 - [ ] 11.3 — роли и маскирование в Trino/Postgres
 
 ## Мини-проект (вклад в capstone)
@@ -38,6 +40,8 @@ OpenMetadata (слой `governance.yaml`, запускать отдельно �
 ## Ресурсы
 
 - [OpenMetadata docs](https://docs.open-metadata.org/)
+- [OpenLineage: стандарт событий lineage](https://openlineage.io/docs/)
+- [OpenLineage: интеграция со Spark](https://openlineage.io/docs/integrations/spark/)
 
 ## Книга и видео
 

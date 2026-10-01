@@ -16,6 +16,7 @@
 
 - DAG, идемпотентность, ретраи, backfill, партиции по времени
 - Dagster: assets, resources, schedules, sensors, интеграции dbt и dlt
+- граф ассетов как lineage: от загрузки до витрин; что пересчитать после сбоя (downstream materialization)
 - Airflow 3: DAG, operators, TaskFlow — для сравнения
 - где хранить состояние и секреты
 - неизменяемые входы и перерасчёт как способ «отката» (Клеппман, гл. 10)
@@ -29,7 +30,7 @@ Dagster (новый слой `orchestration.yaml`), Airflow (опц.)
 Каждая лаба — папка `labs/<номер>_<название>/` с README по [шаблону](../../templates/lab_README.md).
 
 - [ ] 06.1 — Dagster в compose, assets для dlt
-- [ ] 06.2 — dbt-проект как assets
+- [ ] 06.2 — dbt-проект как assets; граф от загрузки до витрин, разбор «что пересчитать после сбоя»
 - [ ] 06.3 — партиции по дням и backfill
 - [ ] 06.4 — (опц.) тот же pipeline на Airflow
 

@@ -19,10 +19,11 @@
 - Trino: федеративные запросы, коннекторы Iceberg/Postgres/ClickHouse
 - BI: Superset — датасеты, чарты, дашборды; основы визуализации
 - семантический слой и метрики
+- отчёты как код: страница, где текст, SQL и графики живут вместе (Evidence; альтернатива — Quarto); сборка в статический сайт
 
 ## Инструменты
 
-ClickHouse, Trino, Superset (слой `serving.yaml`)
+ClickHouse, Trino, Superset, Evidence (слой `serving.yaml`)
 
 ## Лабы
 
@@ -31,6 +32,7 @@ ClickHouse, Trino, Superset (слой `serving.yaml`)
 - [ ] 10.1 — ClickHouse: витрины из marts
 - [ ] 10.2 — Trino: один запрос через Iceberg + Postgres
 - [ ] 10.3 — Superset: дашборд сети (минимум: распределение по категориям + динамика во времени)
+- [ ] 10.4 — Evidence: отчёт-страница по одному бизнес-вопросу из модуля 01 (текст + SQL + графики)
 
 ## Мини-проект (вклад в capstone)
 
@@ -41,6 +43,8 @@ ClickHouse, Trino, Superset (слой `serving.yaml`)
 - [Data-Learn: модуль 3 — BI](https://github.com/Data-Learn/data-engineering/blob/master/DE-101%20Modules/Module03/readme.md)
 - [Surfalytics: Trino](https://github.com/surfalytics/data-projects/tree/main/de-projects/05_trinodb)
 - [Surfalytics: Open-source BI with Metabase](https://github.com/surfalytics/data-projects/tree/main/async-projects/03-Open-Source-BI-with-Metabase)
+- [Evidence: отчёты как код (markdown + SQL)](https://docs.evidence.dev/)
+- [Quarto — альтернатива для отчётов с кодом](https://quarto.org/)
 
 ## Книга и видео
 

@@ -1,185 +1,25 @@
 {
- "nodes": [
-  {
-   "id": "title",
-   "type": "text",
-   "x": 0,
-   "y": -300,
-   "width": 1500,
-   "height": 140,
-   "text": "# Хранилище курса: S3 → Parquet → Iceberg → каталог\nУрок: [04 · S3, Parquet, Iceberg и каталог](../theory/04_s3_iceberg_catalog.md) · Аналогия: склад коробок ([S3](../../../glossary/s3.md)), коробки по столбцам ([Parquet](../../../glossary/parquet.md)), опись ([Iceberg](../../../glossary/iceberg.md)), картотека и бюро пропусков ([каталог](../../../glossary/iceberg-catalog.md)).",
-   "color": "6"
-  },
-  {
-   "id": "g_ws",
-   "type": "group",
-   "x": 0,
-   "y": -120,
-   "width": 380,
-   "height": 560,
-   "label": "📦 workspace"
-  },
-  {
-   "id": "env",
-   "type": "text",
-   "x": 20,
-   "y": -80,
-   "width": 340,
-   "height": 110,
-   "text": "**Переменные**\n`S3_ENDPOINT=http://silo:9000`\n`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`"
-  },
-  {
-   "id": "direct",
-   "type": "text",
-   "x": 20,
-   "y": 70,
-   "width": 340,
-   "height": 110,
-   "text": "**① Прямой путь**\ns3fs · dlt · boto3 · `check_s3`\nадрес и ключи — свои",
-   "color": "2"
-  },
-  {
-   "id": "cat_cl",
-   "type": "text",
-   "x": 20,
-   "y": 230,
-   "width": 340,
-   "height": 110,
-   "text": "**② Через каталог**\nPyIceberg · DuckDB · `check_iceberg_and_duckdb`\nзнает только `ICEBERG_CATALOG_URI`",
-   "color": "5"
-  },
-  {
-   "id": "note",
-   "type": "text",
-   "x": 20,
-   "y": 360,
-   "width": 340,
-   "height": 60,
-   "text": "Ошибка в переменных ломает только ①"
-  },
-  {
-   "id": "g_lk",
-   "type": "group",
-   "x": 460,
-   "y": -120,
-   "width": 420,
-   "height": 560,
-   "label": "📒 Lakekeeper (каталог)",
-   "color": "5"
-  },
-  {
-   "id": "ptr",
-   "type": "text",
-   "x": 480,
-   "y": -80,
-   "width": 380,
-   "height": 110,
-   "text": "**Указатели** в Postgres\n`_demo.sales → metadata/00002-….json`\nатомарный commit = транзакция"
-  },
-  {
-   "id": "wh",
-   "type": "text",
-   "x": 480,
-   "y": 70,
-   "width": 380,
-   "height": 150,
-   "text": "**Warehouse `lakehouse`**\nstorage-profile: `silo:9000`, бакет `warehouse`, `sts-enabled`\nstorage-credential: root-ключи (зашифрованы)"
-  },
-  {
-   "id": "sts",
-   "type": "text",
-   "x": 480,
-   "y": 250,
-   "width": 380,
-   "height": 150,
-   "text": "**Vended credentials**\nAssumeRole (STS) root-ключом → временные ключи на 3600 с\n→ клиенту: `s3.endpoint` + ключи\n[vended credentials](../../../glossary/vended-credentials.md)",
-   "color": "4"
-  },
-  {
-   "id": "g_s3",
-   "type": "group",
-   "x": 960,
-   "y": -120,
-   "width": 540,
-   "height": 560,
-   "label": "🏬 Silo (S3)"
-  },
-  {
-   "id": "land",
-   "type": "text",
-   "x": 980,
-   "y": -80,
-   "width": 500,
-   "height": 90,
-   "text": "**бакет landing** — сырые файлы\n`freshretail/2026-09-28/sales.parquet` (папок нет — это ключ)"
-  },
-  {
-   "id": "whb",
-   "type": "text",
-   "x": 980,
-   "y": 40,
-   "width": 500,
-   "height": 380,
-   "text": "**бакет warehouse / lakehouse / <uuid таблицы>/**\n\n`metadata/00002-….metadata.json` ← текущий\n`metadata/00001-…`, `00000-…` ← прошлые версии\n`metadata/snap-….avro` ← manifest list (версия)\n`metadata/…-m0.avro` ← manifest (файлы + min/max)\n`data/….parquet` ← строки по столбцам, ZSTD\n\n[snapshot](../../../glossary/snapshot.md): каждая запись = новая версия, старые файлы не меняются"
-  }
- ],
- "edges": [
-  {
-   "id": "a",
-   "fromNode": "env",
-   "fromSide": "bottom",
-   "toNode": "direct",
-   "toSide": "top",
-   "toEnd": "arrow"
-  },
-  {
-   "id": "b",
-   "fromNode": "direct",
-   "fromSide": "right",
-   "toNode": "land",
-   "toSide": "left",
-   "toEnd": "arrow",
-   "label": "① S3_ENDPOINT + AWS_*",
-   "color": "2"
-  },
-  {
-   "id": "c",
-   "fromNode": "cat_cl",
-   "fromSide": "right",
-   "toNode": "ptr",
-   "toSide": "left",
-   "toEnd": "arrow",
-   "label": "loadTable / commit",
-   "color": "5"
-  },
-  {
-   "id": "d",
-   "fromNode": "sts",
-   "fromSide": "left",
-   "toNode": "cat_cl",
-   "toSide": "right",
-   "toEnd": "arrow",
-   "label": "config: адрес + временные ключи",
-   "color": "4"
-  },
-  {
-   "id": "e",
-   "fromNode": "cat_cl",
-   "fromSide": "bottom",
-   "toNode": "whb",
-   "toSide": "bottom",
-   "toEnd": "arrow",
-   "label": "② временными ключами",
-   "color": "5"
-  },
-  {
-   "id": "f",
-   "fromNode": "ptr",
-   "fromSide": "right",
-   "toNode": "whb",
-   "toSide": "left",
-   "toEnd": "arrow",
-   "label": "указывает на metadata.json"
-  }
- ]
+	"nodes":[
+		{"id":"g_s3","type":"group","x":960,"y":-120,"width":540,"height":560,"label":"🏬 Silo (S3)"},
+		{"id":"g_lk","type":"group","x":460,"y":-120,"width":420,"height":560,"color":"5","label":"📒 Lakekeeper (каталог)"},
+		{"id":"g_ws","type":"group","x":0,"y":-120,"width":380,"height":560,"label":"📦 workspace"},
+		{"id":"title","type":"text","text":"# Хранилище курса: S3 → Parquet → Iceberg → каталог\nУрок: [04 · S3, Parquet, Iceberg и каталог](../theory/04_s3_iceberg_catalog.md) · Аналогия: склад коробок ([S3](../../../glossary/s3.md)), коробки по столбцам ([Parquet](../../../glossary/parquet.md)), опись ([Iceberg](../../../glossary/iceberg.md)), картотека и бюро пропусков ([каталог](../../../glossary/iceberg-catalog.md)).","x":0,"y":-300,"width":1500,"height":140,"color":"6"},
+		{"id":"env","type":"text","text":"**Переменные**\n`S3_ENDPOINT=http://silo:9000`\n`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`","x":20,"y":-80,"width":340,"height":110},
+		{"id":"ptr","type":"text","text":"**Указатели** в Postgres\n`_demo.sales → metadata/00002-….json`\nатомарный commit = транзакция","x":480,"y":-80,"width":380,"height":110},
+		{"id":"wh","type":"text","text":"**Warehouse `lakehouse`**\nstorage-profile: `silo:9000`, бакет `warehouse`, `sts-enabled`\nstorage-credential: root-ключи (зашифрованы)","x":480,"y":70,"width":380,"height":150},
+		{"id":"land","type":"text","text":"**бакет landing** — сырые файлы\n`freshretail/2026-09-28/sales.parquet` (папок нет — это ключ)","x":980,"y":-80,"width":500,"height":90},
+		{"id":"whb","type":"text","text":"**бакет warehouse / lakehouse / <uuid таблицы>/**\n\n`metadata/00002-….metadata.json` ← текущий\n`metadata/00001-…`, `00000-…` ← прошлые версии\n`metadata/snap-….avro` ← manifest list (версия)\n`metadata/…-m0.avro` ← manifest (файлы + min/max)\n`data/….parquet` ← строки по столбцам, ZSTD\n\n[snapshot](../../../glossary/snapshot.md): каждая запись = новая версия, старые файлы не меняются","x":980,"y":40,"width":500,"height":380},
+		{"id":"note","type":"text","text":"Ошибка в переменных ломает только ①","x":20,"y":360,"width":340,"height":60},
+		{"id":"sts","type":"text","text":"**Vended credentials**\nAssumeRole (STS) root-ключом → временные ключи на 3600 с\n→ клиенту: `s3.endpoint` + ключи\n[vended credentials](../../../glossary/vended-credentials.md)","x":480,"y":250,"width":380,"height":150,"color":"4"},
+		{"id":"direct","type":"text","text":"**① Прямой путь**\ns3fs · dlt · boto3 · `check_s3`\nадрес и ключи — свои","x":20,"y":70,"width":340,"height":110,"color":"2"},
+		{"id":"cat_cl","type":"text","text":"**② Через каталог**\nPyIceberg · DuckDB · `check_iceberg_and_duckdb`\nзнает только `ICEBERG_CATALOG_URI`","x":20,"y":215,"width":340,"height":110,"color":"5"}
+	],
+	"edges":[
+		{"id":"a","fromNode":"env","fromSide":"bottom","toNode":"direct","toSide":"top"},
+		{"id":"b","fromNode":"direct","fromSide":"right","toNode":"land","toSide":"left","color":"2","label":"① S3_ENDPOINT + AWS_*"},
+		{"id":"c","fromNode":"cat_cl","fromSide":"right","toNode":"ptr","toSide":"left","color":"5","label":"loadTable / commit"},
+		{"id":"d","fromNode":"sts","fromSide":"left","toNode":"cat_cl","toSide":"right","color":"4","label":"config: адрес + временные ключи"},
+		{"id":"e","fromNode":"cat_cl","fromSide":"bottom","toNode":"whb","toSide":"bottom","color":"5","label":"② временными ключами"},
+		{"id":"f","fromNode":"ptr","fromSide":"right","toNode":"whb","toSide":"left","label":"указывает на metadata.json"}
+	]
 }

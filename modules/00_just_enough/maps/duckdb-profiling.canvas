@@ -1,0 +1,23 @@
+{
+	"nodes":[
+		{"id":"title","type":"text","x":0,"y":-300,"width":1600,"height":140,"text":"# DuckDB и профилирование\nУрок: [09 · DuckDB и профилирование](../theory/09_duckdb_profiling.md) · Документация — чужое предположение, сверяй с фактом. Каждая проверка — **число нарушений**. [Профилирование](../../../glossary/data-profiling.md)","color":"6"},
+		{"id":"g1","type":"group","x":0,"y":-120,"width":1600,"height":220,"label":"Порядок профилирования"},
+		{"id":"s1","type":"text","x":20,"y":-80,"width":290,"height":150,"text":"**1. Открыть**\n`read_parquet('…/*.parquet', filename = true)`\n`CREATE VIEW sales`"},
+		{"id":"s2","type":"text","x":335,"y":-80,"width":290,"height":150,"text":"**2. Схема**\n`DESCRIBE`, `parquet_file_metadata`\n`dt` — VARCHAR → `::DATE`"},
+		{"id":"s3","type":"text","x":650,"y":-80,"width":290,"height":150,"text":"**3. Обзор**\n`SUMMARIZE`\n⚠️ `approx_unique` — оценка"},
+		{"id":"s4","type":"text","x":965,"y":-80,"width":290,"height":150,"text":"**4. Grain и ключ**\n`count(*) = count(DISTINCT (…))`\n`HAVING count(*) > 1`","color":"4"},
+		{"id":"s5","type":"text","x":1280,"y":-80,"width":290,"height":150,"text":"**5. Качество и сравнение**\nправило → число нарушений\n`filename`, `EXCEPT`"},
+		{"id":"g2","type":"group","x":0,"y":140,"width":780,"height":420,"label":"SQL-приёмы"},
+		{"id":"q1","type":"text","x":20,"y":180,"width":740,"height":160,"text":"FROM → **WHERE** (строки) → GROUP BY → **HAVING** (группы) → SELECT → ORDER BY\n`count(col)` не считает NULL · `count(*) FILTER (WHERE …)`\n`WITH x AS (…)` — шаги с именами"},
+		{"id":"q2","type":"text","x":20,"y":360,"width":740,"height":180,"text":"**Массивы (LIST)**: `lst[1]` — первый (с 1!)\n`len`, `list_sum`, `list_max`, `list_filter(lst, lambda x: x > 0)`\n`generate_subscripts(lst, 1), unnest(lst)` — в строки\n`abs(a - b) < 1e-6` — дробные с допуском"},
+		{"id":"g3","type":"group","x":820,"y":140,"width":780,"height":420,"label":"Проверки качества"},
+		{"id":"k1","type":"text","x":840,"y":180,"width":740,"height":200,"text":"| Тип | Шаблон |\n|---|---|\n| Полнота | `count(*) - count(col)` |\n| Диапазон | `FILTER (WHERE col < a OR col > b)` |\n| Формат | `FILTER (WHERE len(lst) <> N)` |\n| «У X одно Y» | `GROUP BY X HAVING count(DISTINCT Y) > 1` |"},
+		{"id":"k2","type":"text","x":840,"y":400,"width":740,"height":140,"text":"Нарушение ≠ грязные данные: сверь **правило** с документацией\n[grain](../../../glossary/grain.md) · [естественный ключ](../../../glossary/natural-key.md) · [train / eval](../../../glossary/train-eval-split.md)","color":"1"}
+	],
+	"edges":[
+		{"id":"a","fromNode":"s1","fromSide":"right","toNode":"s2","toSide":"left","toEnd":"arrow"},
+		{"id":"b","fromNode":"s2","fromSide":"right","toNode":"s3","toSide":"left","toEnd":"arrow"},
+		{"id":"c","fromNode":"s3","fromSide":"right","toNode":"s4","toSide":"left","toEnd":"arrow"},
+		{"id":"d","fromNode":"s4","fromSide":"right","toNode":"s5","toSide":"left","toEnd":"arrow"}
+	]
+}

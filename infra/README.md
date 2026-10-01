@@ -50,7 +50,7 @@ core + 1–2 слоя. Governance запускать отдельно от spark
 | 8181 | Lakekeeper API + UI (`/ui`) | |
 | 8888 | JupyterLab | |
 | 8080 | — | **занят на хосте** (open-webui), не использовать |
-| зарезервировано | 3000 Dagster · 8081 Airflow · 4040/8090 Spark · 19092/8084 Redpanda · 8123 ClickHouse · 8082 Trino · 8088 Superset · 8585 OpenMetadata | для будущих слоёв |
+| зарезервировано | 3000 Dagster · 8081 Airflow · 4040/8090 Spark · 19092/8084 Redpanda · 8123 ClickHouse · 8082 Trino · 8088 Superset · 3001 Evidence · 8585 OpenMetadata | для будущих слоёв |
 
 ## Подключение к Iceberg из workspace
 

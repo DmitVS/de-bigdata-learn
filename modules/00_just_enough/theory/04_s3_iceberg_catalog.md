@@ -15,11 +15,11 @@ tags: [s3, iceberg, lakehouse]
 > превращает кучу файлов в таблицу с версиями. Каталог Lakekeeper хранит, где лежит актуальная
 > опись каждой таблицы, и выдаёт клиентам временный пропуск в хранилище.
 
-> [!todo] После урока ты сможешь
-> - объяснить, почему в S3 нет папок и что это значит для работы с файлами;
-> - рассказать, из каких файлов состоит Iceberg-таблица и как запись создаёт новую версию;
-> - проследить, откуда клиент берёт адрес S3 и ключи на каждом из двух путей доступа;
-> - предсказать, что сломается при ошибке в переменных клиента или в настройках каталога
+> [!todo] Чек-лист: после урока ты сможешь
+> - [ ] объяснить, почему в S3 нет папок и что это значит для работы с файлами;
+> - [ ] рассказать, из каких файлов состоит Iceberg-таблица и как запись создаёт новую версию;
+> - [ ] проследить, откуда клиент берёт адрес S3 и ключи на каждом из двух путей доступа;
+> - [ ] предсказать, что сломается при ошибке в переменных клиента или в настройках каталога
 >   (задачи 3.2 и 3.4).
 
 **Нужно для:** лаба [00.1](../labs/00.1_compose_anatomy/README.md), задачи 3.2 и 3.4.
@@ -274,8 +274,11 @@ sequenceDiagram
   в каталоге, а не файлы.
 
 > [!example]- Попробуй сам: две записи — две версии
-> В `make shell` запусти `python` и вставь:
-> ```python
+> В `make shell` вставь блок целиком. Это bash-команда: `python -` читает программу из
+> ввода до строки `EOF`. Если вставить сам Python-код прямо в bash, получишь
+> `import: command not found`.
+> ```bash
+> python - <<'EOF'
 > import os, pyarrow as pa, s3fs
 > from pyiceberg.catalog import load_catalog
 > c = load_catalog("lh", type="rest", uri=os.environ["ICEBERG_CATALOG_URI"],
@@ -286,9 +289,12 @@ sequenceDiagram
 > t.append(pa.table({"store": pa.array([3], pa.int32()), "sales": [30.0]}))
 > print([s.snapshot_id for s in t.snapshots()])
 > print(t.scan().to_arrow().num_rows, t.scan(snapshot_id=t.snapshots()[0].snapshot_id).to_arrow().num_rows)
+> print(t.location())
 > fs = s3fs.S3FileSystem(endpoint_url=os.environ["S3_ENDPOINT"])
-> for f in sorted(fs.find(t.location().removeprefix("s3://"))): print(f.split("/", 3)[-1])
+> for f in sorted(fs.find(t.location().removeprefix("s3://"))):
+>     print(f.split("/", 3)[-1])
 > c.purge_table("_demo.sales"); c.drop_namespace("_demo")
+> EOF
 > ```
 > **Увидишь:**
 > - два snapshot'а; `3` строки сейчас и `2` в первой версии — это time travel;
@@ -319,11 +325,11 @@ Lakekeeper это база `lakekeeper` в нашем Postgres). Атомарн�
 - **Namespace** — группа таблиц, аналог схемы в Postgres. Полное имя: `namespace.table`,
   например `_smoke.ping`.
 
-| Адрес | Что это | Кто пользуется |
-|---|---|---|
-| `http://lakekeeper:8181/catalog` | Iceberg REST API (`ICEBERG_CATALOG_URI`) | PyIceberg, DuckDB |
-| `http://lakekeeper:8181/management/v1` | API управления Lakekeeper | `init.sh` |
-| `http://localhost:8181/ui` | веб-интерфейс | ты, с хоста |
+| Адрес                                  | Что это                                  | Кто пользуется    |
+| -------------------------------------- | ---------------------------------------- | ----------------- |
+| `http://lakekeeper:8181/catalog`       | Iceberg REST API (`ICEBERG_CATALOG_URI`) | PyIceberg, DuckDB |
+| `http://lakekeeper:8181/management/v1` | API управления Lakekeeper                | `init.sh`         |
+| `http://localhost:8181/ui`             | веб-интерфейс                            | ты, с хоста       |
 
 > [!example]- Попробуй сам: каталог — это просто HTTP
 > На хосте:

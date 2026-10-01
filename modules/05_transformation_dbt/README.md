@@ -16,7 +16,9 @@
 
 - слои staging / intermediate / marts, naming conventions
 - materializations: view, table, incremental, ephemeral — trade-offs
-- тесты: generic, singular, unit tests; документация и lineage
+- тесты: generic, singular, unit tests
+- документация как код: описания моделей и колонок в YAML, docs blocks, `persist_docs`; сайт `dbt docs`
+- lineage в dbt: граф `ref`/`source`, анализ влияния через `dbt ls --select +модель+`; проверка, что у marts есть описания
 - snapshots (SCD2), макросы Jinja, пакеты (dbt_utils)
 - SQLMesh: виртуальные окружения, plan/apply — сравнение с dbt
 
@@ -30,9 +32,10 @@ dbt-core + dbt-duckdb (Iceberg через DuckDB), SQLMesh
 
 - [ ] 05.1 — dbt init, sources, staging-модели
 - [ ] 05.2 — звёздная схема из модуля 02 в marts
-- [ ] 05.3 — тесты и docs
-- [ ] 05.4 — incremental + snapshots по `retail_oltp`
-- [ ] 05.5 — одна модель на SQLMesh
+- [ ] 05.3 — тесты
+- [ ] 05.4 — документация и lineage: `dbt docs`, анализ влияния, проверка описаний marts
+- [ ] 05.5 — incremental + snapshots по `retail_oltp`
+- [ ] 05.6 — одна модель на SQLMesh
 
 ## Мини-проект (вклад в capstone)
 
@@ -44,6 +47,8 @@ dbt-core + dbt-duckdb (Iceberg через DuckDB), SQLMesh
 - [Surfalytics: dbt intro](https://github.com/surfalytics/data-projects/tree/main/de-projects/18_dbt_intro)
 - [Surfalytics: SQLMesh intro](https://github.com/surfalytics/data-projects/tree/main/de-projects/19_sqlmesh_intro)
 - [dbt best practices](https://docs.getdbt.com/best-practices)
+- [dbt: документация моделей и `dbt docs`](https://docs.getdbt.com/docs/build/documentation)
+- [dbt: синтаксис выбора узлов (`+модель+`)](https://docs.getdbt.com/reference/node-selection/syntax)
 
 ## Книга и видео
 

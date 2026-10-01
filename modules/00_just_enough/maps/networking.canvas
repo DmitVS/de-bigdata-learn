@@ -1,252 +1,33 @@
 {
- "nodes": [
-  {
-   "id": "g_host",
-   "type": "group",
-   "x": -380,
-   "y": -80,
-   "width": 1300,
-   "height": 720,
-   "label": "🖥️ Хост = здание"
-  },
-  {
-   "id": "g_net",
-   "type": "group",
-   "x": -40,
-   "y": -40,
-   "width": 680,
-   "height": 620,
-   "color": "5",
-   "label": "🏢 debd_default · 172.28.0.0/24 (офис проекта debd)"
-  },
-  {
-   "id": "g_terms",
-   "type": "group",
-   "x": -380,
-   "y": 680,
-   "width": 1300,
-   "height": 190,
-   "label": "📚 Термины урока"
-  },
-  {
-   "id": "g_out",
-   "type": "group",
-   "x": -720,
-   "y": -80,
-   "width": 300,
-   "height": 380,
-   "color": "1",
-   "label": "🌐 Снаружи (LAN, Wi-Fi, VPN)"
-  },
-  {
-   "id": "g_other",
-   "type": "group",
-   "x": 660,
-   "y": -40,
-   "width": 240,
-   "height": 340,
-   "color": "1",
-   "label": "🏢 nettest_default (без настройки сети)"
-  },
-  {
-   "id": "title",
-   "type": "text",
-   "text": "# Сети Docker в нашем стеке\nУрок: [03 · Сети Docker](../theory/03_networking.md) · Аналогия: хост = здание, сеть = офис со своей АТС, контейнер = кабинет, DNS = справочник, `ports` = ресепшен.",
-   "x": -380,
-   "y": -300,
-   "width": 1300,
-   "height": 140,
-   "color": "6"
-  },
-  {
-   "id": "lan",
-   "type": "text",
-   "text": "**Ноутбук в LAN / кто-то в VPN**\nНе попадёт: порты слушают только `127.0.0.1`",
-   "x": -700,
-   "y": -20,
-   "width": 260,
-   "height": 100
-  },
-  {
-   "id": "me",
-   "type": "text",
-   "text": "**Ты**: браузер, DBeaver, curl на хосте\n`localhost:<порт>`",
-   "x": -350,
-   "y": -20,
-   "width": 260,
-   "height": 90
-  },
-  {
-   "id": "rec",
-   "type": "text",
-   "text": "**Ресепшен** = опубликованные порты\n`127.0.0.1` :5432 :9000 :9001 :8181 :8888\nDNAT → IP контейнера\n[публикация порта](../../../glossary/port-publishing.md)",
-   "x": -350,
-   "y": 120,
-   "width": 210,
-   "height": 160,
-   "color": "4"
-  },
-  {
-   "id": "ddns",
-   "type": "text",
-   "text": "**DNS Docker** `127.0.0.11`\nsilo → 172.28.0.3\nlakekeeper → 172.28.0.2\npostgres → 172.28.0.5\nworkspace → 172.28.0.4",
-   "x": -10,
-   "y": 0,
-   "width": 270,
-   "height": 140
-  },
-  {
-   "id": "terms",
-   "type": "text",
-   "text": "[IP-адрес](../../../glossary/ip-address.md) · [Порт](../../../glossary/port.md) · [localhost](../../../glossary/localhost.md) · [Интерфейс](../../../glossary/network-interface.md) · [DNS](../../../glossary/dns.md) · [Подсеть /24](../../../glossary/subnet.md) · [Маршрут](../../../glossary/route.md) · [Bridge-сеть](../../../glossary/bridge-network.md) · [Namespace](../../../glossary/network-namespace.md) · [Публикация порта](../../../glossary/port-publishing.md) · [Файрвол](../../../glossary/firewall.md)\n\nНаведи на термин, чтобы увидеть карточку. Открыть — клик с Ctrl.",
-   "x": -350,
-   "y": 720,
-   "width": 1240,
-   "height": 120
-  },
-  {
-   "id": "ufw",
-   "type": "text",
-   "text": "**ufw** — охранник (цепочка INPUT)\nDNAT-пакеты идут мимо него\n[файрвол](../../../glossary/firewall.md)",
-   "x": -350,
-   "y": 310,
-   "width": 260,
-   "height": 110,
-   "color": "2"
-  },
-  {
-   "id": "hdns",
-   "type": "text",
-   "text": "**DNS хоста** `127.0.0.53`\nимени `silo` не знает → curl exit 6\n[DNS](../../../glossary/dns.md)",
-   "x": -350,
-   "y": 460,
-   "width": 260,
-   "height": 120
-  },
-  {
-   "id": "lk",
-   "type": "text",
-   "text": "**lakekeeper** :8181\nREST-каталог Iceberg",
-   "x": 320,
-   "y": 0,
-   "width": 250,
-   "height": 90
-  },
-  {
-   "id": "probe",
-   "type": "text",
-   "text": "**Гость: probe** (проект nettest)\n`default: name: debd_default`\n`external: true`\n→ сидит в нашем офисе",
-   "x": -10,
-   "y": 385,
-   "width": 270,
-   "height": 150,
-   "color": "4"
-  },
-  {
-   "id": "pg",
-   "type": "text",
-   "text": "**postgres** :5432",
-   "x": 320,
-   "y": 415,
-   "width": 250,
-   "height": 90
-  },
-  {
-   "id": "ws",
-   "type": "text",
-   "text": "**workspace** 172.28.0.4\n`localhost` = он сам (exit 7)",
-   "x": -10,
-   "y": 275,
-   "width": 270,
-   "height": 90
-  },
-  {
-   "id": "silo",
-   "type": "text",
-   "text": "**silo** :9000 S3, :9001 консоль",
-   "x": 360,
-   "y": 265,
-   "width": 250,
-   "height": 90
-  },
-  {
-   "id": "other",
-   "type": "text",
-   "text": "**curl → lakekeeper:8181**\nБез VPN: сеть создастся, но имени нет → **exit 6**\nНа этой машине: `up` упадёт — *could not find an available … address pool*",
-   "x": 670,
-   "y": 15,
-   "width": 220,
-   "height": 250
-  }
- ],
- "edges": [
-  {
-   "id": "e1",
-   "fromNode": "me",
-   "fromSide": "bottom",
-   "toNode": "rec",
-   "toSide": "top",
-   "label": "звонок на ресепшен"
-  },
-  {
-   "id": "e2",
-   "fromNode": "rec",
-   "fromSide": "right",
-   "toNode": "g_net",
-   "toSide": "left",
-   "color": "4",
-   "label": "DNAT (ports)"
-  },
-  {
-   "id": "e3",
-   "fromNode": "lan",
-   "fromSide": "right",
-   "toNode": "rec",
-   "toSide": "left",
-   "color": "1",
-   "label": "❌ 127.0.0.1 не слушает снаружи"
-  },
-  {
-   "id": "e4",
-   "fromNode": "ws",
-   "fromSide": "top",
-   "toNode": "ddns",
-   "toSide": "bottom",
-   "label": "кто такой silo?"
-  },
-  {
-   "id": "e5",
-   "fromNode": "ws",
-   "fromSide": "right",
-   "toNode": "silo",
-   "toSide": "left",
-   "label": "silo:9000"
-  },
-  {
-   "id": "e6",
-   "fromNode": "lk",
-   "fromSide": "right",
-   "toNode": "pg",
-   "toSide": "right",
-   "label": "postgres:5432 (ports не нужен)"
-  },
-  {
-   "id": "e7",
-   "fromNode": "probe",
-   "fromSide": "right",
-   "toNode": "lk",
-   "toSide": "left",
-   "color": "4",
-   "label": "✅ lakekeeper:8181/health"
-  },
-  {
-   "id": "e8",
-   "fromNode": "other",
-   "fromSide": "left",
-   "toNode": "lk",
-   "toSide": "right",
-   "color": "1",
-   "label": "❌ справочник другой"
-  }
- ]
+	"nodes":[
+		{"id":"g_host","type":"group","x":-380,"y":-80,"width":1300,"height":720,"label":"🖥️ Хост = здание"},
+		{"id":"g_net","type":"group","x":-40,"y":-40,"width":680,"height":620,"color":"5","label":"🏢 debd_default · 172.28.0.0/24 (офис проекта debd)"},
+		{"id":"g_terms","type":"group","x":-380,"y":680,"width":1300,"height":190,"label":"📚 Термины урока"},
+		{"id":"g_out","type":"group","x":-720,"y":-80,"width":300,"height":380,"color":"1","label":"🌐 Снаружи (LAN, Wi-Fi, VPN)"},
+		{"id":"g_other","type":"group","x":660,"y":-40,"width":240,"height":340,"color":"1","label":"🏢 nettest_default (без настройки сети)"},
+		{"id":"title","type":"text","text":"# Сети Docker в нашем стеке\nУрок: [03 · Сети Docker](../theory/03_networking.md) · Аналогия: хост = здание, сеть = офис со своей АТС, контейнер = кабинет, DNS = справочник, `ports` = ресепшен.","x":-380,"y":-300,"width":1300,"height":140,"color":"6"},
+		{"id":"lan","type":"text","text":"**Ноутбук в LAN / кто-то в VPN**\nНе попадёт: порты слушают только `127.0.0.1`","x":-700,"y":-20,"width":260,"height":100},
+		{"id":"me","type":"text","text":"**Ты**: браузер, DBeaver, curl на хосте\n`localhost:<порт>`","x":-350,"y":-20,"width":260,"height":90},
+		{"id":"rec","type":"text","text":"**Ресепшен** = опубликованные порты\n`127.0.0.1` :5432 :9000 :9001 :8181 :8888\nDNAT → IP контейнера\n[публикация порта](../../../glossary/port-publishing.md)","x":-350,"y":120,"width":210,"height":160,"color":"4"},
+		{"id":"ddns","type":"text","text":"**DNS Docker** `127.0.0.11`\nsilo → 172.28.0.3\nlakekeeper → 172.28.0.2\npostgres → 172.28.0.5\nworkspace → 172.28.0.4","x":-10,"y":0,"width":270,"height":140},
+		{"id":"terms","type":"text","text":"[IP-адрес](../../../glossary/ip-address.md) · [Порт](../../../glossary/port.md) · [localhost](../../../glossary/localhost.md) · [Интерфейс](../../../glossary/network-interface.md) · [DNS](../../../glossary/dns.md) · [Подсеть /24](../../../glossary/subnet.md) · [Маршрут](../../../glossary/route.md) · [Bridge-сеть](../../../glossary/bridge-network.md) · [Namespace](../../../glossary/network-namespace.md) · [Публикация порта](../../../glossary/port-publishing.md) · [Файрвол](../../../glossary/firewall.md)\n\nНаведи на термин, чтобы увидеть карточку. Открыть — клик с Ctrl.","x":-350,"y":720,"width":1240,"height":120},
+		{"id":"ufw","type":"text","text":"**ufw** — охранник (цепочка INPUT)\nDNAT-пакеты идут мимо него\n[файрвол](../../../glossary/firewall.md)","x":-350,"y":310,"width":260,"height":110,"color":"2"},
+		{"id":"hdns","type":"text","text":"**DNS хоста** `127.0.0.53`\nимени `silo` не знает → curl exit 6\n[DNS](../../../glossary/dns.md)","x":-350,"y":460,"width":260,"height":120},
+		{"id":"lk","type":"text","text":"**lakekeeper** :8181\nREST-каталог Iceberg","x":320,"y":0,"width":250,"height":90},
+		{"id":"probe","type":"text","text":"**Гость: probe** (проект nettest)\n`default: name: debd_default`\n`external: true`\n→ сидит в нашем офисе","x":-10,"y":385,"width":270,"height":150,"color":"4"},
+		{"id":"pg","type":"text","text":"**postgres** :5432","x":320,"y":415,"width":250,"height":90},
+		{"id":"ws","type":"text","text":"**workspace** 172.28.0.4\n`localhost` = он сам (exit 7)","x":-10,"y":275,"width":270,"height":90},
+		{"id":"silo","type":"text","text":"**silo** :9000 S3, :9001 консоль","x":360,"y":265,"width":250,"height":90},
+		{"id":"other","type":"text","text":"**curl → lakekeeper:8181**\nБез VPN: сеть создастся, но имени нет → **exit 6**\nНа этой машине: `up` упадёт — *could not find an available … address pool*","x":670,"y":15,"width":220,"height":250}
+	],
+	"edges":[
+		{"id":"e1","fromNode":"me","fromSide":"bottom","toNode":"rec","toSide":"top","label":"звонок на ресепшен"},
+		{"id":"e2","fromNode":"rec","fromSide":"right","toNode":"g_net","toSide":"left","color":"4","label":"DNAT (ports)"},
+		{"id":"e3","fromNode":"lan","fromSide":"right","toNode":"rec","toSide":"left","color":"1","label":"❌ 127.0.0.1 не слушает снаружи"},
+		{"id":"e4","fromNode":"ws","fromSide":"top","toNode":"ddns","toSide":"bottom","label":"кто такой silo?"},
+		{"id":"e5","fromNode":"ws","fromSide":"right","toNode":"silo","toSide":"left","label":"silo:9000"},
+		{"id":"e6","fromNode":"lk","fromSide":"right","toNode":"pg","toSide":"right","label":"postgres:5432 (ports не нужен)"},
+		{"id":"e7","fromNode":"probe","fromSide":"right","toNode":"lk","toSide":"left","color":"4","label":"✅ lakekeeper:8181/health"},
+		{"id":"e8","fromNode":"other","fromSide":"left","toNode":"lk","toSide":"right","color":"1","label":"❌ справочник другой"}
+	]
 }

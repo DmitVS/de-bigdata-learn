@@ -1,0 +1,31 @@
+{
+	"nodes":[
+		{"id":"title","type":"text","x":0,"y":-300,"width":1600,"height":140,"text":"# Тома и состояние\nУрок: [06 · Тома и состояние](../theory/06_volumes_and_state.md) · Правило: состояние не живёт внутри контейнера. Смотри не на сервис, а на то, **куда он пишет**: [том](../../../glossary/volume.md), [анонимный том](../../../glossary/anonymous-volume.md), [bind mount](../../../glossary/bind-mount.md) или слой записи.","color":"6"},
+		{"id":"g1","type":"group","x":0,"y":-120,"width":1600,"height":400,"label":"Где живёт состояние стека"},
+		{"id":"pg","type":"text","x":30,"y":-70,"width":300,"height":130,"text":"📦 **postgres**\nбазы `lakekeeper`, `retail_oltp`\n`/var/lib/postgresql/data`","color":"5"},
+		{"id":"lk","type":"text","x":30,"y":110,"width":300,"height":130,"text":"📦 **lakekeeper** — томов нет\nwarehouse и таблицы хранит **в Postgres** → stateless"},
+		{"id":"si","type":"text","x":400,"y":-70,"width":300,"height":130,"text":"📦 **silo**\nбакеты = папки в `/data`\n`landing`, `warehouse`, `.minio.sys`","color":"5"},
+		{"id":"sinit","type":"text","x":400,"y":110,"width":300,"height":130,"text":"📦 **silo-init**\nобраз объявил `VOLUME /data`, монтирования нет → анонимный том","color":"1"},
+		{"id":"ws","type":"text","x":770,"y":-70,"width":300,"height":130,"text":"📦 **workspace**\n`/workspace` = весь репозиторий\nкод, `data/`, ноутбуки","color":"4"},
+		{"id":"wsl","type":"text","x":770,"y":110,"width":300,"height":130,"text":"📦 **workspace**: `/tmp`, `~/.duckdb`\nслой записи — умрёт с контейнером"},
+		{"id":"v1","type":"text","x":1140,"y":-90,"width":420,"height":100,"text":"🔒 `debd_postgres-data`, `debd_silo-data`\nnamed volume · `/var/lib/docker/volumes/…/_data` (root)","color":"5"},
+		{"id":"v2","type":"text","x":1140,"y":30,"width":420,"height":90,"text":"❓ `18fc860d…` — анонимный том, копится после каждого down/up","color":"1"},
+		{"id":"v3","type":"text","x":1140,"y":140,"width":420,"height":110,"text":"📁 `~/Documents/repo/DE_BigData_Learn` — bind mount\nне удаляет ни одна команда Docker","color":"4"},
+		{"id":"g2","type":"group","x":0,"y":320,"width":780,"height":400,"label":"Что переживает какая команда"},
+		{"id":"c1","type":"text","x":20,"y":360,"width":740,"height":340,"text":"| Команда | Слой записи | Том | `data/` |\n|---|---|---|---|\n| `docker stop`/`start` | ✅ | ✅ | ✅ |\n| перезагрузка | ✅ | ✅ | ✅ |\n| `make down` | ❌ | ✅ | ✅ |\n| `make restart` | ❌ | ✅ | ✅ |\n| `make clean` | ❌ | ❌ | ✅ |\n\n⚠️ После перезагрузки контейнеры поднимает демон — **без** `depends_on`, one-shot не запускаются"},
+		{"id":"g3","type":"group","x":820,"y":320,"width":780,"height":400,"label":"Инициализация: два способа не сломать повтором"},
+		{"id":"i1","type":"text","x":840,"y":360,"width":740,"height":150,"text":"**Postgres initdb.d** — «только в пустую папку»\nнет `PG_VERSION` → initdb + `01-databases.sql`\nесть → `Skipping initialization`\nправка скрипта применится только после `make clean`"},
+		{"id":"i2","type":"text","x":840,"y":530,"width":740,"height":170,"text":"**silo-init, lakekeeper-init** — «проверь и сделай» ([идемпотентность](../../../glossary/idempotency.md))\nпри каждом `make up`: `--ignore-existing`, «уже есть?» в `init.sh`\nбез этого → exit ≠ 0 → Lakekeeper не стартует\n⚠️ `Bucket created successfully` печатается и для существующих бакетов"},
+		{"id":"g4","type":"group","x":0,"y":760,"width":1600,"height":200,"label":"Что видит контейнер в смонтированной папке","color":"3"},
+		{"id":"m1","type":"text","x":20,"y":800,"width":500,"height":130,"text":"**Bind mount** — закрывает папку образа\nв образе `/workspace` лежат `pyproject.toml`, `uv.lock` — в контейнере их не видно"},
+		{"id":"m2","type":"text","x":550,"y":800,"width":500,"height":130,"text":"**Пустой named volume** — Docker сначала копирует в него файлы образа"},
+		{"id":"m3","type":"text","x":1080,"y":800,"width":500,"height":130,"text":"**Непустой named volume** — как есть\nобновил образ → в томе старые файлы"}
+	],
+	"edges":[
+		{"id":"e1","fromNode":"pg","fromSide":"right","toNode":"v1","toSide":"left","toEnd":"arrow","color":"5"},
+		{"id":"e2","fromNode":"si","fromSide":"right","toNode":"v1","toSide":"left","toEnd":"arrow","color":"5"},
+		{"id":"e3","fromNode":"lk","fromSide":"top","toNode":"pg","toSide":"bottom","toEnd":"arrow","label":"пишет в базу"},
+		{"id":"e4","fromNode":"sinit","fromSide":"right","toNode":"v2","toSide":"left","toEnd":"arrow","color":"1"},
+		{"id":"e5","fromNode":"ws","fromSide":"right","toNode":"v3","toSide":"left","toEnd":"arrow","color":"4"}
+	]
+}

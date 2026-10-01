@@ -21,4 +21,4 @@ tags: [docker]
 
 **Посмотреть:** `docker volume ls`, `docker volume inspect debd_postgres-data`.
 
-Связано: [bind mount](bind-mount.md) · [контейнер](container.md)
+Связано: [bind mount](bind-mount.md) · [контейнер](container.md) · [анонимный том](anonymous-volume.md)

@@ -62,6 +62,8 @@
 ### ⬜ 05 · Трансформации: dbt — [модуль](modules/05_transformation_dbt/README.md)
 - [ ] dbt-проект `capstone/transform`: staging → intermediate → marts, sources, refs
 - [ ] Тесты (generic, singular, unit tests), документация, `dbt docs`
+- [ ] Документация и lineage в dbt: описания в YAML, docs blocks, `persist_docs`; анализ влияния через `dbt ls --select +модель+`
+- [ ] Проверка: у каждой модели слоя marts есть описание (падает, если нет)
 - [ ] Инкрементальные модели, snapshots (SCD2 по справочникам retail_oltp), макросы, пакеты
 - [ ] Сравнение: та же модель на SQLMesh — плюсы/минусы
 - [ ] Мини-проект: витрины «продажи», «out-of-stock», «эффект промо»
@@ -70,6 +72,7 @@
 
 ### ⬜ 06 · Оркестрация — [модуль](modules/06_orchestration/README.md)
 - [ ] Dagster в compose: assets для dlt + dbt, расписания, сенсоры, партиции, backfill
+- [ ] Граф ассетов от загрузки до витрин в UI Dagster; по графу разобрано, что пересчитать после сбоя одного ассета
 - [ ] (опц.) Тот же pipeline на Airflow 3 — сравнение подходов asset vs task
 - [ ] Мини-проект: весь pipeline 03–05 запускается одной кнопкой / по расписанию
 
@@ -92,21 +95,26 @@
 - [ ] dbt tests + Soda checks на ключевых таблицах; data contracts
 - [ ] Elementary: отчёт и алерты по прогонам dbt
 - [ ] SLO pipeline (свежесть, успешность) в [`ops/slo.md`](ops/slo.md); первый разбор в [`ops/incidents.md`](ops/incidents.md)
+- [ ] В разборе инцидента источник плохих данных найден по lineage (вверх по графу от витрины)
 
 ### ⬜ 10 · Витрины и BI — [модуль](modules/10_serving_bi/README.md)
 - [ ] ClickHouse: витрины, MergeTree, materialized views
 - [ ] Trino: федеративные запросы Iceberg + Postgres + ClickHouse
 - [ ] Superset: дашборд сети (продажи, out-of-stock, промо, погода) — минимум график по категориям и график динамики во времени
 - [ ] Семантический слой: метрики в одном месте
+- [ ] Отчёт-страница «код + текст» (Evidence): markdown с SQL-запросами и графиками, собирается в статический сайт
 
 ## Фаза 3 — Production и карьера (недели 14–18)
 
 ### ⬜ 11 · Governance — [модуль](modules/11_governance/README.md)
+- [ ] Теория lineage: таблица vs колонка, статический vs рантайм, анализ влияния и поиск причины; стандарт OpenLineage
 - [ ] OpenMetadata: каталог, lineage из dbt/Dagster, владельцы, glossary
+- [ ] Lineage из Spark через OpenLineage в OpenMetadata: граф от источника через Spark и dbt до дашборда
 - [ ] Доступы: роли и маскирование в Trino/Postgres
 
 ### ⬜ 12 · DataOps и CI/CD — [модуль](modules/12_dataops_cicd/README.md)
 - [ ] pre-commit + GitHub Actions: ruff, sqlfmt, yamllint, `dbt build` на выборке (slim CI)
+- [ ] `dbt docs generate` в CI и публикация на GitHub Pages: документация обновляется при каждом изменении
 - [ ] Terraform (обзор): как этот стек выглядел бы в облаке
 - [ ] DORA, SLA/SLO/SLI, MTTD/MTTR — применено к своему pipeline
 

@@ -17,6 +17,7 @@
 - pre-commit, линтеры (ruff, sqlfmt, yamllint)
 - GitHub Actions: lint → test → `dbt build` на выборке (slim CI)
 - окружения dev/prod, секреты в CI
+- документация как артефакт сборки: `dbt docs generate` в CI → GitHub Pages
 - Terraform: как этот стек выглядел бы в облаке
 - DORA, SLA/SLO/SLI, MTTD/MTTR, TCO
 
@@ -29,7 +30,7 @@ GitHub Actions, pre-commit, Terraform (обзор)
 Каждая лаба — папка `labs/<номер>_<название>/` с README по [шаблону](../../templates/lab_README.md).
 
 - [ ] 12.1 — pre-commit (в контейнере)
-- [ ] 12.2 — CI в GitHub Actions
+- [ ] 12.2 — CI в GitHub Actions; сборка и публикация `dbt docs` на GitHub Pages
 - [ ] 12.3 — Terraform: S3-бакет и Postgres у облачного провайдера (plan без apply)
 
 ## Мини-проект (вклад в capstone)
@@ -40,6 +41,7 @@ GitHub Actions, pre-commit, Terraform (обзор)
 
 - [Surfalytics: Git and CI/CD](https://github.com/surfalytics/data-projects/tree/main/dataops-projects/01_git_and_ci_cd)
 - [Surfalytics: Terraform 101](https://github.com/surfalytics/data-projects/tree/main/dataops-projects/02_terraform_101)
+- [GitHub Pages: публикация через Actions](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
 
 ## Книга и видео
 

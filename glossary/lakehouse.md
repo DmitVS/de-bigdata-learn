@@ -20,4 +20,4 @@ tags: [архитектура]
 
 **У нас:** Silo + Iceberg + Lakekeeper; движки — PyIceberg и DuckDB, позже Spark (07), Trino (10).
 
-Связано: [Iceberg](iceberg.md) · [каталог](iceberg-catalog.md)
+Связано: [Iceberg](iceberg.md) · [каталог](iceberg-catalog.md) · [warehouse, lake, lakehouse](warehouse-lake-lakehouse.md) · [medallion](medallion.md)

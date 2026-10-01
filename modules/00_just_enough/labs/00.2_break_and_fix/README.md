@@ -17,6 +17,7 @@
 
 ## Prerequisites
 
+- Теория: [08 · Диагностика](../../theory/08_diagnostics.md)
 - Лаба 00.1 выполнена, `make check` — все OK, `git status` чистый
 - Инструменты диагностики: `make ps`, `make logs S=<сервис>`, `docker inspect`, `make check`
 
