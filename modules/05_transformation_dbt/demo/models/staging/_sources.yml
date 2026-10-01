@@ -1,0 +1,10 @@
+sources:
+  - name: raw
+    description: "Файлы FreshRetailNet-50K как есть (data/raw)"
+    meta:
+      external_location: "read_parquet('/workspace/data/raw/freshretailnet_50k/data/{name}.parquet')"
+    tables:
+      - name: train
+        description: "Дневные строки магазин × товар, 2024-03-28 … 2024-06-25"
+      - name: eval
+        description: "Дневные строки магазин × товар, 2024-06-26 … 2024-07-02"

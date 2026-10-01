@@ -1,0 +1,10 @@
+exposures:
+  - name: weather_report
+    label: "Отчёт «Погода и продажи по городам»"
+    type: dashboard
+    maturity: low
+    description: "Страница отчёта (модуль 10): дождливые дни и температура по городам сети"
+    depends_on:
+      - ref('mart_city_rainy_days')
+    owner:
+      name: Команда данных курса

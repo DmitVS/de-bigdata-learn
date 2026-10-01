@@ -1,0 +1,8 @@
+snapshots:
+  - name: demo_store_status_snapshot
+    relation: ref('demo_store_status')
+    config:
+      unique_key: store_id
+      strategy: timestamp
+      updated_at: updated_at
+      hard_deletes: new_record

@@ -21,4 +21,4 @@ tags: [хранение, форматы]
 
 **Посмотреть:** `pyarrow.parquet.ParquetFile(f).metadata` — row groups, статистика по столбцам.
 
-Связано: [Iceberg](iceberg.md) · [S3](s3.md)
+Связано: [Iceberg](iceberg.md) · [S3](s3.md) · [группа строк](row-group.md) · [статистики](parquet-statistics.md) · [кодирование и сжатие](encoding-compression.md)

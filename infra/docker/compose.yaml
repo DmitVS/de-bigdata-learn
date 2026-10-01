@@ -7,6 +7,7 @@ name: debd
 
 include:
   - core.yaml
+  - ingestion.yaml       # модуль 04: учебный API retail-api (профиль ingestion)
   # Добавляются по мере прохождения курса (файлы создаются в соответствующем модуле):
   # - orchestration.yaml   # модуль 06: Dagster (+ Airflow для сравнения)
   # - spark.yaml           # модуль 07: Spark master/workers

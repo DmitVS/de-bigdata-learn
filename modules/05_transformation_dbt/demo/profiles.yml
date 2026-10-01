@@ -1,0 +1,20 @@
+# Профиль учебного проекта. dbt ищет profiles.yml сначала в текущей папке.
+weather_demo:
+  target: dev
+  outputs:
+    dev:                                   # обычная работа: только файл DuckDB
+      type: duckdb
+      path: /workspace/data/demo_weather.duckdb
+      threads: 4
+    lake:                                  # то же + каталог Iceberg (урок 02: публикация)
+      type: duckdb
+      path: /workspace/data/demo_weather.duckdb
+      threads: 1
+      extensions: [httpfs, iceberg]
+      attach:
+        - path: lakehouse
+          alias: lh
+          type: iceberg
+          options:
+            endpoint: http://lakekeeper:8181/catalog
+            authorization_type: none

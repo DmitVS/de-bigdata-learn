@@ -29,4 +29,4 @@ ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
 
 WORKDIR /workspace
 COPY --chown=dev:dev pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-install-project
+RUN uv sync --frozen --no-install-project --all-groups

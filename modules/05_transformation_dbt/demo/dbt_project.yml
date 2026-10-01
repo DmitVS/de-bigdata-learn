@@ -1,0 +1,25 @@
+# Учебный dbt-проект уроков модуля 05: погода по городам сети (не capstone).
+# Запуск — в make shell: cd modules/05_transformation_dbt/demo && dbt deps && dbt build
+name: weather_demo
+version: "1.0.0"
+profile: weather_demo
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+snapshot-paths: ["snapshots"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+
+models:
+  weather_demo:
+    +persist_docs: {relation: true, columns: true}   # описания → COMMENT в DuckDB
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view   # ephemeral нельзя подменить в unit-тесте (урок 03)
+    marts:
+      +materialized: table
+      # Публикация витрин в Iceberg — только с --target lake (урок 02, шаг 5)
+      +post-hook:
+        - sql: "{{ publish_to_iceberg('sandbox_dbt') }}"
+          transaction: false

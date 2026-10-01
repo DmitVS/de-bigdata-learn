@@ -1,0 +1,12 @@
+test_rainy_day_threshold:
+  model: weather.city_rainy_days
+  inputs:
+    weather.city_weather_daily:
+      rows:
+        - {city_id: 0, weather_date: 2024-04-01, precipitation: 0.0, avg_temperature: 10.0, stores: 1}
+        - {city_id: 0, weather_date: 2024-04-02, precipitation: 10.0, avg_temperature: 12.0, stores: 1}
+        - {city_id: 0, weather_date: 2024-04-03, precipitation: 15.5, avg_temperature: 14.0, stores: 1}
+  outputs:
+    query:
+      rows:
+        - {city_id: 0, days: 3, rainy_days: 2, avg_temperature: 12.0}

@@ -1,0 +1,12 @@
+# Учебный проект SQLMesh урока 06 модуля 05: та же погода, что в demo/ на dbt.
+# Запуск — в make shell: cd modules/05_transformation_dbt/demo_sqlmesh && sqlmesh plan
+gateways:
+  local:
+    connection:
+      type: duckdb
+      database: /workspace/data/demo_sqlmesh.duckdb
+default_gateway: local
+
+model_defaults:
+  dialect: duckdb
+  start: 2024-03-28          # с какой даты строить инкрементальные модели

@@ -17,6 +17,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 # dbt / sqlmesh
+.cache/
 target/
 dbt_packages/
 logs/

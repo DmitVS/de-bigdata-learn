@@ -10,7 +10,7 @@ dependencies = [
     "duckdb>=1.5",
     "polars>=1.44",
     "pyarrow>=25.0",
-    "pyiceberg[pyarrow,s3fs,sql-postgres]>=0.12",
+    "pyiceberg[pyarrow,s3fs,sql-postgres,pyiceberg-core]>=0.12",
     "dlt[duckdb,filesystem,postgres]>=1.30",
     "dbt-core>=1.11",
     "dbt-duckdb>=1.11",
@@ -26,6 +26,12 @@ dev = [
     "pytest>=9.1",
     "yamllint>=1.37",
 ]
+ingestion = [
+    "pandas>=3.0.6",
+]
+transform = [
+    "sqlmesh>=0.228.4",
+]
 
 [tool.uv]
 package = false
@@ -34,9 +40,13 @@ package = false
 line-length = 100
 target-version = "py312"
 
+[tool.ruff.format]
+# Фрагменты кода в уроках (*.md) намеренно сжаты для чтения — их не переформатируем
+exclude = ["*.md"]
+
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.sqlfmt]
 line_length = 100
-exclude = ["**/target/**", "**/dbt_packages/**"]
+exclude = ["**/target/**", "**/dbt_packages/**", "**/demo_sqlmesh/**"]  # sqlfmt не знает блок MODEL SQLMesh

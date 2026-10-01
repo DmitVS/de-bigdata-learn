@@ -131,8 +131,26 @@ services:
       ICEBERG_CATALOG_URI: http://lakekeeper:8181/catalog
       ICEBERG_WAREHOUSE: ${ICEBERG_WAREHOUSE}
       HF_HOME: /workspace/data/.hf_cache
+      # dlt (модуль 04): секреты и адреса — из окружения, не из файлов в git.
+      # Рабочие папки пайплайнов — в data/.dlt, чтобы состояние пережило пересоздание контейнера.
+      DLT_DATA_DIR: /workspace/data/.dlt
+      DESTINATION__FILESYSTEM__CREDENTIALS__AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
+      DESTINATION__FILESYSTEM__CREDENTIALS__AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
+      DESTINATION__FILESYSTEM__CREDENTIALS__ENDPOINT_URL: http://silo:9000
+      DESTINATION__FILESYSTEM__CREDENTIALS__REGION_NAME: local-01
+      SOURCES__FILESYSTEM__CREDENTIALS__AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
+      SOURCES__FILESYSTEM__CREDENTIALS__AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
+      SOURCES__FILESYSTEM__CREDENTIALS__ENDPOINT_URL: http://silo:9000
+      SOURCES__FILESYSTEM__CREDENTIALS__REGION_NAME: local-01
+      SOURCES__SQL_DATABASE__CREDENTIALS: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/retail_oltp
+      SOURCES__RETAIL_API__API_KEY: ${RETAIL_API_KEY}
+      RETAIL_API_URL: http://retail-api:8000
+      ICEBERG_CATALOG__ICEBERG_CATALOG_TYPE: rest
+      ICEBERG_CATALOG__ICEBERG_CATALOG_CONFIG: >-
+        {"type": "rest", "uri": "http://lakekeeper:8181/catalog", "warehouse": "${ICEBERG_WAREHOUSE}"}
     ports:
       - "127.0.0.1:8888:8888" # JupyterLab
+      - "127.0.0.1:8580:8580" # dbt docs serve / SQLMesh UI (модуль 05), запускаются вручную
     command: >
       jupyter lab --ip=0.0.0.0 --port=8888 --no-browser
       --IdentityProvider.token='' --ServerApp.root_dir=/workspace

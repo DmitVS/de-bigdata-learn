@@ -1,0 +1,32 @@
+# Слой ingestion (модуль 04): учебные источники данных.
+#   retail-api — «маркетинговая система» сети: промо-акции по дням через REST API
+#                (ключ, курсорная пагинация, лимит частоты, случайные 503). Код — retail_api/server.py.
+#
+# Запуск: make up PROFILES="ingestion". Изнутри стека: http://retail-api:8000,
+# с хоста: http://localhost:8095.
+# Доля сбоев и лимит меняются при запуске: RETAIL_API_FAIL_RATE=0.3 make up PROFILES="ingestion".
+
+services:
+  retail-api:
+    image: debd/workspace:local # тот же образ: Python и DuckDB уже есть
+    profiles: [ingestion]
+    command: ["python", "/workspace/infra/docker/retail_api/server.py"]
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace:ro
+    environment:
+      RETAIL_API_KEY: ${RETAIL_API_KEY}
+      RETAIL_API_RPS: ${RETAIL_API_RPS:-10}
+      RETAIL_API_FAIL_RATE: ${RETAIL_API_FAIL_RATE:-0.05}
+    ports:
+      - "127.0.0.1:8095:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    depends_on:
+      workspace:
+        condition: service_started
+    restart: unless-stopped

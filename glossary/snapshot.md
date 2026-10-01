@@ -17,4 +17,4 @@ tags: [lakehouse]
 > [!tip] Аналогия
 > Версии описи склада: №1 — две коробки, №2 — те же две плюс третья.
 
-Связано: [Iceberg](iceberg.md)
+Связано: [Iceberg](iceberg.md) · [copy-on-write](copy-on-write.md) · [compaction](compaction.md) · [эволюция схем](schema-evolution.md)

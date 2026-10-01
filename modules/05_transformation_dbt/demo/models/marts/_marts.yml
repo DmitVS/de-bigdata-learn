@@ -1,0 +1,41 @@
+models:
+  - name: mart_city_rainy_days
+    description: "{{ doc('mart_city_rainy_days') }}"
+    columns:
+      - name: city_id
+        description: "Город (ID датасета)"
+        data_tests: [unique, not_null]
+      - name: days
+        description: "Дней с наблюдениями"
+      - name: rainy_days
+        description: "Дней со средними осадками по городу не меньше порога `rainy_threshold`"
+      - name: avg_temperature
+        description: "Средняя температура за период"
+
+  - name: fct_city_weather_daily
+    description: "Погода города за день; инкрементальная модель с окном перечитывания `lookback_days`"
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [city_id, weather_date]
+    columns:
+      - name: city_id
+        description: "Город (ID датасета)"
+      - name: weather_date
+        description: "Дата"
+
+unit_tests:
+  - name: rainy_day_counts_threshold
+    description: "Дождливый день — осадки не меньше порога; порог включительно"
+    model: mart_city_rainy_days
+    overrides:
+      vars: {rainy_threshold: 1.0}
+    given:
+      - input: ref('int_city_weather_daily')
+        rows:
+          - {city_id: 0, weather_date: 2024-04-01, precipitation: 0.0, avg_temperature: 10.0}
+          - {city_id: 0, weather_date: 2024-04-02, precipitation: 1.0, avg_temperature: 12.0}
+          - {city_id: 0, weather_date: 2024-04-03, precipitation: 5.5, avg_temperature: 14.0}
+    expect:
+      rows:
+        - {city_id: 0, days: 3, rainy_days: 2, avg_temperature: 12.0}

@@ -54,17 +54,20 @@
 - [ ] Мини-проект: bronze-слой FreshRetail в Iceberg, читается из DuckDB
 
 ### ⬜ 04 · Ingestion (EL) — [модуль](modules/04_ingestion/README.md)
-- [ ] dlt: загрузка файлов из S3 `landing` → Iceberg, инкрементальность, schema contracts
-- [ ] Справочники сети загружены в Postgres `retail_oltp` (эмуляция учётной системы) + генератор изменений
-- [ ] dlt: Postgres → lakehouse (full vs incremental), загрузка из публичного API
+- [ ] dlt: загрузка файлов из S3 `landing` → Iceberg, инкрементальность, повторная доставка без дублей, schema contracts
+- [ ] Справочники сети загружены в Postgres `retail_oltp` (эмуляция учётной системы); изменения генератора найдены запросами
+- [ ] dlt: Postgres → lakehouse (full vs incremental): что теряет каждый вариант — сверкой; триггер и окно перечитывания
+- [ ] dlt: учебный API (пагинация, 429/503) и публичный API праздников → lakehouse; расхождения с `holiday_flag` объяснены
 - [ ] Одна трансформация в трёх вариантах: SQL / Polars / pandas — замер и выводы
+- [ ] Мини-проект: три источника в bronze одной командой `make ingest`, повтор без дублей
 
 ### ⬜ 05 · Трансформации: dbt — [модуль](modules/05_transformation_dbt/README.md)
 - [ ] dbt-проект `capstone/transform`: staging → intermediate → marts, sources, refs
 - [ ] Тесты (generic, singular, unit tests), документация, `dbt docs`
 - [ ] Документация и lineage в dbt: описания в YAML, docs blocks, `persist_docs`; анализ влияния через `dbt ls --select +модель+`
 - [ ] Проверка: у каждой модели слоя marts есть описание (падает, если нет)
-- [ ] Инкрементальные модели, snapshots (SCD2 по справочникам retail_oltp), макросы, пакеты
+- [ ] Инкрементальные модели (окно перечитывания), snapshots (SCD2 по справочникам retail_oltp), макросы, пакеты
+- [ ] Витрины опубликованы в Iceberg `gold` и читаются из чистого DuckDB
 - [ ] Сравнение: та же модель на SQLMesh — плюсы/минусы
 - [ ] Мини-проект: витрины «продажи», «out-of-stock», «эффект промо»
 

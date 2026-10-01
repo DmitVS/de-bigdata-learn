@@ -124,3 +124,53 @@
 | [Data Vault](data-vault.md) | хабы, связи, сателлиты | 02 · урок 06 |
 | [One Big Table](one-big-table.md) | всё в одной широкой таблице | 02 · урок 06 |
 | [План запроса](query-plan.md) | EXPLAIN ANALYZE, pushdown | 02 · урок 07 |
+
+## Форматы и lakehouse (углублённо)
+
+| Термин | Коротко | Где впервые |
+|---|---|---|
+| [Группа строк](row-group.md) | ящик Parquet; подвал с метаданными | 03 · урок 01 |
+| [Статистики Parquet](parquet-statistics.md) | min/max для пропуска групп | 03 · урок 01 |
+| [Кодирование и сжатие](encoding-compression.md) | словарь, RLE, snappy, zstd | 03 · урок 01 |
+| [Отсечение (pruning)](pruning.md) | не читать то, что не подходит под фильтр | 03 · урок 01 |
+| [Apache Arrow](arrow.md) | общий формат в памяти, zero-copy | 03 · урок 02 |
+| [Форматы файлов](file-formats.md) | CSV, JSON, Avro, Parquet, ORC | 03 · урок 02 |
+| [Copy-on-write и merge-on-read](copy-on-write.md) | как Iceberg меняет строки | 03 · урок 03 |
+| [Compaction и обслуживание](compaction.md) | мелкие файлы, expire, orphan files | 03 · урок 03 |
+| [Эволюция схем](schema-evolution.md) | ID полей, совместимость, расширение типов | 03 · урок 04 |
+| [Партиционирование](partitioning.md) | скрытые партиции, преобразования | 03 · урок 05 |
+| [Порядок сортировки](sort-order.md) | узкие min/max — отсечение файлов | 03 · урок 05 |
+
+## Загрузка данных (ingestion)
+
+| Термин | Коротко | Где впервые |
+|---|---|---|
+| [Паттерны загрузки](load-patterns.md) | полная, инкремент по курсору, CDC | 04 · урок 01 |
+| [Курсор и отметка](incremental-cursor.md) | `updated_at`, watermark, окно перечитывания | 04 · урок 01 |
+| [CDC](cdc.md) | изменения из журнала базы | 04 · урок 01 |
+| [Способы записи](write-disposition.md) | append, replace, merge, замена партиции | 04 · урок 01 |
+| [Backfill и поздние данные](backfill.md) | прогон за прошлое, время события | 04 · урок 01 |
+| [dlt](dlt.md) | ресурс, источник, пайплайн, пакет загрузки | 04 · урок 02 |
+| [Нормализация вложенных данных](nested-normalization.md) | вложенный JSON → дочерние таблицы | 04 · урок 02 |
+| [Транзакция, MVCC](transaction.md) | целиком или никак; снимки; изоляция | 04 · урок 03 |
+| [Триггер](trigger.md) | функция на событие таблицы | 04 · урок 03 |
+| [Сверка](reconciliation.md) | источник против копии: строки, суммы, ключи | 04 · урок 03 |
+| [HTTP](http.md) | запрос, ответ, коды | 04 · урок 04 |
+| [Пагинация](pagination.md) | страницы: offset, номер, курсор | 04 · урок 04 |
+| [Повторы и backoff](retry-backoff.md) | 429/5xx, экспоненциальная задержка, джиттер | 04 · урок 04 |
+| [Контракт схемы](schema-contract.md) | дрейф схемы; evolve / freeze / discard | 04 · урок 05 |
+| [Жадное и ленивое выполнение](lazy-evaluation.md) | план целиком против «сразу» | 04 · урок 06 |
+
+## Трансформации (dbt, SQLMesh)
+
+| Термин | Коротко | Где впервые |
+|---|---|---|
+| [dbt](dbt-core.md) | модели, `ref`/`source`, профиль, компиляция | 05 · урок 01 |
+| [Граф dbt и селекторы](dbt-dag.md) | DAG, `manifest.json`, `m+`, `state:modified` | 05 · урок 01 |
+| [Материализация](materialization.md) | view, table, incremental, ephemeral; публикация в Iceberg | 05 · урок 02 |
+| [Инкрементальная модель](incremental-model.md) | `is_incremental`, стратегии, microbatch | 05 · урок 02 |
+| [Тесты dbt](dbt-tests.md) | тесты данных и unit-тесты | 05 · урок 03 |
+| [Документация как код](docs-as-code.md) | описания в YAML, docs-блоки, сайт, `persist_docs` | 05 · урок 04 |
+| [Lineage](lineage.md) | происхождение данных; влияние и причина | 05 · урок 04 |
+| [Jinja, макросы, пакеты](jinja-macros.md) | шаблоны, макросы, dbt_utils | 05 · урок 05 |
+| [SQLMesh](sqlmesh.md) | виртуальные окружения, план, Breaking / Non-breaking | 05 · урок 06 |
