@@ -15,6 +15,9 @@ x-lakekeeper-env: &lakekeeper-env
 services:
   postgres:
     image: postgres:17.11
+    # wal_level=logical — журнал хранит построчные изменения для логической репликации:
+    # на нём работает CDC через Debezium (модуль 08). Применяется при перезапуске контейнера.
+    command: ["postgres", "-c", "wal_level=logical"]
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

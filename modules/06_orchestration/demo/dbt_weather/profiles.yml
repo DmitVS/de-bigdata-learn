@@ -1,0 +1,8 @@
+# Тот же файл DuckDB, в который dlt пишет bronze. Один писатель — см. pool "duckdb" в Dagster.
+dbt_weather:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /workspace/data/demo_orchestration.duckdb
+      threads: 1

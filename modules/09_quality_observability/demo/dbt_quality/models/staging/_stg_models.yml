@@ -1,0 +1,26 @@
+models:
+  - name: stg_store_sales
+    description: "Продажи магазина за день; grain — (store_id, sales_date)"
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [store_id, sales_date]
+      # Объём по дням не выбивается из истории (Elementary, урок 04)
+      - elementary.volume_anomalies:
+          arguments:
+            timestamp_column: sales_date
+            time_bucket: {period: day, count: 1}
+            training_period: {period: day, count: 30}
+            detection_period: {period: day, count: 2}
+          config:
+            severity: error
+    columns:
+      - name: store_id
+        data_tests: [not_null]
+      - name: city_id
+        data_tests: [not_null]
+      - name: sales
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0

@@ -9,8 +9,8 @@ include:
   - core.yaml
   - ingestion.yaml       # модуль 04: учебный API retail-api (профиль ingestion)
   # Добавляются по мере прохождения курса (файлы создаются в соответствующем модуле):
-  # - orchestration.yaml   # модуль 06: Dagster (+ Airflow для сравнения)
-  # - spark.yaml           # модуль 07: Spark master/workers
-  # - streaming.yaml       # модуль 08: Redpanda, Schema Registry, Kafka Connect/Debezium, Flink
+  - orchestration.yaml   # модуль 06: Dagster (профиль orchestration), Airflow (профиль airflow)
+  - spark.yaml           # модуль 07: Spark master, 2 workers, Spark Connect (профиль spark)
+  - streaming.yaml       # модуль 08: Redpanda, Console, Kafka Connect/Debezium, Flink (профиль streaming)
   # - serving.yaml         # модуль 10: ClickHouse, Trino, Superset
   # - governance.yaml      # модуль 11: OpenMetadata

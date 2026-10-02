@@ -1,0 +1,17 @@
+# Профиль dbt и профиль Elementary CLI (edr) — один и тот же файл DuckDB.
+dbt_quality:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /workspace/data/demo_quality.duckdb
+      threads: 1
+
+elementary:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /workspace/data/demo_quality.duckdb
+      schema: main_elementary
+      threads: 1

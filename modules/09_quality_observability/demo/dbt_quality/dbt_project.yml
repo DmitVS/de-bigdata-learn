@@ -1,0 +1,21 @@
+# Учебный dbt-проект модуля 09: продажи магазинов по дням → витрина по городам.
+# Проверки: тесты dbt (урок 01), свежесть источника и детекторы аномалий Elementary (урок 04).
+# Запуск — в make shell: cd modules/09_quality_observability/demo/dbt_quality && dbt deps && dbt build
+name: dbt_quality
+version: "1.0.0"
+profile: dbt_quality
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+models:
+  dbt_quality:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
+  elementary:
+    +schema: elementary # служебные таблицы Elementary — в схеме main_elementary
+
+flags:
+  require_explicit_package_overrides_for_builtin_materializations: false

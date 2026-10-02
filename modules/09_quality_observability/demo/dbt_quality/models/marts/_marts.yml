@@ -1,0 +1,31 @@
+models:
+  - name: mart_city_sales_daily
+    description: "Продажи города за день; grain — (city_id, sales_date)"
+    # Контракт модели (урок 03): dbt проверяет имена и типы колонок ДО записи таблицы
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: city_id
+        data_type: bigint
+        constraints:
+          - type: not_null
+      - name: sales_date
+        data_type: date
+      - name: sales
+        data_type: double
+      - name: stores
+        data_type: bigint
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [city_id, sales_date]
+      # Средние продажи города за день не выбиваются из истории
+      - elementary.column_anomalies:
+          arguments:
+            column_name: sales
+            column_anomalies: [average]
+            timestamp_column: sales_date
+            time_bucket: {period: day, count: 1}
+            training_period: {period: day, count: 30}
+            detection_period: {period: day, count: 2}

@@ -1,0 +1,28 @@
+# Правила поверх контракта (урок 02, шаги 3–4): переменная порога и предупреждение.
+# soda contract verify -c store_sales_rules.yml -ds data_source.yml [--set MIN_SHARE=100]
+dataset: demo_quality/raw/store_sales_daily
+variables:
+  MIN_SHARE:
+    default: 95
+columns:
+  - name: store_id
+  - name: dt
+  - name: sales
+  - name: stock_hours
+checks:
+  - metric:
+      name: Доля магазинов последнего дня
+      query: |
+        SELECT round(100.0 * count(*) / 898, 1) FROM raw.store_sales_daily
+        WHERE dt = (SELECT max(dt) FROM raw.store_sales_daily)
+      threshold:
+        must_be_greater_than_or_equal: ${var.MIN_SHARE}
+  # stock_hours считает наличие только в часы 6–22: продажа вне окна — не обязательно сбой
+  - failed_rows:
+      name: Продажи без наличия на полке
+      query: |
+        SELECT store_id, dt, sales, stock_hours FROM raw.store_sales_daily
+        WHERE stock_hours = 0 AND sales > 0
+      threshold:
+        level: warn
+        must_be: 0

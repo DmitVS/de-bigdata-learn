@@ -1,0 +1,10 @@
+# Code locations — откуда webserver и daemon берут определения ассетов.
+# Каждая локация — отдельный code-сервер (контейнер) со своим кодом и окружением; Dagster
+# ходит к нему по gRPC. Модуль 06, урок 02.
+load_from:
+  - grpc_server:
+      host: dagster-demo
+      port: 4000
+      location_name: weather_demo
+# Лаба 06.1: добавь сюда code location своего capstone-проекта (отдельный сервис в
+# infra/docker/orchestration.yaml).

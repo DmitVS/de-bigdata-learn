@@ -1,0 +1,52 @@
+# Контракт Soda на сырые продажи магазинов (урок 02, урок 03).
+# Проверка: soda contract verify -c store_sales_daily.yml -ds data_source.yml
+dataset: demo_quality/raw/store_sales_daily
+description: "Продажи магазина за день от учётной системы. Grain — (store_id, dt)."
+
+columns:
+  - name: store_id
+    data_type: BIGINT
+    checks:
+      - missing:
+  - name: city_id
+    data_type: BIGINT
+    checks:
+      - missing:
+  - name: dt
+    data_type: DATE
+    checks:
+      - missing:
+  - name: sales
+    data_type: DOUBLE
+    checks:
+      - invalid:
+          valid_min: 0
+  - name: products
+    data_type: BIGINT
+  - name: stock_hours
+    data_type: BIGINT
+  - name: loaded_at
+    data_type: TIMESTAMP
+
+checks:
+  - schema:
+  - duplicate:
+      columns: [store_id, dt]
+  - freshness:
+      column: loaded_at
+      threshold:
+        unit: hour
+        must_be_less_than: 26
+  # Полнота последнего дня: магазинов не меньше 95 % от предыдущего дня
+  - metric:
+      name: Полнота последнего дня
+      query: |
+        WITH by_day AS (
+            SELECT dt, count(*) AS stores FROM raw.store_sales_daily GROUP BY dt
+        )
+        SELECT round(100.0 * last.stores / prev.stores, 1)
+        FROM by_day AS last
+        JOIN by_day AS prev ON prev.dt = last.dt - INTERVAL 1 DAY
+        WHERE last.dt = (SELECT max(dt) FROM by_day)
+      threshold:
+        must_be_greater_than_or_equal: 95

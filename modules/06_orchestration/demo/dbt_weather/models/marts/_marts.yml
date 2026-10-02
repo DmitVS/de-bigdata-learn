@@ -1,0 +1,6 @@
+models:
+  - name: mart_city_rainy_days
+    description: "Число дождливых дней по городу за весь загруженный период"
+    columns:
+      - name: city_id
+        data_tests: [unique, not_null]

@@ -1,0 +1,15 @@
+# dbt-проект учебного pipeline модуля 06: bronze.weather (загружает dlt) → витрина.
+# Запускается из Dagster (ассеты weather_dbt_assets) или вручную в make shell: dbt build.
+name: dbt_weather
+version: "1.0.0"
+profile: dbt_weather
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+models:
+  dbt_weather:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

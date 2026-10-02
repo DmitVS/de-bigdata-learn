@@ -174,3 +174,58 @@
 | [Lineage](lineage.md) | происхождение данных; влияние и причина | 05 · урок 04 |
 | [Jinja, макросы, пакеты](jinja-macros.md) | шаблоны, макросы, dbt_utils | 05 · урок 05 |
 | [SQLMesh](sqlmesh.md) | виртуальные окружения, план, Breaking / Non-breaking | 05 · урок 06 |
+
+## Оркестрация (Dagster, Airflow)
+
+| Термин | Коротко | Где впервые |
+|---|---|---|
+| [Оркестратор](orchestrator.md) | граф, расписания, ретраи, история запусков | 06 · урок 01 |
+| [Ассет](software-defined-asset.md) | объект данных в коде; материализация | 06 · урок 01 |
+| [Ресурс Dagster](dagster-resource.md) | подключение параметром; `EnvVar`, `Config` | 06 · урок 02 |
+| [Code location](code-location.md) | проект в своём code-сервере; gRPC; Reload | 06 · урок 02 |
+| [Партиции ассета](asset-partitions.md) | дни как единицы перезапуска; политика backfill | 06 · урок 03 |
+| [Расписание и сенсор](schedule-sensor.md) | cron, тик, `run_key`, курсор | 06 · урок 03 |
+| [Пул конкурентности](concurrency-pool.md) | один писатель DuckDB во всех запусках | 06 · урок 03 |
+| [Проверка ассета](asset-check.md) | asset check, blocking; тесты dbt как проверки | 06 · урок 04 |
+| [Apache Airflow](airflow.md) | DAG, TaskFlow, XCom, Execution API, Asset | 06 · урок 05 |
+| [Логическая дата](logical-date.md) | интервал данных, `ds`, `catchup` | 06 · урок 05 |
+
+## Батч-обработка (Spark)
+
+| Термин | Коротко | Где впервые |
+|---|---|---|
+| [Apache Spark](spark.md) | driver, executors, workers, менеджер кластера | 07 · урок 01 |
+| [Spark Connect](spark-connect.md) | клиент без JVM, план по gRPC | 07 · урок 01 |
+| [Job, stage, task](spark-job-stage-task.md) | действие → стадии по shuffle → задачи по партициям | 07 · урок 01 |
+| [Партиция в Spark](spark-partition.md) | кусок данных одной задачи; `repartition`, `coalesce` | 07 · урок 02 |
+| [Shuffle](shuffle.md) | перераспределение по ключу; частичная агрегация; spill | 07 · урок 02 |
+| [AQE](aqe.md) | план по фактическим размерам во время выполнения | 07 · урок 02 |
+| [Соединения в Spark](spark-joins.md) | broadcast hash, sort-merge, shuffle hash | 07 · урок 03 |
+| [Перекос данных](data-skew.md) | горячий ключ, соль | 07 · урок 03 |
+| [Тесты трансформаций](transformation-tests.md) | pytest, фикстуры, chispa | 07 · урок 05 |
+
+## Качество и наблюдаемость
+
+| Термин | Коротко | Где впервые |
+|---|---|---|
+| [Измерения качества](data-quality-dimensions.md) | полнота, уникальность, свежесть, валидность, согласованность; строгость | 09 · урок 01 |
+| [Soda Core](soda.md) | источник + контракт, пороги, коды выхода 0/1/2/3 | 09 · урок 02 |
+| [Контракт данных](data-contract.md) | договор производителя и потребителей; контракт модели dbt | 09 · урок 03 |
+| [Наблюдаемость данных](data-observability.md) | метрики против истории | 09 · урок 04 |
+| [Elementary](elementary.md) | мониторы аномалий, отчёт `edr` | 09 · урок 04 |
+| [SLA, SLO, SLI](slo-sli-sla.md) | индикатор, цель через перцентиль, бюджет ошибок | 09 · урок 05 |
+
+## Стриминг и CDC
+
+| Термин | Коротко | Где впервые |
+|---|---|---|
+| [Kafka (Redpanda)](kafka.md) | лог событий; retention и compaction | 08 · урок 01 |
+| [Партиция Kafka и ключ](kafka-partition.md) | порядок внутри партиции; параллелизм | 08 · урок 01 |
+| [Офсет и группа потребителей](consumer-group.md) | коммит, lag, деление партиций | 08 · урок 01 |
+| [Гарантии доставки](delivery-semantics.md) | at-most / at-least / exactly-once | 08 · урок 02 |
+| [Schema Registry и Avro](schema-registry.md) | версии схем, совместимость | 08 · урок 02 |
+| [Kafka Connect и Debezium](kafka-connect-debezium.md) | коннекторы, слот, события изменений | 08 · урок 03 |
+| [Время события и окна](event-time-windows.md) | event time, TUMBLE, HOP | 08 · урок 04 |
+| [Watermark](watermark.md) | когда закрыть окно; опоздавшие | 08 · урок 04 |
+| [Apache Flink](flink.md) | jobmanager, taskmanager, Flink SQL | 08 · урок 04 |
+| [Чекпоинт](checkpoint.md) | снимок офсетов и состояния; exactly-once | 08 · урок 05 |

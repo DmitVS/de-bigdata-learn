@@ -1,0 +1,7 @@
+# Источник данных Soda (урок 02): учебная база модуля 09, только чтение.
+type: duckdb
+name: demo_quality
+connection:
+  database: /workspace/data/demo_quality.duckdb
+  schema: raw
+  read_only: true

@@ -1,0 +1,141 @@
+# Слой orchestration (модуль 06): Dagster.
+#   dagster-db-init   — однократно создаёт базу dagster в общем Postgres
+#   dagster-demo      — code-сервер учебного проекта modules/06_orchestration/demo (gRPC :4000);
+#                       в нём же выполняются запуски, поэтому у него окружение workspace
+#   dagster-webserver — UI и GraphQL API: http://localhost:3070
+#   dagster-daemon    — расписания, сенсоры, очередь запусков, ретраи
+#
+# Запуск: make up PROFILES="orchestration". Настройки экземпляра — dagster/dagster.yaml,
+# список code locations — dagster/workspace.yaml.
+#
+# Слой airflow (модуль 06, урок 05, опционально): Airflow 3 standalone для сравнения —
+# make up PROFILES="airflow", UI http://localhost:8081.
+
+x-dagster-instance: &dagster-instance
+  DAGSTER_HOME: /opt/dagster/home
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+x-dagster-volumes: &dagster-volumes
+  - ../..:/workspace
+  - ./dagster/dagster.yaml:/opt/dagster/home/dagster.yaml:ro
+  - ./dagster/workspace.yaml:/opt/dagster/home/workspace.yaml:ro
+
+services:
+  dagster-db-init:
+    image: postgres:17.11
+    profiles: [orchestration]
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - >
+        psql -tAc "SELECT 1 FROM pg_database WHERE datname = 'dagster'" | grep -q 1
+        || psql -c "CREATE DATABASE dagster"
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # Code-сервер наследует от workspace образ, том репозитория и все переменные (S3, dlt,
+  # Iceberg) через extends; порты и команду переопределяет.
+  dagster-demo:
+    extends:
+      file: core.yaml
+      service: workspace
+    build: !reset null # образ уже собран для workspace
+    profiles: [orchestration]
+    working_dir: /workspace/modules/06_orchestration/demo
+    command:
+      - dagster
+      - code-server
+      - start
+      - -h
+      - 0.0.0.0
+      - -p
+      - "4000"
+      - -m
+      - weather_orchestration.definitions
+    environment:
+      <<: *dagster-instance
+      PYTHONPATH: /workspace/modules/06_orchestration/demo
+    volumes: *dagster-volumes
+    ports: !reset []
+    healthcheck:
+      test: ["CMD", "dagster", "api", "grpc-health-check", "-p", "4000", "-h", "localhost"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 20s
+    depends_on:
+      dagster-db-init:
+        condition: service_completed_successfully
+      lakekeeper-init:
+        condition: service_completed_successfully
+
+  dagster-webserver:
+    image: debd/workspace:local
+    profiles: [orchestration]
+    command: ["dagster-webserver", "-h", "0.0.0.0", "-p", "3000", "-w", "/opt/dagster/home/workspace.yaml"]
+    environment: *dagster-instance
+    volumes: *dagster-volumes
+    ports:
+      - "127.0.0.1:3070:3000" # 3000 на хосте занят (secure_firefox)
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:3000/server_info"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    depends_on:
+      dagster-demo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  dagster-daemon:
+    image: debd/workspace:local
+    profiles: [orchestration]
+    command: ["dagster-daemon", "run", "-w", "/opt/dagster/home/workspace.yaml"]
+    environment: *dagster-instance
+    volumes: *dagster-volumes
+    depends_on:
+      dagster-demo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Airflow 3 одним процессом (scheduler + api-server + dag-processor + triggerer) на SQLite —
+  # только для сравнения подходов в уроке 05. Вход без пароля (все — администраторы).
+  airflow:
+    build:
+      context: ./airflow
+    image: debd/airflow:3.3.2
+    profiles: [airflow]
+    # Свой UID, чтобы писать в смонтированный репозиторий; группа 0 нужна образу Airflow
+    user: "${HOST_UID:-1000}:0"
+    command: ["standalone"]
+    environment:
+      AIRFLOW_HOME: /opt/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_FOLDER: /workspace/modules/06_orchestration/airflow_demo/dags
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"
+      # Задачи отчитываются api-серверу по HTTP изнутри контейнера: порт 8080, а не хостовый 8081
+      AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://localhost:8080/execution/
+    volumes:
+      - ../..:/workspace
+      - airflow-home:/opt/airflow
+    ports:
+      - "127.0.0.1:8081:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/api/v2/monitor/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+
+volumes:
+  airflow-home:

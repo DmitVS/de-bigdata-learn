@@ -1,0 +1,8 @@
+models:
+  - name: stg_weather
+    description: "Погода по городам за день, имена колонок приведены к соглашениям"
+    columns:
+      - name: city_id
+        data_tests: [not_null]
+      - name: weather_date
+        data_tests: [not_null]

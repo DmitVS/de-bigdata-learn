@@ -1,0 +1,44 @@
+# Настройки экземпляра (instance) Dagster — общие для webserver, daemon и code-серверов.
+# Файл монтируется в DAGSTER_HOME=/opt/dagster/home (слой orchestration.yaml).
+# Модуль 06, урок 02: где Dagster хранит историю запусков, события и логи.
+
+# История запусков, журнал событий и расписания — в Postgres (база dagster), а не в SQLite:
+# webserver, daemon и code-серверы — разные контейнеры, им нужна общая база.
+storage:
+  postgres:
+    postgres_db:
+      hostname: postgres
+      port: 5432
+      db_name: dagster
+      username:
+        env: POSTGRES_USER
+      password:
+        env: POSTGRES_PASSWORD
+
+# Конкурентность (урок 03, шаг 6).
+# runs  — запуски из UI, расписаний и сенсоров встают в очередь; daemon берёт из неё не больше
+#         max_concurrent_runs одновременно.
+# pools — шаги с pool="duckdb" выполняются по одному во всех запусках сразу, потому что файл
+#         DuckDB допускает только одного писателя.
+concurrency:
+  runs:
+    max_concurrent_runs: 4
+  pools:
+    default_limit: 1
+
+# Файлы на диске (логи шагов, результаты IO-менеджера по умолчанию) — в data/.dagster вне git,
+# чтобы пережили пересоздание контейнеров.
+local_artifact_storage:
+  module: dagster.core.storage.root
+  class: LocalArtifactStorage
+  config:
+    base_dir: /workspace/data/.dagster/storage
+
+compute_logs:
+  module: dagster.core.storage.local_compute_log_manager
+  class: LocalComputeLogManager
+  config:
+    base_dir: /workspace/data/.dagster/logs
+
+telemetry:
+  enabled: false

@@ -1,0 +1,6 @@
+sources:
+  - name: bronze
+    description: "Схема bronze в demo_orchestration.duckdb — её наполняет dlt (ассет weather_bronze)"
+    tables:
+      - name: weather
+        description: "Погода по городам за день: city_id, dt, осадки, температура, влажность"

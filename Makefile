@@ -10,7 +10,7 @@ UV_RUN   := docker run --rm -u $$(id -u):$$(id -g) -v $(CURDIR):/w -w /w \
             -e UV_CACHE_DIR=/tmp/uv-cache $(UV_IMAGE) uv
 
 .DEFAULT_GOAL := help
-.PHONY: help init lock uv build up down restart ps logs shell sql check data lint fmt test obsidian clean
+.PHONY: help init lock uv build up down restart ps logs shell sql check data lint fmt test obsidian clean dagster dagster-shell rpk flink-sql
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n",$$1,$$2}'
@@ -48,6 +48,18 @@ shell: ## Bash внутри workspace
 
 sql: ## DuckDB CLI внутри workspace
 	$(EXEC) duckdb
+
+dagster: ## Dagster CLI в code-сервере демо (модуль 06), напр.: make dagster ARGS="asset list"
+	$(COMPOSE) exec dagster-demo dagster $(ARGS) $(if $(filter asset,$(firstword $(ARGS))),-m weather_orchestration.definitions,)
+
+dagster-shell: ## Bash внутри code-сервера Dagster (модуль 06)
+	$(COMPOSE) exec dagster-demo bash
+
+rpk: ## CLI Redpanda (модуль 08), напр.: make rpk ARGS="topic list"
+	$(COMPOSE) exec redpanda rpk $(ARGS)
+
+flink-sql: ## Flink SQL-клиент (модуль 08); скрипт: make flink-sql ARGS="-f /workspace/…sql"
+	$(COMPOSE) exec flink-jobmanager ./bin/sql-client.sh $(ARGS)
 
 check: ## Smoke-тест инфраструктуры (S3, Postgres, Iceberg-каталог, DuckDB)
 	$(EXEC) python scripts/check_stack.py

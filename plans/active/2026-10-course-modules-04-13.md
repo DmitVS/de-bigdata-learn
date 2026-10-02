@@ -21,10 +21,10 @@ type: infra
 |---|---|---|
 | 04 Ingestion | переменные dlt в workspace, `--all-groups` в образе, pandas; слой `ingestion.yaml` (учебный API `retail-api`); скрипты `landing_drop.py`, генератор изменений `retail_oltp` | ✅ |
 | 05 dbt | учебные проекты `demo/` и `demo_sqlmesh/`, SQLMesh в группе `transform`, порт 8580 | ✅ |
-| 06 Оркестрация | слой `orchestration.yaml`: Dagster (+ Airflow опц.) | ⬜ |
-| 07 Spark | слой `spark.yaml`: master + 2 workers, Iceberg runtime | ⬜ |
-| 08 Стриминг | слой `streaming.yaml`: Redpanda, Console, Connect/Debezium, Flink; `wal_level=logical` | ⬜ |
-| 09 Качество | Soda Core, Elementary в зависимостях | ⬜ |
+| 06 Оркестрация | слой `orchestration.yaml`: Dagster (+ Airflow опц.) | ✅ |
+| 07 Spark | слой `spark.yaml`: master + 2 workers, Iceberg runtime | ✅ |
+| 08 Стриминг | слой `streaming.yaml`: Redpanda, Console, Connect/Debezium, Flink; `wal_level=logical` | ✅ |
+| 09 Качество | Soda Core, Elementary в зависимостях | ✅ |
 | 10 Витрины | слой `serving.yaml`: ClickHouse, Trino, Superset, Evidence | ⬜ |
 | 11 Governance | слой `governance.yaml`: OpenMetadata | ⬜ |
 | 12 DataOps | pre-commit, шаблон GitHub Actions, Terraform в контейнере | ⬜ |
@@ -98,6 +98,75 @@ type: infra
 - 2026-10-01 — **модуль 05 готов**: 6 уроков, 7 лаб (05.1–05.7), учебные проекты dbt и SQLMesh,
   9 терминов, карточки, 6 карт, домашка (ключи — в памяти ассистента), README, ROADMAP.
   Следующий — модуль 06 (оркестрация, слой `orchestration.yaml`).
+
+- 2026-10-02 — модуль 06, проверки на стеке: Dagster 1.13.25 в compose (webserver, daemon,
+  code-сервер через `extends`, история в Postgres `dagster`). Порт 3000/3001 на хосте заняты
+  (`secure_firefox`) → UI на 3070. Замеры и находки для уроков:
+  - запуск «файл + bronze + проверка» ~25 с при ~1 с работы (процесс на шаг); backfill 3 дней —
+    89 с, 7 дней — 176 с; dbt-шаг ~7 с;
+  - ретраи `delay=2, EXPONENTIAL`: паузы 2 → 6 → 14 с;
+  - проверка без пула → `Could not set lock on file` в 3 из 7 запусков backfill; с `pool="duckdb"` — 0;
+  - сенсор не видел перезапись файла: fsspec переиспользует `S3FileSystem` с кэшем списков →
+    `skip_instance_cache=True`;
+  - `build_schedule_from_partitioned_job` с `end_date`: тик 2024-04-02 → партиция 04-01, тик в
+    2026 → последняя партиция 2024-07-02;
+  - блокирующая проверка смотрит на весь ассет: порча 04-02 остановила запуск за 04-01;
+  - Airflow 3.3.2: `base_url` с хостовым портом → задачи не достучались до Execution API
+    (`Connection refused`, SIGKILL); UID 50000 → `PermissionError` на томе; Asset-триггер работает.
+- 2026-10-02 — **модуль 06 готов**: 5 уроков, 5 лаб (06.1–06.5), учебные проекты `demo/` (Dagster +
+  dbt_weather) и `airflow_demo/`, 10 терминов, карточки, 5 карт, домашка (ключи — в памяти
+  ассистента), README, infra/README, stack.md. Заранее добавлены группы зависимостей spark,
+  streaming, quality. Следующий — модуль 07 (Spark).
+- 2026-10-02 — модуль 07, проверки на стеке: Spark 4.1.3 standalone + Spark Connect (driver в
+  `spark-connect`), клиент `pyspark-client` без JVM; Iceberg 1.12 через Lakekeeper с vended
+  credentials. Проблемы слоя: произвольный UID без `/etc/passwd` → `user.home=?` (Ivy) и
+  `Invalid UID` (Hadoop) → пользователь dev с UID хоста в образе; Python 3.10 в образе → 3.12 для UDF.
+  Замеры для уроков:
+  - train.parquet (106 МБ) — 4 задачи чтения; groupBy по магазинам: shuffle 38 КБ (901 строка),
+    AQE 200 → 1 задача; repartition(8) — 4,5 млн строк через shuffle; почасовые 108 млн → магазин ×
+    час: shuffle 402 КБ, ~1 с;
+  - город 0 — 51,62 % строк. Sort-merge почасовых × города: 12 с, shuffle 193 МБ, задачи 4,2/9,1 с,
+    spill 188 МБ; соль 8 — 9,8 с, 4,1/4,3 с; broadcast — 1,1 с. AQE skew join не сработал даже с
+    порогом 16 МБ и force;
+  - join с `distinct`-справочником: explain — SortMergeJoin, итоговый план — BroadcastHashJoin;
+  - Iceberg: hash-распределение — файл на день; none + repartition(8) — 59 файлов по 36 КБ →
+    компактизация 56 → 7; MERGE одного магазина-дня — 1 файл; expire_snapshots без older_than — 0;
+    `CREATE OR REPLACE` — один коммит поверх истории;
+  - движки, почасовые 108 млн → магазин × час: DuckDB 0,52 с / 376 МБ; Polars lazy 1,84 с / 5,5 ГБ;
+    Spark 1,46 с (клиент 160 МБ, кластер ~5,5 ГБ); `coalesce(1)` → чтение 1 задачей, 2,7 с.
+- 2026-10-02 — **модуль 07 готов**: 6 уроков, 5 лаб (07.1–07.5), демо (`spark_demo`, 6 тестов chispa,
+  `bench_hourly.py`), 9 терминов, карточки, 6 карт, домашка (ключи — в памяти ассистента), README,
+  infra/README, stack.md. Следующий — модуль 08 (стриминг).
+- 2026-10-02 — модуль 09, проверки на стеке: Soda Core 4.25 + soda-duckdb (контракты YAML; раздел
+  `columns` обязателен; `data-source create` знает только Postgres; коды выхода 0/1/2/3; Python API:
+  `from_existing_cursor` с `ATTACH` и `data_timestamp`), Elementary 0.26 (пакет + `edr report`, схема
+  `main_elementary`), dbt `contract: enforced`. Учебная база `demo_quality.duckdb` со сдвигом дат к
+  «вчера»: детекторы и свежесть считают окна от текущего времени. Замеры и находки:
+  - инциденты `--drop-day --null-city 3 --negative 2`: dbt FAIL 2 / 1 / 3, PASS=35 ERROR=3 SKIP=3;
+    Soda — 3 провала, код 1; Elementary: `The last row_count value is 376.000. The average … 880.600`;
+  - `--stale 2` → WARN, `--stale 3` → ERROR STALE в `dbt source freshness`;
+  - переименование колонки → Soda schema FAILED + ошибка запроса → код 3 (не 1!);
+  - на чистых данных 34 магазино-дня с продажами при нуле часов наличия (окно 6–22) — warn, не fail;
+  - задержка загрузки: среднее 3,7 ч, p50 2,8, p95 13,6, в SLO «≤ 6 ч» — 93,8 % дней;
+  - `--dupes`: +50 000 строк товаров, +1,122 % продаж против исходных файлов; dbt — FAIL 898
+    уникальности + аномалия объёма, витрина SKIP.
+- 2026-10-02 — **модуль 09 готов**: 5 уроков, 4 лабы (09.1–09.4), демо (`build_demo_db.py`, `soda/`,
+  `dbt_quality/`), 6 терминов, карточки, 5 карт, домашка (ключи — в памяти ассистента), README.
+- 2026-10-02 — модуль 08, проверки на стеке: Redpanda 26.2.3 + Console 3.12, Debezium 3.7.0,
+  Flink 2.1.3 (свой образ), `wal_level=logical`. Находки и замеры:
+  - demo-producer: 2694 события за 3 дня (898 × 3), партиции 825 / 663 / 1206; группы: lag 2684
+    после 10 прочитанных; Avro: субъект `demo.weather_readings.avro-value`, ID 1, байты `00 00 00
+    00 01`; совместимость: поле с default — True, переименование — False;
+  - Debezium: снапшот `op=r`; без `REPLICA IDENTITY FULL` у UPDATE `before=null` → Flink
+    `debezium-json` бесконечно перезапускается; офсеты коннектора переживают удаление (`Last
+    recorded offset is no longer available`) → `PUT stop` + `DELETE offsets`; retained_wal ~3 КБ;
+  - Flink: окна по дням — город 0 290 показаний; опоздавшие при переигрывании 3 партиций не
+    теряются (минимум watermark + выпуск раз в 200 мс), на топике с 1 партицией и `on-event` —
+    257 / 260 вместо 290; поток в Iceberg: 36 → 72 строки, 1 → 2 снапшота, 8 чекпоинтов;
+  - INSERT в SQL-клиенте асинхронный (`table.dml-sync` для синхронного).
+- 2026-10-02 — **модуль 08 готов**: 5 уроков, 5 лаб (08.1–08.5), демо (producer/consumer, Flink SQL,
+  песочница CDC), 10 терминов, карточки, 5 карт, домашка (ключи — в памяти ассистента), README,
+  infra/README, stack.md. Модули 06–09 закрыты; следующий — модуль 10 (витрины и BI).
 
 ## Результат
 

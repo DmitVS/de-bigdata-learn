@@ -1,0 +1,11 @@
+sources:
+  - name: raw
+    description: "Сырые продажи магазинов по дням (генератор build_demo_db.py)"
+    tables:
+      - name: store_sales_daily
+        description: "Магазин × день: продажи, число товаров, часы наличия; loaded_at — время загрузки"
+        loaded_at_field: loaded_at
+        config:
+          freshness: # свежесть по времени загрузки (dbt source freshness, урок 01)
+            warn_after: {count: 26, period: hour}
+            error_after: {count: 50, period: hour}
