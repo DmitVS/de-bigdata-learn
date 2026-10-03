@@ -1,175 +1,25 @@
 {
-	"nodes": [
-		{
-			"id": "title",
-			"type": "text",
-			"x": 0,
-			"y": -300,
-			"width": 1600,
-			"height": 140,
-			"text": "# Лог событий\nУрок: [01](../theory/01_log_and_kafka.md) · [Kafka](../../../glossary/kafka.md) · [группа](../../../glossary/consumer-group.md)",
-			"color": "6"
-		},
-		{
-			"id": "g1",
-			"type": "group",
-			"x": 0,
-			"y": -130,
-			"width": 1600,
-			"height": 230,
-			"label": "Ход мысли"
-		},
-		{
-			"id": "s0",
-			"type": "text",
-			"x": 20,
-			"y": -90,
-			"width": 296,
-			"height": 160,
-			"text": "**лог**\nтолько дописывание"
-		},
-		{
-			"id": "s1",
-			"type": "text",
-			"x": 336,
-			"y": -90,
-			"width": 296,
-			"height": 160,
-			"text": "**партиции**\nhash(ключ) mod N"
-		},
-		{
-			"id": "s2",
-			"type": "text",
-			"x": 652,
-			"y": -90,
-			"width": 296,
-			"height": 160,
-			"text": "**офсеты**\nзакладка читателя"
-		},
-		{
-			"id": "s3",
-			"type": "text",
-			"x": 968,
-			"y": -90,
-			"width": 296,
-			"height": 160,
-			"text": "**группы**\nделят партиции"
-		},
-		{
-			"id": "s4",
-			"type": "text",
-			"x": 1284,
-			"y": -90,
-			"width": 296,
-			"height": 160,
-			"text": "**хранение**\nretention · compaction"
-		},
-		{
-			"id": "gl",
-			"type": "group",
-			"x": 0,
-			"y": 140,
-			"width": 780,
-			"height": 460,
-			"label": "У нас"
-		},
-		{
-			"id": "gl0",
-			"type": "text",
-			"x": 20,
-			"y": 180,
-			"width": 740,
-			"height": 120,
-			"text": "Redpanda :9092, Console :8084"
-		},
-		{
-			"id": "gl1",
-			"type": "text",
-			"x": 20,
-			"y": 320,
-			"width": 740,
-			"height": 120,
-			"text": "make rpk ARGS=\"…\""
-		},
-		{
-			"id": "gl2",
-			"type": "text",
-			"x": 20,
-			"y": 460,
-			"width": 740,
-			"height": 120,
-			"text": "demo.weather_readings, ключ city_id"
-		},
-		{
-			"id": "gr",
-			"type": "group",
-			"x": 820,
-			"y": 140,
-			"width": 780,
-			"height": 460,
-			"label": "Ловушки",
-			"color": "1"
-		},
-		{
-			"id": "gr0",
-			"type": "text",
-			"x": 840,
-			"y": 180,
-			"width": 740,
-			"height": 120,
-			"text": "нет ключа — нет порядка"
-		},
-		{
-			"id": "gr1",
-			"type": "text",
-			"x": 840,
-			"y": 320,
-			"width": 740,
-			"height": 120,
-			"text": "потребителей больше, чем партиций"
-		},
-		{
-			"id": "gr2",
-			"type": "text",
-			"x": 840,
-			"y": 460,
-			"width": 740,
-			"height": 120,
-			"text": "auto.offset.reset=latest у новой группы"
-		}
+	"nodes":[
+		{"id":"title","type":"text","x":0,"y":-300,"width":1600,"height":140,"text":"# Лог событий\nУрок: [01](../theory/01_log_and_kafka.md) · [Kafka](../../../glossary/kafka.md) · [группа](../../../glossary/consumer-group.md)","color":"6"},
+		{"id":"g1","type":"group","x":0,"y":-130,"width":1600,"height":230,"label":"Ход мысли"},
+		{"id":"s0","type":"text","x":20,"y":-90,"width":296,"height":160,"text":"**лог**\nтолько дописывание"},
+		{"id":"s1","type":"text","x":336,"y":-90,"width":296,"height":160,"text":"**партиции**\nhash(ключ) mod N"},
+		{"id":"s2","type":"text","x":652,"y":-90,"width":296,"height":160,"text":"**офсеты**\nзакладка читателя"},
+		{"id":"s3","type":"text","x":968,"y":-90,"width":296,"height":160,"text":"**группы**\nделят партиции"},
+		{"id":"s4","type":"text","x":1284,"y":-90,"width":296,"height":160,"text":"**хранение**\nretention · compaction"},
+		{"id":"gl","type":"group","x":0,"y":140,"width":780,"height":460,"label":"У нас"},
+		{"id":"gl0","type":"text","x":20,"y":180,"width":740,"height":120,"text":"Redpanda :9092, Console :8084"},
+		{"id":"gl1","type":"text","x":20,"y":320,"width":740,"height":120,"text":"make rpk ARGS=\"…\""},
+		{"id":"gl2","type":"text","x":20,"y":460,"width":740,"height":120,"text":"demo.weather_readings, ключ city_id"},
+		{"id":"gr","type":"group","x":820,"y":140,"width":780,"height":460,"label":"Ловушки","color":"1"},
+		{"id":"gr0","type":"text","x":840,"y":180,"width":740,"height":120,"text":"нет ключа — нет порядка"},
+		{"id":"gr1","type":"text","x":840,"y":320,"width":740,"height":120,"text":"потребителей больше, чем партиций"},
+		{"id":"gr2","type":"text","x":840,"y":460,"width":740,"height":120,"text":"auto.offset.reset=latest у новой группы"}
 	],
-	"edges": [
-		{
-			"id": "e1",
-			"fromNode": "s0",
-			"fromSide": "right",
-			"toNode": "s1",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e2",
-			"fromNode": "s1",
-			"fromSide": "right",
-			"toNode": "s2",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e3",
-			"fromNode": "s2",
-			"fromSide": "right",
-			"toNode": "s3",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e4",
-			"fromNode": "s3",
-			"fromSide": "right",
-			"toNode": "s4",
-			"toSide": "left",
-			"toEnd": "arrow"
-		}
+	"edges":[
+		{"id":"e1","fromNode":"s0","fromSide":"right","toNode":"s1","toSide":"left","toEnd":"arrow"},
+		{"id":"e2","fromNode":"s1","fromSide":"right","toNode":"s2","toSide":"left","toEnd":"arrow"},
+		{"id":"e3","fromNode":"s2","fromSide":"right","toNode":"s3","toSide":"left","toEnd":"arrow"},
+		{"id":"e4","fromNode":"s3","fromSide":"right","toNode":"s4","toSide":"left","toEnd":"arrow"}
 	]
 }
