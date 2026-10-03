@@ -1,0 +1,14 @@
+# dbt-trino: каталог iceberg, схема governance_demo. Аутентификации у учебного Trino нет,
+# user — подпись в журнале запросов и в правилах доступа (урок 04).
+governance_demo:
+  target: dev
+  outputs:
+    dev:
+      type: trino
+      method: none
+      host: trino
+      port: 8080
+      user: dbt
+      database: iceberg
+      schema: governance_demo
+      threads: 2

@@ -1,0 +1,16 @@
+# Реквизиты — только из окружения (.env: SNOWFLAKE_*), в git их нет.
+# Пароль на trial можно; для CI и продакшена — ключевая пара (private_key_path).
+# «or 'not-set'»: в workspace переменная задана, но пуста — значение по умолчанию env_var не сработает.
+snowflake_demo:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT', '') or 'not-set' }}"
+      user: "{{ env_var('SNOWFLAKE_USER', '') or 'not-set' }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD', '') or 'not-set' }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', '') or 'SYSADMIN' }}"
+      warehouse: de_wh
+      database: de_course
+      schema: analytics
+      threads: 4

@@ -1,0 +1,24 @@
+models:
+  - name: mart_city_oos_daily
+    description: >
+      Город × день: продажи, часы без товара и часы работы полки (доля без товара = oos_hours /
+      shelf_hours), число открытых сейчас магазинов. Читает дашборд Superset «Наличие по городам».
+    meta:
+      owner: analytics
+    columns:
+      - name: city_id
+        description: ID города.
+        tests: [not_null]
+      - name: dt
+        description: День.
+        tests: [not_null]
+      - name: sales
+        description: Продажи города за день.
+        meta:
+          sensitivity: commercial
+      - name: oos_hours
+        description: Часы без товара на полке.
+      - name: shelf_hours
+        description: Часы работы полки.
+      - name: open_stores
+        description: Магазины города, открытые сейчас по учётной системе.

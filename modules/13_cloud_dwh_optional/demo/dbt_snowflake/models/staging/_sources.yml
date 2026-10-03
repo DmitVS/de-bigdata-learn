@@ -1,0 +1,7 @@
+sources:
+  - name: raw
+    database: de_course
+    schema: raw
+    tables:
+      - name: sales
+        description: Файлы датасета, загруженные COPY INTO (snowflake/01_setup_and_load.sql).

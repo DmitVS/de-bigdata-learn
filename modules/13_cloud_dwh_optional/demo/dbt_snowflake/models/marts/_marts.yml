@@ -1,0 +1,8 @@
+models:
+  - name: mart_city_oos_daily
+    description: Город × день — тот же расчёт, что governance_demo.mart_city_oos_daily в lakehouse.
+    columns:
+      - name: city_id
+        tests: [not_null]
+      - name: dt
+        tests: [not_null]

@@ -1,0 +1,30 @@
+# Сбор дашбордов Superset → сервис superset_bi. lineageInformation.dbServiceNames — в каких
+# сервисах баз искать таблицы датасетов: так дашборд встаёт в граф за витриной.
+# Перед запуском: python modules/11_governance/demo/superset_dashboard.py (в make shell).
+# Запуск: make om-ingest CFG=modules/11_governance/demo/openmetadata/superset.yaml
+source:
+  type: superset
+  serviceName: superset_bi
+  serviceConnection:
+    config:
+      type: Superset
+      hostPort: http://superset:8088
+      connection:
+        provider: db
+        username: admin
+        password: ${SUPERSET_ADMIN_PASSWORD}
+  sourceConfig:
+    config:
+      type: DashboardMetadata
+      lineageInformation:
+        dbServiceNames: ["trino_lake"]
+sink:
+  type: metadata-rest
+  config: {}
+workflowConfig:
+  loggerLevel: INFO
+  openMetadataServerConfig:
+    hostPort: http://openmetadata:8585/api
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: ${OM_INGESTION_TOKEN}

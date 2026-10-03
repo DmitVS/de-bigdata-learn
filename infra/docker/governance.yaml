@@ -1,0 +1,136 @@
+# Слой governance (модуль 11): каталог данных, lineage, доступы.
+#   om-db-init        — однократно: база openmetadata в общем Postgres
+#   elasticsearch     — поисковый индекс каталога (OpenMetadata ищет и строит граф через него)
+#   om-migrate        — однократно: миграции схемы OpenMetadata
+#   openmetadata      — сервер и UI каталога: http://localhost:8585 (admin@open-metadata.org / admin)
+#   om-ingest         — CLI `metadata` (сбор метаданных из источников по YAML), запуск: make om-ingest CFG=…
+#   spark-lineage     — spark-submit в локальном режиме с агентом OpenLineage, запуск: make spark-lineage
+#
+# Запуск: make up PROFILES="governance". Слой тяжёлый (~4 ГБ): поднимай без spark и streaming.
+# Встроенный в OpenMetadata планировщик сбора (Airflow) не используется: сбор — командой, конфиги в git.
+
+x-om-env: &om-env
+  DB_DRIVER_CLASS: org.postgresql.Driver
+  DB_SCHEME: postgresql
+  DB_PARAMS: sslmode=disable
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_USER: ${POSTGRES_USER}
+  DB_USER_PASSWORD: ${POSTGRES_PASSWORD}
+  OM_DATABASE: openmetadata
+  ELASTICSEARCH_HOST: elasticsearch
+  ELASTICSEARCH_PORT: 9200
+  SEARCH_TYPE: elasticsearch
+  FERNET_KEY: ${OM_FERNET_KEY}
+  # Без встроенного Airflow: сбор метаданных запускается CLI (сервис om-ingest)
+  PIPELINE_SERVICE_CLIENT_ENABLED: "false"
+  SERVER_HOST_API_URL: http://openmetadata:8585/api
+  OPENMETADATA_HEAP_OPTS: -Xmx1G -Xms1G
+  LOG_LEVEL: WARN
+
+services:
+  om-db-init:
+    image: postgres:17.11
+    profiles: [governance]
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - >
+        psql -tAc "SELECT 1 FROM pg_database WHERE datname = 'openmetadata'" | grep -q 1
+        || psql -c "CREATE DATABASE openmetadata"
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.0
+    profiles: [governance]
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+    volumes:
+      - om-es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+    restart: unless-stopped
+
+  om-migrate:
+    image: openmetadata/server:2.0.3
+    profiles: [governance]
+    command: ["./bootstrap/openmetadata-ops.sh", "migrate"]
+    environment: *om-env
+    depends_on:
+      om-db-init:
+        condition: service_completed_successfully
+      elasticsearch:
+        condition: service_healthy
+    restart: "no"
+
+  openmetadata:
+    image: openmetadata/server:2.0.3
+    profiles: [governance]
+    environment: *om-env
+    ports:
+      - "127.0.0.1:8585:8585" # UI и REST API (в т.ч. приём OpenLineage: /api/v1/openlineage/lineage)
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8586/healthcheck >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 30s
+    depends_on:
+      om-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # CLI сбора метаданных. Конфиги — YAML в репозитории; токен бота — OM_INGESTION_TOKEN в .env.
+  om-ingest:
+    image: openmetadata/ingestion:2.0.3
+    profiles: [governance]
+    entrypoint: ["metadata"]
+    command: ["--help"]
+    working_dir: /workspace
+    environment:
+      OM_INGESTION_TOKEN: ${OM_INGESTION_TOKEN:-}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+    volumes:
+      - ../..:/workspace
+    depends_on:
+      openmetadata:
+        condition: service_healthy
+    restart: "no"
+
+  # Spark в локальном режиме (driver и executor в одном процессе) с агентом OpenLineage:
+  # события запуска уходят в OpenMetadata. Кластер модуля 07 для этого не нужен.
+  spark-lineage:
+    image: debd/spark:4.1.3
+    profiles: [governance]
+    working_dir: /workspace
+    environment:
+      OM_INGESTION_TOKEN: ${OM_INGESTION_TOKEN:-}
+    volumes:
+      - ../..:/workspace
+      - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+    entrypoint: ["/workspace/infra/docker/spark/submit_with_lineage.sh"]
+    command: ["modules/11_governance/demo/spark_store_sales.py"]
+    depends_on:
+      openmetadata:
+        condition: service_healthy
+      lakekeeper-init:
+        condition: service_completed_successfully
+    restart: "no"
+
+volumes:
+  om-es-data:

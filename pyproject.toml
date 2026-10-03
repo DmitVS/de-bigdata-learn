@@ -20,11 +20,19 @@ dependencies = [
 ]
 
 [dependency-groups]
+cloud = [
+    "dbt-snowflake>=1.12.1",
+]
 dev = [
     "ruff>=0.16",
     "shandy-sqlfmt>=0.32",
     "pytest>=9.1",
     "yamllint>=1.37",
+    "pre-commit>=4.6.2",
+]
+governance = [
+    "dbt-trino>=1.10.6",
+    "openlineage-python>=1.53.0",
 ]
 ingestion = [
     "pandas>=3.0.6",
@@ -40,6 +48,11 @@ quality = [
     "elementary-data[duckdb]>=0.26.0",
     "soda-core>=4.25.0",
     "soda-duckdb>=4.25.0",
+]
+serving = [
+    "clickhouse-connect>=1.9.0",
+    "dbt-metricflow[dbt-duckdb]>=0.15.0",
+    "trino>=0.340.0",
 ]
 spark = [
     "chispa>=0.12",
@@ -75,8 +88,10 @@ norecursedirs = [".*", "data", "dbt_packages", "target", "logs", "node_modules"]
 [tool.sqlfmt]
 line_length = 100
 # demo_sqlmesh — sqlfmt не знает блок MODEL SQLMesh; flink — DDL Flink SQL (WATERMARK, WITH);
+# clickhouse, demo/snowflake — DDL ClickHouse и Snowflake (ENGINE, COPY INTO); evidence — сборки;
 # data/.dlt — служебные SQL-файлы dlt (вне git)
 exclude = [
     "**/target/**", "**/dbt_packages/**", "**/demo_sqlmesh/**", "**/flink/**", "**/data/**",
-    "**/.dlt/**",
+    "**/clickhouse/**", "**/demo/snowflake/**", "data/**", "**/.uv-cache/**", "**/.ci-venv/**", "**/.pre-commit/**",
+    "**/.dlt/**", "**/.evidence/**", "**/node_modules/**", "**/build/**",
 ]

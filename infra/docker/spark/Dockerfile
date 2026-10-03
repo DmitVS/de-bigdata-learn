@@ -1,6 +1,8 @@
 # Spark 4.1 для модуля 07: master, workers и сервер Spark Connect (driver) на одном образе.
 # К официальному образу добавлены (и пользователь dev с UID хоста):
 #  - Iceberg runtime и AWS bundle — чтение и запись Iceberg через REST-каталог Lakekeeper;
+#  - агент OpenLineage (модуль 11): listener включается только конфигом spark-submit
+#    (infra/docker/spark/submit_with_lineage.sh), кластер модуля 07 его не использует;
 #  - Python 3.12 для executors: Python UDF выполняются на executors, и минорная версия Python
 #    должна совпадать с клиентом (workspace — 3.12, в образе Spark — 3.10).
 FROM apache/spark:4.1.3-scala2.13-java17-python3-ubuntu
@@ -12,6 +14,10 @@ RUN curl -fsSL -o /opt/spark/jars/iceberg-spark-runtime-4.1_2.13-${ICEBERG_VERSI
       ${MAVEN}/iceberg-spark-runtime-4.1_2.13/${ICEBERG_VERSION}/iceberg-spark-runtime-4.1_2.13-${ICEBERG_VERSION}.jar \
     && curl -fsSL -o /opt/spark/jars/iceberg-aws-bundle-${ICEBERG_VERSION}.jar \
       ${MAVEN}/iceberg-aws-bundle/${ICEBERG_VERSION}/iceberg-aws-bundle-${ICEBERG_VERSION}.jar
+
+ARG OPENLINEAGE_VERSION=1.53.0
+RUN curl -fsSL -o /opt/spark/jars/openlineage-spark_2.13-${OPENLINEAGE_VERSION}.jar \
+      https://repo1.maven.org/maven2/io/openlineage/openlineage-spark_2.13/${OPENLINEAGE_VERSION}/openlineage-spark_2.13-${OPENLINEAGE_VERSION}.jar
 
 COPY --from=ghcr.io/astral-sh/uv:python3.12-bookworm-slim /usr/local/bin/uv /usr/local/bin/uv
 RUN UV_PYTHON_INSTALL_DIR=/opt/python uv python install 3.12 \

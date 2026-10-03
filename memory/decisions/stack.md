@@ -117,3 +117,57 @@ metadata:
   manim-voiceover 0.4.0, piper-tts 1.8.0 с голосом `ru_RU-ruslan-medium` (встроен в образ). Версии
   закреплены в `infra/docker/media/requirements.txt` — отдельно от `uv.lock`: системные библиотеки
   Manim (cairo, pango) не нужны в workspace. Сборка ролика 1:49 в 1080p60 — около 40 с.
+
+## Дополнение от 2026-10-03: модуль 10 (витрины и BI)
+
+- **ClickHouse 26.8.15.10** (LTS) — копия витрин для дашборда. Iceberg читает движком базы
+  `DataLakeCatalog` через REST Lakekeeper (beta, `allow_database_iceberg = 1`), ключи S3 — от
+  каталога. Репозиторий смонтирован только на чтение, `user_files_path` = `data/`;
+  `CLICKHOUSE_DO_NOT_CHOWN=1` обязателен — иначе entrypoint делает `chown -R` этой папки.
+- **Trino 483** — федерация Iceberg + Postgres `retail_oltp` + ClickHouse; `mem_limit: 3g`
+  (куча — 80 % лимита по настройке образа). Pushdown фильтров и агрегатов в JDBC-источники.
+- **Superset 6.1.0** — свой образ: официальный образ без драйверов баз (psycopg2-binary,
+  clickhouse-connect 1.9.0, trino 0.340.0 ставятся в `/app/.venv`). Метаданные — база `superset`
+  в общем Postgres; без Redis и Celery (SimpleCache).
+- **Evidence — открытый фреймворк `@evidence-dev/evidence` 40.1.8**, а не Evidence Studio: шаблон
+  `evidence-dev/template` с 2026 года ведёт в облачный продукт с отдельным CLI и входом в
+  аккаунт. Фреймворк закреплён с `typescript` 5.4.2 (иначе ERESOLVE с TypeScript 7). Коннектор
+  Trino 1.0.11 не переносит DATE/TIMESTAMP — даты передаём строкой. Альтернатива — Quarto.
+- **Семантический слой — dbt + MetricFlow 0.15** (`dbt-metricflow[dbt-duckdb]`, группа `serving`):
+  open source даёт только CLI `mf`; API для BI — платный dbt Cloud, поэтому метрики Superset
+  повторяют формулы и сверяются с `mf query`. Cube не ставим (ещё один сервис).
+- Порты: 8123, 8082, 8088, 3071. Видео к модулю не делаем (решение пользователя 2026-10-03).
+
+## Дополнение от 2026-10-03: модуль 11 (governance)
+
+- **OpenMetadata 2.0.3** на общем Postgres 17 (база `openmetadata`) + **Elasticsearch 9.3.0**;
+  встроенный Airflow не ставится — сбор метаданных CLI `metadata` в разовом контейнере
+  `openmetadata/ingestion:2.0.3` по YAML в git (`make om-ingest`), `${…}` из окружения работают.
+- **Lineage Spark — стандартный `openlineage-spark` 1.53.0** (в образе `debd/spark:4.1.3`) по HTTP
+  на `/api/v1/openlineage/lineage`, а не агент OpenMetadata: стандарт важнее продукта.
+  Находки: Java-клиент — адрес без пути, путь в `endpoint`; сервис пайплайнов `openlineage` и
+  пайплайны создаются заранее (2.0.3 падает на `updatedat`); файлы не сопоставляются; lineage
+  колонок из Spark не сопоставляется (входы — места в S3); Python-события — время с `Z`.
+- **dbt-trino 1.10.6** (группа `governance`) для учебного проекта: модели в Iceberg через Trino,
+  поэтому каталог связывает модели dbt с таблицами сервиса `trino_lake`. Capstone остаётся на
+  dbt-duckdb.
+- Правила доступа Trino — файл `trino/rules.json` (перечитывается каждые 10 с); последнее правило
+  оставляет полный доступ остальным, чтобы не ломать модули 05–10.
+
+## Дополнение от 2026-10-03: модуль 12 (DataOps)
+
+- **pre-commit 4.6** в группе `dev` образа workspace; хуки ruff/sqlfmt/yamllint — `language: system`
+  (одна версия из `uv.lock` для pre-commit, `make lint` и CI); git-хук на хосте вызывает `make`.
+- **CI** — GitHub Actions под отдельный репозиторий курса ([ci-separate-repo](ci-separate-repo.md));
+  шаги в `scripts/ci/*.sh`, локальная проверка `make ci` в чистом контейнере uv и actionlint 1.7.12.
+  Версии: checkout v7, setup-uv v10 (uv 0.9.30), cache v6, upload-pages-artifact v5, deploy-pages v5.
+  Slim CI — `manifest.json` прода с GitHub Pages. Первый `make ci` — 7 мин (загрузка), dbt — 1,2 с.
+- **Terraform 1.16.5** в контейнере; провайдеры `aminueza/minio` (~> 3.0) и `cyrilgdn/postgresql`
+  (~> 1.25) управляют нашим же стеком; state в Silo (`tfstate`). Облачный вариант — только обзор:
+  провайдер AWS ~0,5 ГБ и нужен аккаунт.
+
+## Дополнение от 2026-10-03: модуль 13 (Snowflake, опционально)
+
+- `dbt-snowflake` 1.12.1 — группа `cloud` образа workspace; реквизиты `SNOWFLAKE_*` из `.env`
+  передаются в workspace (пустые по умолчанию). Без аккаунта работают `dbt parse` и `dbt ls`.
+  Облачные команды в уроках помечены как проверенные по документации.

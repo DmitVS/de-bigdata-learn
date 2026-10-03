@@ -1,0 +1,28 @@
+# Сбор метаданных: Trino, каталог postgresql (учётная система через Trino) → тот же сервис
+# trino_lake. Нужен для lineage dbt: модель stg_stores читает postgresql.serving_demo.stores.
+# Запуск: make om-ingest CFG=modules/11_governance/demo/openmetadata/trino_postgresql.yaml
+source:
+  type: trino
+  serviceName: trino_lake
+  serviceConnection:
+    config:
+      type: Trino
+      hostPort: trino:8080
+      username: openmetadata
+      catalog: postgresql
+  sourceConfig:
+    config:
+      type: DatabaseMetadata
+      schemaFilterPattern:
+        includes: ["serving_demo"]
+      markDeletedTables: true
+sink:
+  type: metadata-rest
+  config: {}
+workflowConfig:
+  loggerLevel: INFO
+  openMetadataServerConfig:
+    hostPort: http://openmetadata:8585/api
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: ${OM_INGESTION_TOKEN}

@@ -1,0 +1,11 @@
+# Источник lake: Trino (слой serving), каталог iceberg — витрины lakehouse.
+# Пароля нет: учебный Trino работает без аутентификации, user — только подпись в журнале запросов.
+name: lake
+type: trino
+options:
+  host: trino
+  port: 8080
+  user: evidence
+  catalog: iceberg
+  schema: serving_demo
+  ssl: false

@@ -10,7 +10,7 @@ UV_RUN   := docker run --rm -u $$(id -u):$$(id -g) -v $(CURDIR):/w -w /w \
             -e UV_CACHE_DIR=/tmp/uv-cache $(UV_IMAGE) uv
 
 .DEFAULT_GOAL := help
-.PHONY: help init lock uv build up down restart ps logs shell sql check data lint fmt test obsidian clean dagster dagster-shell rpk flink-sql video ste
+.PHONY: help init lock uv build up down restart ps logs shell sql check data lint fmt test obsidian clean dagster dagster-shell rpk flink-sql ch trino report om-token om-ingest spark-lineage tf precommit hooks ci video ste
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n",$$1,$$2}'
@@ -41,7 +41,7 @@ ps: ## Статус контейнеров
 	$(COMPOSE) --profile '*' ps -a
 
 logs: ## Логи, напр.: make logs S=lakekeeper
-	$(COMPOSE) logs -f --tail=200 $(S)
+	$(COMPOSE) --profile '*' logs -f --tail=200 $(S)
 
 shell: ## Bash внутри workspace
 	$(EXEC) bash
@@ -61,6 +61,35 @@ rpk: ## CLI Redpanda (модуль 08), напр.: make rpk ARGS="topic list"
 flink-sql: ## Flink SQL-клиент (модуль 08); скрипт: make flink-sql ARGS="-f /workspace/…sql"
 	$(COMPOSE) exec flink-jobmanager ./bin/sql-client.sh $(ARGS)
 
+ch: ## ClickHouse-клиент (модуль 10), напр.: make ch ARGS="-q 'SELECT 1'"; файл: ARGS="--queries-file modules/…sql"
+	$(COMPOSE) exec clickhouse clickhouse-client $(ARGS)
+
+trino: ## Trino CLI (модуль 10), напр.: make trino ARGS="--execute 'SHOW CATALOGS'"
+	$(COMPOSE) exec trino trino $(ARGS)
+
+report: ## Собрать отчёт Evidence в build/ (модуль 10); папка — EVIDENCE_DIR=… (по умолчанию учебный отчёт)
+	$(COMPOSE) --profile serving --profile evidence stop evidence
+	$(COMPOSE) --profile serving --profile evidence run --rm --no-deps evidence sh -c "npm ci && npm run sources && npm run build"
+
+om-token: ## OpenMetadata (модуль 11): токен бота в .env и сервис пайплайнов openlineage
+	$(EXEC) python scripts/om_token.py
+
+om-ingest: ## Сбор метаданных OpenMetadata (модуль 11): make om-ingest CFG=modules/…/x.yaml [CMD=ingest|profile]
+	$(COMPOSE) --profile governance run --rm om-ingest $(or $(CMD),ingest) -c $(CFG)
+
+spark-lineage: ## Задача Spark с агентом OpenLineage (модуль 11): make spark-lineage [JOB=modules/…py]
+	$(COMPOSE) --profile governance run --rm spark-lineage $(or $(JOB),modules/11_governance/demo/spark_store_sales.py)
+
+TF_DIR ?= modules/12_dataops_cicd/demo/terraform_local
+TF_IMAGE := hashicorp/terraform:1.16.5
+tf: ## Terraform в контейнере (модуль 12): make tf ARGS="plan" [TF_DIR=…]; ключи — из .env
+	@set -a; . ./.env; set +a; docker run --rm -u $$(id -u):$$(id -g) --network debd_default \
+	  -v $(CURDIR):/w -w /w/$(TF_DIR) -e HOME=/tmp -e TF_DATA_DIR=/w/data/.terraform/$(notdir $(TF_DIR)) \
+	  -e AWS_ACCESS_KEY_ID="$$S3_ACCESS_KEY" -e AWS_SECRET_ACCESS_KEY="$$S3_SECRET_KEY" \
+	  -e TF_VAR_s3_user="$$S3_ACCESS_KEY" -e TF_VAR_s3_password="$$S3_SECRET_KEY" \
+	  -e TF_VAR_pg_user="$$POSTGRES_USER" -e TF_VAR_pg_password="$$POSTGRES_PASSWORD" \
+	  $(TF_IMAGE) $(ARGS)
+
 Q ?= h
 VOICE ?= elevenlabs
 video: ## Видео Manim + озвучка: make video SCENE=modules/…/x_video.py [Q=l|m|h] [VOICE=piper] → x.mp4
@@ -79,6 +108,21 @@ data: ## Скачать датасет FreshRetailNet-50K в data/raw
 
 ste: ## Стиль уроков по ASD-STE100: make ste [P=modules/00_just_enough/theory] [V=-v]
 	$(EXEC) python scripts/ste_check.py $(V) $(P)
+
+CI_STEPS ?= lint test dbt
+ci: ## CI локально в чистом контейнере uv, без стека (модуль 12): make ci [CI_STEPS="lint"]
+	docker run --rm -u $$(id -u):$$(id -g) -v $(CURDIR):/workspace -w /workspace -e HOME=/tmp \
+	  -e UV_CACHE_DIR=/workspace/data/.uv-cache -e UV_PROJECT_ENVIRONMENT=/workspace/data/.ci-venv \
+	  -e HF_HOME=/workspace/data/.hf_cache -e STATE_DIR=/workspace/data/ci_state \
+	  $(UV_IMAGE) sh -c 'for s in $(CI_STEPS); do echo "== $$s"; scripts/ci/$$s.sh || exit 1; done'
+
+precommit: ## pre-commit в контейнере (модуль 12): изменённые файлы; все — make precommit ARGS="--all-files"
+	$(COMPOSE) exec -T -e PRE_COMMIT_HOME=/workspace/data/.pre-commit workspace pre-commit run $(ARGS)
+
+hooks: ## Поставить git-хук pre-commit (модуль 12; нужен .git в корне курса)
+	@test -d .git || { echo "нет .git в корне курса: хук ставится после выноса курса в свой репозиторий"; exit 1; }
+	cp scripts/git-hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+	@echo "хук установлен: .git/hooks/pre-commit → make precommit"
 
 lint: ## Линтеры: ruff, sqlfmt --check, yamllint
 	$(EXEC) sh -c 'ruff check . && ruff format --check . && sqlfmt --check . && yamllint -s infra'

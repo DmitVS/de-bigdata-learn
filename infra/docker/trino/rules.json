@@ -1,0 +1,27 @@
+{
+  "tables": [
+    {
+      "user": "partner",
+      "catalog": "iceberg",
+      "schema": "governance_demo",
+      "table": "mart_city_oos_daily",
+      "privileges": ["SELECT"],
+      "columns": [{"name": "sales", "mask": "CAST(NULL AS double)"}]
+    },
+    {
+      "user": "city_manager_0",
+      "catalog": "iceberg",
+      "schema": "governance_demo",
+      "table": "mart_city_oos_daily",
+      "privileges": ["SELECT"],
+      "filter": "city_id = 0"
+    },
+    {
+      "user": "partner|city_manager_0",
+      "privileges": []
+    },
+    {
+      "privileges": ["SELECT", "INSERT", "DELETE", "UPDATE", "OWNERSHIP"]
+    }
+  ]
+}

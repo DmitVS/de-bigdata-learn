@@ -1,0 +1,175 @@
+{
+	"nodes": [
+		{
+			"id": "title",
+			"type": "text",
+			"x": 0,
+			"y": -300,
+			"width": 1600,
+			"height": 140,
+			"text": "# Слой отдачи\nУрок: [01](../theory/01_serving_layer.md) · [слой отдачи](../../../glossary/serving-layer.md)",
+			"color": "6"
+		},
+		{
+			"id": "g1",
+			"type": "group",
+			"x": 0,
+			"y": -130,
+			"width": 1600,
+			"height": 230,
+			"label": "Ход мысли"
+		},
+		{
+			"id": "s0",
+			"type": "text",
+			"x": 20,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**потребители**\nдашборд, аналитик, отчёт, приложение"
+		},
+		{
+			"id": "s1",
+			"type": "text",
+			"x": 336,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**требования**\nзадержка, параллельность, свежесть"
+		},
+		{
+			"id": "s2",
+			"type": "text",
+			"x": 652,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**схемы**\nlakehouse · копия · федерация"
+		},
+		{
+			"id": "s3",
+			"type": "text",
+			"x": 968,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**стоимость**\nстроки и байты прочитано"
+		},
+		{
+			"id": "s4",
+			"type": "text",
+			"x": 1284,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**наш стек**\nClickHouse · Trino · Superset · Evidence"
+		},
+		{
+			"id": "gl",
+			"type": "group",
+			"x": 0,
+			"y": 140,
+			"width": 780,
+			"height": 460,
+			"label": "Схемы отдачи"
+		},
+		{
+			"id": "gl0",
+			"type": "text",
+			"x": 20,
+			"y": 180,
+			"width": 740,
+			"height": 120,
+			"text": "A: читать Iceberg — одна копия, задержка плавает"
+		},
+		{
+			"id": "gl1",
+			"type": "text",
+			"x": 20,
+			"y": 320,
+			"width": 740,
+			"height": 120,
+			"text": "B: копия в ClickHouse — 4 мс против 29 мс"
+		},
+		{
+			"id": "gl2",
+			"type": "text",
+			"x": 20,
+			"y": 460,
+			"width": 740,
+			"height": 120,
+			"text": "C: Trino — join источников без пайплайна"
+		},
+		{
+			"id": "gr",
+			"type": "group",
+			"x": 820,
+			"y": 140,
+			"width": 780,
+			"height": 460,
+			"label": "Ловушки",
+			"color": "1"
+		},
+		{
+			"id": "gr0",
+			"type": "text",
+			"x": 840,
+			"y": 180,
+			"width": 740,
+			"height": 120,
+			"text": "копия — не источник правды: обновлять в пайплайне"
+		},
+		{
+			"id": "gr1",
+			"type": "text",
+			"x": 840,
+			"y": 320,
+			"width": 740,
+			"height": 120,
+			"text": "«быстрее» по одному запуску — шум"
+		},
+		{
+			"id": "gr2",
+			"type": "text",
+			"x": 840,
+			"y": 460,
+			"width": 740,
+			"height": 120,
+			"text": "serving + spark + streaming сразу — не хватит памяти"
+		}
+	],
+	"edges": [
+		{
+			"id": "e1",
+			"fromNode": "s0",
+			"fromSide": "right",
+			"toNode": "s1",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e2",
+			"fromNode": "s1",
+			"fromSide": "right",
+			"toNode": "s2",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e3",
+			"fromNode": "s2",
+			"fromSide": "right",
+			"toNode": "s3",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e4",
+			"fromNode": "s3",
+			"fromSide": "right",
+			"toNode": "s4",
+			"toSide": "left",
+			"toEnd": "arrow"
+		}
+	]
+}

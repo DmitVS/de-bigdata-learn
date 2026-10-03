@@ -1,0 +1,20 @@
+sources:
+  - name: spark
+    description: Таблицы, которые пишет задача Spark (spark_store_sales.py).
+    database: iceberg
+    schema: governance_demo
+    tables:
+      - name: store_sales_daily
+        description: Продажи магазина за день из файлов датасета; пишет Spark.
+        meta:
+          owner: data-platform
+
+  - name: retail_oltp
+    description: Учётная система сети (Postgres), читается федеративно через каталог postgresql.
+    database: postgresql
+    schema: serving_demo
+    tables:
+      - name: stores
+        description: Текущий справочник магазинов, статус открыт/закрыт.
+        meta:
+          owner: retail-ops

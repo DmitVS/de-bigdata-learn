@@ -1,0 +1,12 @@
+# Учебный dbt-проект модуля 11: модели строятся через Trino прямо в Iceberg (адаптер dbt-trino),
+# поэтому OpenMetadata видит их как таблицы сервиса Trino и связывает с моделями dbt.
+name: governance_demo
+version: "1.0.0"
+profile: governance_demo
+model-paths: ["models"]
+target-path: target
+clean-targets: [target]
+
+models:
+  governance_demo:
+    +materialized: table

@@ -1,0 +1,105 @@
+models:
+  - name: metricflow_time_spine
+    time_spine:
+      standard_granularity_column: date_day
+    columns:
+      - name: date_day
+        granularity: day
+
+semantic_models:
+  - name: sales
+    description: Продажи товара в магазине за день (grain — магазин × товар × день).
+    model: ref('fct_sales_daily')
+    primary_entity: sale_line             # строка факта; своего ключа-колонки у неё нет
+    defaults:
+      agg_time_dimension: dt
+    entities:                               # ① ключи: по ним MetricFlow сам строит join
+      - name: store
+        type: foreign
+        expr: store_id
+      - name: product
+        type: foreign
+        expr: product_id
+    dimensions:                             # ② разрезы
+      - name: dt
+        type: time
+        type_params:
+          time_granularity: day
+      - name: is_promo
+        type: categorical
+        expr: activity_flag = 1
+      - name: is_holiday
+        type: categorical
+        expr: holiday_flag = 1
+    measures:                               # ③ агрегаты колонок
+      - name: sale_amount
+        agg: sum
+      - name: oos_hours
+        description: Часы без товара на полке, 6:00–22:00.
+        agg: sum
+      - name: shelf_hours
+        description: Часы работы с 6 до 22 — 16 на каждую строку.
+        agg: sum
+        expr: "16"
+      - name: product_days
+        agg: count
+        expr: "1"
+
+  - name: stores
+    model: ref('dim_store')
+    entities:
+      - name: store
+        type: primary
+        expr: store_id
+    dimensions:
+      - name: city_id
+        type: categorical
+
+  - name: products
+    model: ref('dim_product')
+    entities:
+      - name: product
+        type: primary
+        expr: product_id
+    dimensions:
+      - name: first_category_id
+        type: categorical
+
+metrics:                                    # ④ определения для бизнеса
+  - name: sales
+    label: Продажи
+    description: Сумма sale_amount (нормированные единицы датасета).
+    type: simple
+    type_params:
+      measure: sale_amount
+
+  - name: oos_hours
+    label: Часы без товара
+    type: simple
+    type_params:
+      measure: oos_hours
+
+  - name: shelf_hours
+    label: Часы работы полки
+    type: simple
+    type_params:
+      measure: shelf_hours
+
+  - name: oos_share
+    label: Доля часов без товара
+    description: Часы без товара / все часы 6–22. Считается из сумм, а не как среднее долей.
+    type: ratio
+    type_params:
+      numerator: oos_hours
+      denominator: shelf_hours
+
+  - name: promo_sales_share
+    label: Доля продаж в промо
+    description: Продажи в дни промо / все продажи.
+    type: ratio
+    type_params:
+      numerator:
+        name: sales
+        filter: "{{ Dimension('sale_line__is_promo') }} = true"
+        alias: promo_sales                  # без псевдонима MetricFlow 0.15 путает части дроби
+      denominator: sales

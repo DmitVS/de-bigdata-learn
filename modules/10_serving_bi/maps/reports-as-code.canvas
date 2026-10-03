@@ -1,0 +1,175 @@
+{
+	"nodes": [
+		{
+			"id": "title",
+			"type": "text",
+			"x": 0,
+			"y": -300,
+			"width": 1600,
+			"height": 140,
+			"text": "# Отчёты как код: Evidence\nУрок: [07](../theory/07_reports_as_code.md) · [отчёт как код](../../../glossary/reports-as-code.md)",
+			"color": "6"
+		},
+		{
+			"id": "g1",
+			"type": "group",
+			"x": 0,
+			"y": -130,
+			"width": 1600,
+			"height": 230,
+			"label": "Ход мысли"
+		},
+		{
+			"id": "s0",
+			"type": "text",
+			"x": 20,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**sources**\nSQL в Trino → Parquet"
+		},
+		{
+			"id": "s1",
+			"type": "text",
+			"x": 336,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**страница**\nmarkdown + SQL + компоненты"
+		},
+		{
+			"id": "s2",
+			"type": "text",
+			"x": 652,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**браузер**\nDuckDB WASM, фильтры"
+		},
+		{
+			"id": "s3",
+			"type": "text",
+			"x": 968,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**build**\nстатический сайт"
+		},
+		{
+			"id": "s4",
+			"type": "text",
+			"x": 1284,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**публикация**\nлюбой веб-сервер"
+		},
+		{
+			"id": "gl",
+			"type": "group",
+			"x": 0,
+			"y": 140,
+			"width": 780,
+			"height": 460,
+			"label": "Дашборд или отчёт"
+		},
+		{
+			"id": "gl0",
+			"type": "text",
+			"x": 20,
+			"y": 180,
+			"width": 740,
+			"height": 120,
+			"text": "дашборд — мониторинг, срез выбирает читатель"
+		},
+		{
+			"id": "gl1",
+			"type": "text",
+			"x": 20,
+			"y": 320,
+			"width": 740,
+			"height": 120,
+			"text": "отчёт — вывод и доказательства, срез выбирает автор"
+		},
+		{
+			"id": "gl2",
+			"type": "text",
+			"x": 20,
+			"y": 460,
+			"width": 740,
+			"height": 120,
+			"text": "отчёт ревьюят как код"
+		},
+		{
+			"id": "gr",
+			"type": "group",
+			"x": 820,
+			"y": 140,
+			"width": 780,
+			"height": 460,
+			"label": "Ловушки",
+			"color": "1"
+		},
+		{
+			"id": "gr0",
+			"type": "text",
+			"x": 840,
+			"y": 180,
+			"width": 740,
+			"height": 120,
+			"text": "DATE из Trino → строкой"
+		},
+		{
+			"id": "gr1",
+			"type": "text",
+			"x": 840,
+			"y": 320,
+			"width": 740,
+			"height": 120,
+			"text": "✖ у среза, но «Done!»"
+		},
+		{
+			"id": "gr2",
+			"type": "text",
+			"x": 840,
+			"y": 460,
+			"width": 740,
+			"height": 120,
+			"text": "срез попадает в сайт целиком"
+		}
+	],
+	"edges": [
+		{
+			"id": "e1",
+			"fromNode": "s0",
+			"fromSide": "right",
+			"toNode": "s1",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e2",
+			"fromNode": "s1",
+			"fromSide": "right",
+			"toNode": "s2",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e3",
+			"fromNode": "s2",
+			"fromSide": "right",
+			"toNode": "s3",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e4",
+			"fromNode": "s3",
+			"fromSide": "right",
+			"toNode": "s4",
+			"toSide": "left",
+			"toEnd": "arrow"
+		}
+	]
+}

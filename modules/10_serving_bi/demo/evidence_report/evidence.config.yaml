@@ -1,0 +1,6 @@
+# Открытый фреймворк Evidence (npm @evidence-dev/evidence): markdown + SQL → статический сайт.
+plugins:
+  components:
+    "@evidence-dev/core-components": {}
+  datasources:
+    "@evidence-dev/trino": {}

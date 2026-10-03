@@ -1,0 +1,16 @@
+# dbt и MetricFlow ищут profiles.yml в текущей папке. Iceberg подключён для чтения витрин.
+serving_semantic:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /workspace/data/demo_serving.duckdb
+      threads: 1
+      extensions: [httpfs, iceberg]
+      attach:
+        - path: lakehouse
+          alias: lh
+          type: iceberg
+          options:
+            endpoint: http://lakekeeper:8181/catalog
+            authorization_type: none

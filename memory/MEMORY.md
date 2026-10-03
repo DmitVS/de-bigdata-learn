@@ -12,6 +12,7 @@
 - [Obsidian](decisions/obsidian.md) — папка проекта = хранилище Obsidian, конвенции ссылок/врезок, плагины
 - [Lineage и документация](decisions/lineage-and-docs.md) — где в курсе lineage, OpenLineage, `dbt docs` в CI и отчёты-страницы Evidence
 - [Визуальные объяснения](decisions/visual-explanations.md) — сложные темы: схема + HTML-страница + видео Manim/Piper
+- [CI в отдельном репозитории](decisions/ci-separate-repo.md) — workflow и pre-commit курса — в его собственном корне, после выноса из repo/
 - [Стиль ASD-STE100](decisions/writing-style-ste.md) — тексты на русском по правилам STE (не меньше 80 %)
 
 ## Lessons

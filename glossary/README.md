@@ -229,3 +229,46 @@
 | [Watermark](watermark.md) | когда закрыть окно; опоздавшие | 08 · урок 04 |
 | [Apache Flink](flink.md) | jobmanager, taskmanager, Flink SQL | 08 · урок 04 |
 | [Чекпоинт](checkpoint.md) | снимок офсетов и состояния; exactly-once | 08 · урок 05 |
+
+## Отдача и BI
+
+| Термин | Коротко | Где впервые |
+|---|---|---|
+| [Слой отдачи](serving-layer.md) | копия, федерация, чтение lakehouse | 10 · урок 01 |
+| [Стоимость запроса](query-cost.md) | строки и байты прочитано; медиана времени | 10 · урок 01 |
+| [ClickHouse](clickhouse.md) | колоночная OLAP-СУБД, `make ch` | 10 · урок 02 |
+| [MergeTree](mergetree.md) | части, слияния, гранулы; Summing/Aggregating/Replacing | 10 · урок 02 |
+| [LSM-дерево](lsm-tree.md) | сортированные сегменты + фоновое слияние | 10 · урок 02 |
+| [Разреженный индекс](sparse-index.md) | засечка на гранулу, начало `ORDER BY` | 10 · урок 02 |
+| [Materialized view ClickHouse](clickhouse-materialized-view.md) | триггер на вставку; `-State`/`-Merge`; refreshable | 10 · урок 03 |
+| [Trino](trino.md) | координатор, worker, коннектор, каталог | 10 · урок 04 |
+| [Федеративный запрос](federated-query.md) | pushdown, динамический фильтр | 10 · урок 04 |
+| [Apache Superset](superset.md) | подключение, датасет, чарт, дашборд | 10 · урок 05 |
+| [Семантический слой](semantic-layer.md) | сущности, измерения, меры, метрики; MetricFlow | 10 · урок 06 |
+| [Отчёт как код](reports-as-code.md) | Evidence: срезы, страница, статическая сборка | 10 · урок 07 |
+
+## Governance
+
+| Термин | Коротко | Где впервые |
+|---|---|---|
+| [Каталог данных](data-catalog.md) | FQN, владелец, глоссарий, tier; сбор метаданных | 11 · урок 01 |
+| [OpenMetadata](openmetadata.md) | сервер, Elasticsearch, сбор `metadata ingest` | 11 · урок 01 |
+| [OpenLineage](openlineage.md) | RunEvent, фасеты, транспорты; агент Spark | 11 · урок 03 |
+| [Управление доступом](access-control.md) | аутентификация, авторизация, RBAC | 11 · урок 04 |
+| [Маскирование и RLS](data-masking-rls.md) | маска колонки, фильтр строк, политика | 11 · урок 04 |
+| [Классификация данных](data-classification.md) | PII, коммерческая тайна, метки | 11 · урок 04 |
+
+## DataOps и CI/CD
+
+| Термин | Коротко | Где впервые |
+|---|---|---|
+| [DataOps](dataops.md) | практики и метрики DORA; окружения | 12 · урок 01 |
+| [pre-commit](pre-commit.md) | проверки перед коммитом | 12 · урок 02 |
+| [CI/CD и slim CI](ci-cd.md) | GitHub Actions; state:modified+, defer | 12 · урок 03 |
+| [Terraform](terraform.md) | провайдер, ресурс, state, plan/apply | 12 · урок 05 |
+
+## Облачное хранилище
+
+| Термин | Коротко | Где впервые |
+|---|---|---|
+| [Snowflake](snowflake.md) | склады, кредиты, микропартиции, stage, TCO | 13 · урок 01 |

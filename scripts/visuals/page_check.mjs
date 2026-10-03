@@ -3,6 +3,7 @@
 // Код выхода 1, если на странице были ошибки. Chrome — сервис chrome слоя media (CDP, порт 9222).
 //
 //   node scripts/visuals/page_check.mjs <страница.html> [ширина=1100] [dark] [js-после-загрузки]
+//   Вместо файла можно дать адрес сервиса в сети Docker: http://evidence:3071/ (модуль 10).
 import fs from "node:fs";
 import path from "node:path";
 
@@ -47,7 +48,8 @@ await send("Page.enable");
 await send("Emulation.setDeviceMetricsOverride", { width: +width, height: 900, deviceScaleFactor: 1, mobile: +width < 500 });
 if (theme === "dark")
   await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "dark" }] });
-await send("Page.navigate", { url: `file://${path.resolve(page)}` });
+const isUrl = /^https?:\/\//.test(page);
+await send("Page.navigate", { url: isUrl ? page : `file://${path.resolve(page)}` });
 await sleep(1500);
 if (script) {
   const res = await send("Runtime.evaluate", { expression: script, awaitPromise: true, returnByValue: true });
@@ -64,7 +66,8 @@ const shot = await send("Page.captureScreenshot", {
   clip: { x: 0, y: 0, width: Math.max(Math.ceil(w), +width), height: Math.ceil(h), scale: 1 },
 });
 fs.mkdirSync("data/shots", { recursive: true });
-const out = `data/shots/${path.basename(page, ".html")}-${width}${theme ? "-" + theme : ""}.png`;
+const name = isUrl ? new URL(page).host.replace(/[:.]/g, "_") : path.basename(page, ".html");
+const out = `data/shots/${name}-${width}${theme ? "-" + theme : ""}.png`;
 fs.writeFileSync(out, Buffer.from(shot.result.data, "base64"));
 
 console.log(`${page}: ${Math.ceil(w)}×${Math.ceil(h)} → ${out}`);

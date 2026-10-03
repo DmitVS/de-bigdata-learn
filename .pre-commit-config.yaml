@@ -1,0 +1,50 @@
+# Проверки перед коммитом (модуль 12). Запускаются в контейнере workspace:
+#   make precommit            — по всем файлам
+#   git commit                — по изменённым (хук из scripts/git-hooks/pre-commit, ставится make hooks)
+# Линтеры — те же, что в make lint и в CI: версии из uv.lock, а не отдельные копии pre-commit.
+default_install_hook_types: [pre-commit]
+exclude: ^(data/|.*/dbt_packages/|.*/target/|.*/edr_target/|.*/node_modules/|.*/\.evidence/)
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+        args: [--unsafe] # теги !reset в compose-файлах
+      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        # Obsidian сохраняет карты и настройки без перевода строки в конце — не спорим с ним
+        exclude: (\.canvas$|^\.obsidian/)
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff format
+        entry: ruff format
+        language: system
+        types: [python]
+      - id: sqlfmt
+        name: sqlfmt
+        entry: sqlfmt
+        language: system
+        types: [sql]
+      - id: yamllint
+        name: yamllint
+        entry: yamllint -s
+        language: system
+        files: ^infra/.*\.ya?ml$
+      - id: no-env-file
+        name: .env не коммитим
+        entry: .env попал в коммит — секреты храни только локально
+        language: fail
+        files: (^|/)\.env$

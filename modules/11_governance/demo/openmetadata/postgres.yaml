@@ -1,0 +1,28 @@
+# Сбор метаданных: Postgres retail_oltp → сервис retail_oltp в OpenMetadata.
+# Запуск: make om-ingest CFG=modules/11_governance/demo/openmetadata/postgres.yaml
+source:
+  type: postgres
+  serviceName: retail_oltp
+  serviceConnection:
+    config:
+      type: Postgres
+      hostPort: postgres:5432
+      username: ${POSTGRES_USER}
+      authType:
+        password: ${POSTGRES_PASSWORD}
+      database: retail_oltp
+  sourceConfig:
+    config:
+      type: DatabaseMetadata
+      schemaFilterPattern:
+        includes: ["serving_demo", "public"]
+sink:
+  type: metadata-rest
+  config: {}
+workflowConfig:
+  loggerLevel: INFO
+  openMetadataServerConfig:
+    hostPort: http://openmetadata:8585/api
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: ${OM_INGESTION_TOKEN}

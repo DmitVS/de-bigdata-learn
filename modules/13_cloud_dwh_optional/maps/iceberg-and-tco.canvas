@@ -1,0 +1,175 @@
+{
+	"nodes": [
+		{
+			"id": "title",
+			"type": "text",
+			"x": 0,
+			"y": -300,
+			"width": 1600,
+			"height": 140,
+			"text": "# Облако или lakehouse\nУрок: [03](../theory/03_iceberg_and_tco.md) · [Iceberg](../../../glossary/iceberg.md) · [ADR](../../../glossary/adr.md)",
+			"color": "6"
+		},
+		{
+			"id": "g1",
+			"type": "group",
+			"x": 0,
+			"y": -130,
+			"width": 1600,
+			"height": 230,
+			"label": "Ход мысли"
+		},
+		{
+			"id": "s0",
+			"type": "text",
+			"x": 20,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**Iceberg**\nданные в вашем бакете"
+		},
+		{
+			"id": "s1",
+			"type": "text",
+			"x": 336,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**каталог**\nSnowflake или внешний"
+		},
+		{
+			"id": "s2",
+			"type": "text",
+			"x": 652,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**TCO**\nвсе статьи за год"
+		},
+		{
+			"id": "s3",
+			"type": "text",
+			"x": 968,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**lock-in**\nцена ухода"
+		},
+		{
+			"id": "s4",
+			"type": "text",
+			"x": 1284,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**ADR**\nрешение + условия пересмотра"
+		},
+		{
+			"id": "gl",
+			"type": "group",
+			"x": 0,
+			"y": 140,
+			"width": 780,
+			"height": 460,
+			"label": "Статьи TCO"
+		},
+		{
+			"id": "gl0",
+			"type": "text",
+			"x": 20,
+			"y": 180,
+			"width": 740,
+			"height": 120,
+			"text": "хранение и вычисления"
+		},
+		{
+			"id": "gl1",
+			"type": "text",
+			"x": 20,
+			"y": 320,
+			"width": 740,
+			"height": 120,
+			"text": "лицензии и поддержка"
+		},
+		{
+			"id": "gl2",
+			"type": "text",
+			"x": 20,
+			"y": 460,
+			"width": 740,
+			"height": 120,
+			"text": "часы инженеров"
+		},
+		{
+			"id": "gr",
+			"type": "group",
+			"x": 820,
+			"y": 140,
+			"width": 780,
+			"height": 460,
+			"label": "Ловушки",
+			"color": "1"
+		},
+		{
+			"id": "gr0",
+			"type": "text",
+			"x": 840,
+			"y": 180,
+			"width": 740,
+			"height": 120,
+			"text": "сравнение только по счёту облака"
+		},
+		{
+			"id": "gr1",
+			"type": "text",
+			"x": 840,
+			"y": 320,
+			"width": 740,
+			"height": 120,
+			"text": "склады без контроля"
+		},
+		{
+			"id": "gr2",
+			"type": "text",
+			"x": 840,
+			"y": 460,
+			"width": 740,
+			"height": 120,
+			"text": "решение без условий пересмотра"
+		}
+	],
+	"edges": [
+		{
+			"id": "e1",
+			"fromNode": "s0",
+			"fromSide": "right",
+			"toNode": "s1",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e2",
+			"fromNode": "s1",
+			"fromSide": "right",
+			"toNode": "s2",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e3",
+			"fromNode": "s2",
+			"fromSide": "right",
+			"toNode": "s3",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e4",
+			"fromNode": "s3",
+			"fromSide": "right",
+			"toNode": "s4",
+			"toSide": "left",
+			"toEnd": "arrow"
+		}
+	]
+}

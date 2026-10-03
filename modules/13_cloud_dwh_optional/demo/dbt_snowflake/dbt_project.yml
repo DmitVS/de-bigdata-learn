@@ -1,0 +1,14 @@
+# Учебный dbt-проект модуля 13: тот же расчёт, что в lakehouse, но на Snowflake.
+# Разбор без подключения: dbt parse (урок 02). Сборка — dbt build, нужен аккаунт Snowflake.
+name: snowflake_demo
+version: "1.0.0"
+profile: snowflake_demo
+model-paths: ["models"]
+target-path: target
+
+models:
+  snowflake_demo:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

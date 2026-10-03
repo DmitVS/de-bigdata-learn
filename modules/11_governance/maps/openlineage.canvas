@@ -1,0 +1,175 @@
+{
+	"nodes": [
+		{
+			"id": "title",
+			"type": "text",
+			"x": 0,
+			"y": -300,
+			"width": 1600,
+			"height": 140,
+			"text": "# OpenLineage\nУрок: [03](../theory/03_openlineage.md) · [OpenLineage](../../../glossary/openlineage.md)",
+			"color": "6"
+		},
+		{
+			"id": "g1",
+			"type": "group",
+			"x": 0,
+			"y": -130,
+			"width": 1600,
+			"height": 230,
+			"label": "Ход мысли"
+		},
+		{
+			"id": "s0",
+			"type": "text",
+			"x": 20,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**событие**\nRunEvent: START → COMPLETE"
+		},
+		{
+			"id": "s1",
+			"type": "text",
+			"x": 336,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**задача**\nnamespace + name"
+		},
+		{
+			"id": "s2",
+			"type": "text",
+			"x": 652,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**датасеты**\nвходы и выходы"
+		},
+		{
+			"id": "s3",
+			"type": "text",
+			"x": 968,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**фасеты**\nschema, symlinks, columnLineage"
+		},
+		{
+			"id": "s4",
+			"type": "text",
+			"x": 1284,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**транспорт**\nfile · http · composite"
+		},
+		{
+			"id": "gl",
+			"type": "group",
+			"x": 0,
+			"y": 140,
+			"width": 780,
+			"height": 460,
+			"label": "Что мы видели"
+		},
+		{
+			"id": "gl0",
+			"type": "text",
+			"x": 20,
+			"y": 180,
+			"width": 740,
+			"height": 120,
+			"text": "агент Spark: 16 событий за запуск, rowCount 87 106"
+		},
+		{
+			"id": "gl1",
+			"type": "text",
+			"x": 20,
+			"y": 320,
+			"width": 740,
+			"height": 120,
+			"text": "выход Iceberg = место в S3, имя — в symlinks"
+		},
+		{
+			"id": "gl2",
+			"type": "text",
+			"x": 20,
+			"y": 460,
+			"width": 740,
+			"height": 120,
+			"text": "Python: openlineage-python, время с Z"
+		},
+		{
+			"id": "gr",
+			"type": "group",
+			"x": 820,
+			"y": 140,
+			"width": 780,
+			"height": 460,
+			"label": "Ловушки",
+			"color": "1"
+		},
+		{
+			"id": "gr0",
+			"type": "text",
+			"x": 840,
+			"y": 180,
+			"width": 740,
+			"height": 120,
+			"text": "URL с путём + endpoint — ошибка Java-клиента"
+		},
+		{
+			"id": "gr1",
+			"type": "text",
+			"x": 840,
+			"y": 320,
+			"width": 740,
+			"height": 120,
+			"text": "файлы OpenMetadata не сопоставляет"
+		},
+		{
+			"id": "gr2",
+			"type": "text",
+			"x": 840,
+			"y": 460,
+			"width": 740,
+			"height": 120,
+			"text": "нет сервиса openlineage — нет пайплайна"
+		}
+	],
+	"edges": [
+		{
+			"id": "e1",
+			"fromNode": "s0",
+			"fromSide": "right",
+			"toNode": "s1",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e2",
+			"fromNode": "s1",
+			"fromSide": "right",
+			"toNode": "s2",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e3",
+			"fromNode": "s2",
+			"fromSide": "right",
+			"toNode": "s3",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e4",
+			"fromNode": "s3",
+			"fromSide": "right",
+			"toNode": "s4",
+			"toSide": "left",
+			"toEnd": "arrow"
+		}
+	]
+}

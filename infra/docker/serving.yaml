@@ -1,0 +1,161 @@
+# Слой serving (модуль 10): отдача данных бизнесу.
+#   clickhouse   — колоночная СУБД для быстрых витрин (MergeTree); HTTP http://localhost:8123,
+#                  веб-консоль запросов http://localhost:8123/play
+#   trino        — распределённый SQL-движок: один запрос к Iceberg, Postgres и ClickHouse
+#                  (каталоги в trino/catalog), UI http://localhost:8082
+#   superset-db-init, superset-init — однократно: база superset в Postgres, миграции, админ
+#   superset     — BI: подключения, датасеты, чарты, дашборды; http://localhost:8088
+#   evidence     — отчёты как код (markdown + SQL → сайт); профиль evidence, http://localhost:3071
+#
+# Запуск: make up PROFILES="serving"; Evidence — make up PROFILES="serving evidence".
+# Секреты — CLICKHOUSE_PASSWORD, SUPERSET_SECRET_KEY, SUPERSET_ADMIN_PASSWORD в .env.
+
+x-superset-env: &superset-env
+  SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.8.15.10
+    profiles: [serving]
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-de}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      # Иначе entrypoint делает chown -R папки user_files_path — то есть data репозитория
+      CLICKHOUSE_DO_NOT_CHOWN: 1
+    working_dir: /workspace
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      # Репозиторий — только чтение: SQL-файлы для make ch и данные для функции file()
+      # (user_files_path = /workspace/data, см. config.d/serving.xml)
+      - ../..:/workspace:ro
+      - ./clickhouse/config.d/serving.xml:/etc/clickhouse-server/config.d/serving.xml:ro
+    ports:
+      - "127.0.0.1:8123:8123" # HTTP-интерфейс и /play; нативный протокол 9000 — только в сети
+    ulimits:
+      nofile: {soft: 262144, hard: 262144}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8123/ping | grep -q Ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  trino:
+    image: trinodb/trino:483
+    profiles: [serving]
+    # Куча JVM — 80 % лимита контейнера (настройка образа): лимит держит Trino в пределах 3 ГБ
+    mem_limit: 3g
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-de}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      ICEBERG_WAREHOUSE: ${ICEBERG_WAREHOUSE}
+    volumes:
+      - ./trino/catalog:/etc/trino/catalog:ro
+      # Правила доступа (модуль 11, урок 04): пользователи partner и city_manager_0 — учебные
+      - ./trino/access-control.properties:/etc/trino/access-control.properties:ro
+      - ./trino/rules.json:/etc/trino/rules.json:ro
+    ports:
+      - "127.0.0.1:8082:8080" # UI и REST API координатора
+    depends_on:
+      lakekeeper-init:
+        condition: service_completed_successfully
+      clickhouse:
+        condition: service_healthy
+    restart: unless-stopped
+
+  superset-db-init:
+    image: postgres:17.11
+    profiles: [serving]
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - >
+        psql -tAc "SELECT 1 FROM pg_database WHERE datname = 'superset'" | grep -q 1
+        || psql -c "CREATE DATABASE superset"
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # Однократно: миграции метаданных, пользователь admin, роли и права.
+  superset-init:
+    build: ./superset
+    image: debd/superset:6.1.0
+    profiles: [serving]
+    command:
+      - /bin/sh
+      - -c
+      - >
+        superset db upgrade &&
+        superset fab create-admin --username admin --firstname Admin --lastname DE
+        --email admin@example.local --password "$${SUPERSET_ADMIN_PASSWORD}" || true &&
+        superset init
+    environment:
+      <<: *superset-env
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+    volumes:
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+    depends_on:
+      superset-db-init:
+        condition: service_completed_successfully
+    restart: "no"
+
+  superset:
+    image: debd/superset:6.1.0
+    profiles: [serving]
+    environment: *superset-env
+    volumes:
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+    ports:
+      - "127.0.0.1:8088:8088"
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8088/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+      trino:
+        condition: service_started
+    restart: unless-stopped
+
+  # Evidence — Node.js-проект в репозитории; зависимости ставятся в его node_modules (вне git).
+  evidence:
+    image: node:22.20.0-slim
+    profiles: [evidence]
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    # Папка проекта: учебный отчёт или свой (лаба 10.5): EVIDENCE_DIR=capstone/serving/report make …
+    working_dir: /workspace/${EVIDENCE_DIR:-modules/10_serving_bi/demo/evidence_report}
+    environment:
+      HOME: /tmp
+      npm_config_cache: /workspace/data/.npm
+      SEND_ANONYMOUS_USAGE_STATS: "no" # телеметрия Evidence выключена
+    # Зависимости → выгрузка срезов из источников (sources) → сервер разработки
+    command:
+      - sh
+      - -c
+      - npm ci && npm run sources && npm run dev -- --host 0.0.0.0 --port 3071
+    volumes:
+      - ../..:/workspace
+    ports:
+      - "127.0.0.1:3071:3071"
+    depends_on:
+      trino:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  clickhouse-data:

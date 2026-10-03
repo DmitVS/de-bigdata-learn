@@ -1,0 +1,11 @@
+<!-- Настройки ClickHouse для учебного стека (модуль 10).
+     Память сервера ограничена 4 ГБ: остальное нужно Trino, Superset и core.
+     user_files_path — папка data репозитория: file('raw/freshretailnet_50k/data/*.parquet').
+     system.query_log включён по умолчанию — по нему считаем прочитанные строки и байты. -->
+<clickhouse>
+    <max_server_memory_usage>4294967296</max_server_memory_usage>
+    <user_files_path>/workspace/data/</user_files_path>
+    <logger>
+        <level>warning</level>
+    </logger>
+</clickhouse>

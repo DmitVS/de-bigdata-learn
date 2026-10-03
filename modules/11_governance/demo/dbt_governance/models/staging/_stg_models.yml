@@ -1,0 +1,30 @@
+models:
+  - name: stg_store_sales_daily
+    description: Продажи и часы без товара по магазину за день.
+    meta:
+      owner: data-platform
+    columns:
+      - name: store_id
+        description: ID магазина датасета.
+      - name: city_id
+        description: ID города датасета.
+      - name: dt
+        description: День продаж.
+      - name: sales
+        description: Сумма продаж за день, нормированные единицы датасета.
+        meta:
+          sensitivity: commercial
+      - name: oos_hours
+        description: Часы без товара на полке с 6 до 22, сумма по товарам.
+      - name: shelf_hours
+        description: Часы работы полки — 16 на каждый товар магазина.
+
+  - name: stg_stores
+    description: Магазины учётной системы и признак «открыт сейчас».
+    columns:
+      - name: store_id
+        description: ID магазина.
+      - name: city_id
+        description: ID города.
+      - name: is_open
+        description: Магазин открыт по данным учётной системы.

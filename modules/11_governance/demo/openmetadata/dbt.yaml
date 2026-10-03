@@ -1,0 +1,27 @@
+# Сбор метаданных dbt: модели, описания, тесты и lineage моделей поверх таблиц сервиса trino_lake.
+# Перед запуском в demo/dbt_governance: dbt docs generate, затем dbt build — именно в таком
+# порядке: docs generate перезаписывает run_results.json, а результаты тестов даёт build.
+# Запуск: make om-ingest CFG=modules/11_governance/demo/openmetadata/dbt.yaml
+source:
+  type: dbt
+  serviceName: trino_lake
+  sourceConfig:
+    config:
+      type: DBT
+      dbtConfigSource:
+        dbtConfigType: local
+        dbtManifestFilePath: /workspace/modules/11_governance/demo/dbt_governance/target/manifest.json
+        dbtCatalogFilePath: /workspace/modules/11_governance/demo/dbt_governance/target/catalog.json
+        dbtRunResultsFilePath: /workspace/modules/11_governance/demo/dbt_governance/target/run_results.json
+      dbtUpdateDescriptions: true
+      includeTags: true
+sink:
+  type: metadata-rest
+  config: {}
+workflowConfig:
+  loggerLevel: INFO
+  openMetadataServerConfig:
+    hostPort: http://openmetadata:8585/api
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: ${OM_INGESTION_TOKEN}

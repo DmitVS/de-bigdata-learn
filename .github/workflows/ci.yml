@@ -1,0 +1,87 @@
+# CI курса (модуль 12). Рассчитан на отдельный репозиторий курса: пути — от его корня
+# (решение memory/decisions/ci-separate-repo.md). Шаги — скрипты scripts/ci/*.sh: те же
+# проверки локально запускает make ci.
+#
+# Pull request: lint → test и dbt (slim CI против состояния прода с GitHub Pages).
+# Push в main: то же + публикация dbt docs на GitHub Pages (вместе с manifest.json —
+# он становится состоянием прода для следующих pull request).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  UV_VERSION: "0.9.30"
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - run: scripts/ci/lint.sh
+
+  test:
+    needs: lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - run: scripts/ci/test.sh
+
+  dbt:
+    needs: lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - name: Кэш датасета
+        uses: actions/cache@v6
+        with:
+          path: data/raw
+          key: freshretailnet-50k-v1
+      - name: Состояние прода для slim CI
+        if: github.event_name == 'pull_request'
+        run: |
+          mkdir -p ci_state
+          curl -fsSL "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/manifest.json" \
+            -o ci_state/manifest.json || rm -f ci_state/manifest.json
+      - run: scripts/ci/dbt.sh
+      - name: Сайт документации
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: modules/05_transformation_dbt/demo/target
+
+  docs:
+    if: github.ref == 'refs/heads/main'
+    needs: [test, dbt]
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5

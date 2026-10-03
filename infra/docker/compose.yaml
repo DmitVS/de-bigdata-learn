@@ -13,5 +13,5 @@ include:
   - spark.yaml           # модуль 07: Spark master, 2 workers, Spark Connect (профиль spark)
   - streaming.yaml       # модуль 08: Redpanda, Console, Kafka Connect/Debezium, Flink (профиль streaming)
   - media.yaml           # видео-объяснения: Manim + Piper (профиль media, запуск — make video)
-  # - serving.yaml         # модуль 10: ClickHouse, Trino, Superset
-  # - governance.yaml      # модуль 11: OpenMetadata
+  - serving.yaml         # модуль 10: ClickHouse, Trino, Superset (профиль serving), Evidence (профиль evidence)
+  - governance.yaml      # модуль 11: OpenMetadata, Elasticsearch, Spark + OpenLineage (профиль governance)

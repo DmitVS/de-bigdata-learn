@@ -51,7 +51,8 @@ services:
       retries: 10
     restart: unless-stopped
 
-  # Однократно: бакеты landing (сырые файлы) и warehouse (данные Iceberg).
+  # Однократно: бакеты landing (сырые файлы), warehouse (данные Iceberg), tfstate (состояние
+  # Terraform, модуль 12).
   silo-init:
     image: pgsty/silo:RELEASE.2026-09-03T13-18-01Z
     depends_on:
@@ -62,7 +63,7 @@ services:
       - -c
       - |
         mc alias set local http://silo:9000 "$${S3_ACCESS_KEY}" "$${S3_SECRET_KEY}" &&
-        mc mb --ignore-existing local/landing local/warehouse
+        mc mb --ignore-existing local/landing local/warehouse local/tfstate
     environment:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
       S3_SECRET_KEY: ${S3_SECRET_KEY}
@@ -148,6 +149,12 @@ services:
       SOURCES__SQL_DATABASE__CREDENTIALS: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/retail_oltp
       SOURCES__RETAIL_API__API_KEY: ${RETAIL_API_KEY}
       RETAIL_API_URL: http://retail-api:8000
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:-} # модули 10–11: скрипты API Superset
+      # Модуль 13 (опционально): реквизиты Snowflake для dbt-snowflake; пусто — работает только dbt parse
+      SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT:-}
+      SNOWFLAKE_USER: ${SNOWFLAKE_USER:-}
+      SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD:-}
+      SNOWFLAKE_ROLE: ${SNOWFLAKE_ROLE:-SYSADMIN}
       ICEBERG_CATALOG__ICEBERG_CATALOG_TYPE: rest
       ICEBERG_CATALOG__ICEBERG_CATALOG_CONFIG: >-
         {"type": "rest", "uri": "http://lakekeeper:8181/catalog", "warehouse": "${ICEBERG_WAREHOUSE}"}

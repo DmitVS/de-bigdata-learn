@@ -16,9 +16,9 @@
 | `orchestration.yaml` | Dagster (webserver, daemon, code-сервер `dagster-demo`) — профиль `orchestration`; Airflow 3 standalone — профиль `airflow` | ~0,7 ГБ Dagster, ~1,2 ГБ Airflow | 06 | ✅ |
 | `spark.yaml` | Spark master, 2 workers (по 2 ядра, 3 ГБ), Spark Connect (driver) — профиль `spark` | ~5,5 ГБ | 07 | ✅ |
 | `streaming.yaml` | Redpanda (+ Schema Registry) + Console, Kafka Connect/Debezium, Flink (jobmanager + taskmanager) — профиль `streaming` | ~4–5 ГБ | 08 | ✅ |
-| `serving.yaml` | ClickHouse, Trino, Superset | 4–5 ГБ | 10 | ⬜ |
+| `serving.yaml` | ClickHouse 26.8, Trino 483, Superset 6.1 — профиль `serving`; Evidence — профиль `evidence` | ~3–4,5 ГБ (Trino ≤ 3 ГБ) | 10 | ✅ |
 | `media.yaml` | `media` — Manim + Piper для видео-объяснений (запуск по `make video`, не сервис) | по вызову | все | ✅ |
-| `governance.yaml` | OpenMetadata + Elasticsearch | 5–6 ГБ | 11 | ⬜ |
+| `governance.yaml` | OpenMetadata 2.0.3 + Elasticsearch 9.3, сбор `om-ingest`, `spark-lineage` — профиль `governance` | ~3 ГБ (+1 ГБ на время сбора) | 11 | ✅ |
 
 Машина: Ryzen 7 9700X (16 потоков), 30 ГБ RAM, ~89 ГБ свободно на диске. Комфортная сессия —
 core + 1–2 слоя. Governance запускать отдельно от spark/streaming.
@@ -59,9 +59,13 @@ core + 1–2 слоя. Governance запускать отдельно от spark
 | 4040 | Spark: UI приложения Spark Connect (jobs, stages, SQL) | gRPC 15002 — только внутри сети |
 | 8084 | Redpanda Console | Kafka API 9092, Schema Registry 8081, Connect 8083 — только внутри сети |
 | 8086 | Flink UI | 8081 на хосте занят Airflow |
+| 8123 | ClickHouse: HTTP, веб-консоль `/play` (слой `serving`) | нативный протокол 9000 — только внутри сети |
+| 8082 | Trino UI и REST API (слой `serving`) | без аутентификации, только учебный стек |
+| 8088 | Superset (слой `serving`) | `admin` / `SUPERSET_ADMIN_PASSWORD` |
+| 3071 | Evidence, сервер разработки (профиль `evidence`) | Vite пускает только `localhost` |
 | 8080 | — | **занят на хосте** (open-webui), не использовать |
 | 3000, 3001 | — | **заняты на хосте** (`secure_firefox`), не использовать |
-| зарезервировано | 8123 ClickHouse · 8082 Trino · 8088 Superset · 3071 Evidence · 8585 OpenMetadata | для будущих слоёв |
+| 8585 | OpenMetadata: UI и REST API (слой `governance`) | `admin@open-metadata.org` / `admin`; Elasticsearch 9200 — только внутри сети |
 
 ## Подключение к Iceberg из workspace
 
@@ -159,6 +163,70 @@ SHOW ALL TABLES;
   требует `REPLICA IDENTITY FULL` у таблиц-источников.
 - `make rpk ARGS="…"` — CLI Redpanda (`make -s`, если вывод идёт дальше по конвейеру).
 
+## Отдача и BI (модуль 10)
+
+```
+ Iceberg (Lakekeeper + Silo) ──DataLakeCatalog──► clickhouse:8123 (MergeTree, витрины дашборда)
+        │                                              │
+        └──── каталоги iceberg / postgresql / clickhouse ──► trino:8080 (UI :8082)
+                                                       │
+ superset:8088 ◄── clickhousedb:// · trino:// ─────────┘        evidence:3071 ◄── Trino (sources)
+ (метаданные — база superset в Postgres)                         make report → build/
+```
+
+- **ClickHouse** `26.8.15.10`: пользователь и пароль — `CLICKHOUSE_USER`/`CLICKHOUSE_PASSWORD`.
+  Репозиторий смонтирован только на чтение в `/workspace`: `make ch ARGS="--queries-file
+  modules/…sql"`; `user_files_path` = `/workspace/data`, поэтому `file('raw/…/*.parquet')`.
+  `CLICKHOUSE_DO_NOT_CHOWN=1` обязателен: иначе entrypoint делает `chown -R` папки `user_files_path`.
+  Память сервера — до 4 ГБ (`clickhouse/config.d/serving.xml`). Iceberg: `SET
+  allow_database_iceberg = 1` + `DataLakeCatalog` (beta), ключи S3 — от Lakekeeper.
+- **Trino** `483`: каталоги — `trino/catalog/*.properties`, секреты через `${ENV:…}`, Iceberg с
+  vended credentials. `mem_limit: 3g`, куча — 80 % лимита. CLI — `make trino`.
+- **Superset** `6.1.0`: свой образ `debd/superset:6.1.0` (`superset/Dockerfile`: psycopg2-binary,
+  clickhouse-connect, trino). `superset-db-init` создаёт базу `superset`, `superset-init` —
+  миграции и админа. Кэш — SimpleCache 600 с. `SUPERSET_SECRET_KEY` шифрует пароли подключений:
+  не меняй его после первого запуска.
+- **Evidence** — открытый фреймворк `@evidence-dev/evidence` 40.1.8 на `node:22.20.0-slim`; проект —
+  `EVIDENCE_DIR` (по умолчанию учебный отчёт), зависимости — в его `node_modules` (вне git), кэш
+  npm — `data/.npm`. При старте: `npm ci`, `npm run sources`, `npm run dev`. Сборка сайта —
+  `make report` (останавливает сервер разработки: они делят папку `.evidence`). Телеметрия
+  выключена (`SEND_ANONYMOUS_USAGE_STATS=no`).
+- Python-клиенты в workspace (группа `serving`): `clickhouse-connect`, `trino`, `dbt-metricflow`.
+
+## Governance (модуль 11)
+
+```
+ om-ingest (CLI metadata + YAML в git) ──REST, токен бота──► openmetadata:8585 ◄── spark-lineage
+   читает Trino, Postgres, dbt (target/), Superset              │      (spark-submit local[2]
+                                                                 │       + агент OpenLineage)
+                            Postgres, база openmetadata ◄────────┴────► elasticsearch (поиск, граф)
+```
+
+- **OpenMetadata** `2.0.3` на общем Postgres 17 (база `openmetadata`, создаёт `om-db-init`;
+  миграции — `om-migrate`) и Elasticsearch `9.3.0` (1 ГБ кучи). Встроенный Airflow не ставится
+  (`PIPELINE_SERVICE_CLIENT_ENABLED=false`): сбор метаданных — `make om-ingest CFG=…yaml` в
+  разовом контейнере `openmetadata/ingestion:2.0.3`; переменные `${…}` в YAML подставляются из
+  окружения. `OM_FERNET_KEY` шифрует пароли подключений.
+- `make om-token` — токен бота `ingestion-bot` в `.env` (`OM_INGESTION_TOKEN`) и сервис пайплайнов
+  `openlineage`, к которому OpenMetadata привязывает события OpenLineage.
+- **spark-lineage** — образ `debd/spark:4.1.3` (в нём `openlineage-spark` 1.53.0) в локальном
+  режиме; `spark/submit_with_lineage.sh` шлёт события составным транспортом: HTTP в
+  `/api/v1/openlineage/lineage` и файл `data/openlineage/events.jsonl`. Кластер модуля 07 не нужен.
+- **Trino**: правила доступа `trino/rules.json` (перечитываются каждые 10 с). Последнее правило
+  даёт полный доступ всем прочим пользователям — Superset, Evidence и dbt работают как раньше.
+
+## DataOps (модуль 12)
+
+- **pre-commit** — в образе workspace (группа `dev`): `make precommit [ARGS="--all-files"]`;
+  git-хук `scripts/git-hooks/pre-commit` → `make precommit`, ставится `make hooks` (нужен `.git` в
+  корне курса). Кэш хуков — `data/.pre-commit`.
+- **CI** — `.github/workflows/ci.yml` (для отдельного репозитория курса), шаги `scripts/ci/*.sh`.
+  Локально — `make ci [CI_STEPS="lint test dbt"]` в чистом контейнере `ghcr.io/astral-sh/uv:python3.12-bookworm-slim`
+  без стека: venv — `data/.ci-venv`, кэш — `data/.uv-cache`, состояние slim CI — `data/ci_state`.
+- **Terraform** — `hashicorp/terraform:1.16.5` в контейнере: `make tf ARGS="plan" [TF_DIR=…]`;
+  ключи S3 и Postgres — из `.env`; state — бакет `tfstate` в Silo (создаёт `silo-init`),
+  блокировка `use_lockfile`. Кэш провайдеров — `data/.terraform/<папка>`.
+
 ## Частые операции
 
 | Задача | Команда |
@@ -168,6 +236,10 @@ SHOW ALL TABLES;
 | Dagster CLI / оболочка (модуль 06) | `make dagster ARGS="asset list"`, `make dagster-shell` |
 | Redpanda CLI (модуль 08) | `make rpk ARGS="topic list"` |
 | Flink SQL (модуль 08) | `make flink-sql ARGS="-f /workspace/…sql"` |
+| ClickHouse / Trino (модуль 10) | `make ch`, `make trino` |
+| OpenMetadata (модуль 11) | `make om-token`, `make om-ingest CFG=…`, `make spark-lineage` |
+| pre-commit / CI / Terraform (модуль 12) | `make precommit`, `make ci`, `make tf ARGS="plan"` |
+| Собрать отчёт Evidence (модуль 10) | `make report` (свой проект — `EVIDENCE_DIR=… make report`) |
 | Видео-объяснение | `make video SCENE=modules/…/<тема>_video.py [Q=l] [VOICE=piper]` → `<тема>.mp4` рядом (по умолчанию ElevenLabs) |
 | Остановить тяжёлый слой | `docker compose --env-file .env -f infra/docker/compose.yaml stop <сервисы>` |
 | Остановить (данные сохраняются) | `make down` |

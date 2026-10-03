@@ -1,0 +1,175 @@
+{
+	"nodes": [
+		{
+			"id": "title",
+			"type": "text",
+			"x": 0,
+			"y": -300,
+			"width": 1600,
+			"height": 140,
+			"text": "# Доступы и этика\nУрок: [04](../theory/04_access_control.md) · [доступ](../../../glossary/access-control.md) · [маски и RLS](../../../glossary/data-masking-rls.md)",
+			"color": "6"
+		},
+		{
+			"id": "g1",
+			"type": "group",
+			"x": 0,
+			"y": -130,
+			"width": 1600,
+			"height": 230,
+			"label": "Ход мысли"
+		},
+		{
+			"id": "s0",
+			"type": "text",
+			"x": 20,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**кто**\nаутентификация"
+		},
+		{
+			"id": "s1",
+			"type": "text",
+			"x": 336,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**что можно**\nавторизация, роли"
+		},
+		{
+			"id": "s2",
+			"type": "text",
+			"x": 652,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**колонки**\nмаска"
+		},
+		{
+			"id": "s3",
+			"type": "text",
+			"x": 968,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**строки**\nфильтр, RLS"
+		},
+		{
+			"id": "s4",
+			"type": "text",
+			"x": 1284,
+			"y": -90,
+			"width": 296,
+			"height": 160,
+			"text": "**зачем**\nклассификация, этика"
+		},
+		{
+			"id": "gl",
+			"type": "group",
+			"x": 0,
+			"y": 140,
+			"width": 780,
+			"height": 460,
+			"label": "Где правила"
+		},
+		{
+			"id": "gl0",
+			"type": "text",
+			"x": 20,
+			"y": 180,
+			"width": 740,
+			"height": 120,
+			"text": "Trino: rules.json, сверху вниз"
+		},
+		{
+			"id": "gl1",
+			"type": "text",
+			"x": 20,
+			"y": 320,
+			"width": 740,
+			"height": 120,
+			"text": "Postgres: GRANT, права на колонки"
+		},
+		{
+			"id": "gl2",
+			"type": "text",
+			"x": 20,
+			"y": 460,
+			"width": 740,
+			"height": 120,
+			"text": "Postgres: ENABLE RLS + POLICY"
+		},
+		{
+			"id": "gr",
+			"type": "group",
+			"x": 820,
+			"y": 140,
+			"width": 780,
+			"height": 460,
+			"label": "Ловушки",
+			"color": "1"
+		},
+		{
+			"id": "gr0",
+			"type": "text",
+			"x": 840,
+			"y": 180,
+			"width": 740,
+			"height": 120,
+			"text": "RLS без политики — 0 строк без ошибки"
+		},
+		{
+			"id": "gr1",
+			"type": "text",
+			"x": 840,
+			"y": 320,
+			"width": 740,
+			"height": 120,
+			"text": "владелец обходит RLS"
+		},
+		{
+			"id": "gr2",
+			"type": "text",
+			"x": 840,
+			"y": 460,
+			"width": 740,
+			"height": 120,
+			"text": "имена таблиц видны в SHOW TABLES"
+		}
+	],
+	"edges": [
+		{
+			"id": "e1",
+			"fromNode": "s0",
+			"fromSide": "right",
+			"toNode": "s1",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e2",
+			"fromNode": "s1",
+			"fromSide": "right",
+			"toNode": "s2",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e3",
+			"fromNode": "s2",
+			"fromSide": "right",
+			"toNode": "s3",
+			"toSide": "left",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "e4",
+			"fromNode": "s3",
+			"fromSide": "right",
+			"toNode": "s4",
+			"toSide": "left",
+			"toEnd": "arrow"
+		}
+	]
+}

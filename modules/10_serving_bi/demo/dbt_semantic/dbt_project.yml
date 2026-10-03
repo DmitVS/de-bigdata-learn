@@ -1,0 +1,12 @@
+# Учебный семантический слой (урок 06): метрики сети описаны один раз в YAML,
+# MetricFlow (mf) генерирует по ним SQL. Витрины — копия serving_demo из Iceberg в файле DuckDB.
+name: serving_semantic
+version: "1.0.0"
+profile: serving_semantic
+model-paths: ["models"]
+target-path: target
+clean-targets: [target]
+
+models:
+  serving_semantic:
+    +materialized: table
