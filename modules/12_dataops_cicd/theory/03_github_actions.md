@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7      # ④ готовый action: код репозитория
-      - uses: astral-sh/setup-uv@v10   #    uv нужной версии, кэш пакетов
+      - uses: astral-sh/setup-uv@v10.2.0  # uv нужной версии, кэш пакетов
         with: {version: "0.9.30", enable-cache: true}
       - run: scripts/ci/lint.sh        # ⑤ сам шаг — скрипт из репозитория
   test:
@@ -78,7 +78,7 @@ jobs:
 | ① | `pull_request` — проверка предложенного изменения; `push` в `main` — сборка прода и публикация |
 | ② | экономит минуты: проверять устаревший коммит незачем |
 | ③ | токен workflow по умолчанию может только читать; права на публикацию выдаются одной job (урок 04) |
-| ④ | `uses` — чужой action с версией; версию закрепляют, иначе обновление action сломает CI без твоих правок |
+| ④ | `uses` — чужой action с версией; версию закрепляют, иначе обновление action сломает CI без твоих правок. Короткий тег (`@v7`) есть не у всех: первый запуск курса на GitHub упал на `setup-uv@v10` — такого тега нет |
 | ⑤ | шаг — скрипт в репозитории, а не длинная команда в YAML (шаг 2) |
 | ⑥ | jobs без `needs` идут параллельно на разных машинах; `test` и `dbt` у нас параллельны |
 
@@ -225,7 +225,7 @@ sequenceDiagram
 | Запуск на pull request и в `main` | `on: {pull_request: , push: {branches: [main]}}` |
 | Порядок jobs | `needs: lint` |
 | Условие | `if: github.ref == 'refs/heads/main'` |
-| Кэш пакетов | `astral-sh/setup-uv` с `enable-cache: true` |
+| Кэш пакетов | `astral-sh/setup-uv@v10.2.0` с `enable-cache: true` |
 | Кэш файлов | `actions/cache` с `path` и `key` |
 | Секрет | `${{ secrets.ИМЯ }}` |
 | CI локально | `make ci`, один шаг — `CI_STEPS="dbt"` |
@@ -239,6 +239,7 @@ sequenceDiagram
 | CI зелёный, но ничего не проверено | тесты пропущены | `skipped` в выводе | считать выполненные тесты; дать CI нужное окружение |
 | Работает локально, падает в CI | зависимость от локального стека или файлов | `make ci` | всё нужное CI получает сам |
 | CI сломался без изменений в репозитории | версия action или пакета не закреплена | лог запуска | закрепить `@vN`, `uv.lock`, `--frozen` |
+| Job падает на `Set up job`: `Unable to resolve action …, unable to find version` | такого тега у action нет (у `setup-uv` нет `v10`, только `v10.2.0`) | страница Releases action | указать существующий тег; actionlint этого не ловит |
 | Slim CI собрал всё | нет `manifest.json` прода | лог шага | опубликовать docs из `main` |
 | `ref` указывает на пустую таблицу | slim CI без `--defer` | лог dbt | добавить `--defer` |
 

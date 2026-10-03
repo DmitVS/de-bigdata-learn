@@ -160,7 +160,7 @@ metadata:
   (одна версия из `uv.lock` для pre-commit, `make lint` и CI); git-хук на хосте вызывает `make`.
 - **CI** — GitHub Actions под отдельный репозиторий курса ([ci-separate-repo](ci-separate-repo.md));
   шаги в `scripts/ci/*.sh`, локальная проверка `make ci` в чистом контейнере uv и actionlint 1.7.12.
-  Версии: checkout v7, setup-uv v10 (uv 0.9.30), cache v6, upload-pages-artifact v5, deploy-pages v5.
+  Версии: checkout v7, setup-uv v10.2.0 (короткого тега v10 нет — первый запуск на GitHub упал на `Set up job`; uv 0.9.30), cache v6, upload-pages-artifact v5, deploy-pages v5.
   Slim CI — `manifest.json` прода с GitHub Pages. Первый `make ci` — 7 мин (загрузка), dbt — 1,2 с.
 - **Terraform 1.16.5** в контейнере; провайдеры `aminueza/minio` (~> 3.0) и `cyrilgdn/postgresql`
   (~> 1.25) управляют нашим же стеком; state в Silo (`tfstate`). Облачный вариант — только обзор:
