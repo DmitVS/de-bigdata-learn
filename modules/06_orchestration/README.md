@@ -98,6 +98,7 @@ flowchart LR
 | 🗺️ Карты | [maps/](maps/) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — раздел «Оркестрация» |
 | 🧪 Учебные проекты | [demo/](demo/), [airflow_demo/](airflow_demo/) |
+| 🎬 Визуализации | [Ретраи и граф ассетов](visuals/dag_retries_lineage.html) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)

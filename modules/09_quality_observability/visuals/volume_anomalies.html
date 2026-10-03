@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Аномалии объёма</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Elementary: аномалия объёма по z-оценке</h1>
+  <p class="lead">Модуль 09, урок <a href="../theory/04_observability_elementary.md">04 «Наблюдаемость и
+    Elementary»</a>. Ряд — число строк <code>stg_store_sales</code> по дням: в датасете каждый день
+    898 магазинов. Тест <code>volume_anomalies</code>: обучение 30 дней, обнаружение 2 дня,
+    чувствительность 3. С инцидентом «пропал день» страница даёт те же цифры, что тест в уроке:
+    376 строк при среднем 880,6.</p>
+
+  <section>
+    <h2>1. Инцидент и настройки теста</h2>
+    <div class="controls">
+      <label>Инцидент:
+        <select id="inc">
+          <option value="drop">пропал день: в последнем дне 376 магазинов</option>
+          <option value="custom">свой объём последнего дня</option>
+          <option value="double">день загружен дважды: 1 796 строк</option>
+          <option value="growth1">вчера сеть открыла 100 магазинов</option>
+          <option value="growth5">сеть открыла 100 магазинов 5 дней назад</option>
+          <option value="none">инцидента нет</option>
+        </select></label>
+      <label id="lastbox">Строк в последнем дне: <input type="range" id="last" min="0" max="1800" value="376"> <b id="last-v"></b></label>
+    </div>
+    <div class="controls">
+      <label><code>anomaly_sensitivity</code>: <input type="range" id="sens" min="1" max="6" step="0.5" value="3"> <b id="sens-v"></b></label>
+      <label><code>training_period</code>: <input type="range" id="train" min="7" max="60" value="30"> <b id="train-v"></b> дней</label>
+      <label><code>detection_period</code>: <input type="range" id="det" min="1" max="5" value="2"> <b id="det-v"></b></label>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--muted)"></i>обучающее окно</span>
+      <span><i class="sw" style="background:var(--k0)"></i>проверяемые дни</span>
+      <span><i class="sw" style="background:var(--warn)"></i>аномалия: |z| &gt; чувствительности</span>
+      <span><i class="sw" style="background:var(--soft)"></i>полоса «нормы»: среднее ± чувствительность × σ</span>
+    </div>
+    <div class="scroll"><svg id="sv" viewBox="0 0 960 300" role="img" aria-label="Ряд объёма по дням"></svg></div>
+    <div class="stats">
+      <div class="stat"><b id="s-mean">—</b><span>среднее обучения</span></div>
+      <div class="stat"><b id="s-sd">—</b><span>стандартное отклонение σ</span></div>
+      <div class="stat"><b id="s-z">—</b><span>z последнего дня</span></div>
+      <div class="stat"><b id="s-res">—</b><span>результат теста</span></div>
+    </div>
+    <div class="caption" id="cap"></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+const N = 60;   // дней на графике
+const f1 = (v) => v.toFixed(1).replace(".", ",");
+
+function series(o) {
+  const s = new Array(N).fill(898);
+  if (o.inc === "drop") s[N - 1] = 376;
+  if (o.inc === "custom") s[N - 1] = o.last;
+  if (o.inc === "double") s[N - 1] = 1796;
+  if (o.inc.startsWith("growth")) for (let i = N - +o.inc.slice(6); i < N; i++) s[i] = 998;
+  return s;
+}
+
+/* Окна считаются от последнего дня. Обучение включает проверяемые дни — так получилось 880,6 в уроке. */
+function test(o) {
+  const s = series(o);
+  const train = s.slice(N - o.train);
+  const mean = train.reduce((a, b) => a + b, 0) / train.length;
+  const sd = Math.sqrt(train.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, train.length - 1));
+  const det = [];
+  for (let i = N - o.det; i < N; i++) {
+    const z = sd === 0 ? (s[i] === mean ? 0 : Infinity) : (s[i] - mean) / sd;
+    det.push({ i, v: s[i], z, bad: Math.abs(z) > o.sens });
+  }
+  return { s, mean, sd, det };
+}
+
+function render() {
+  const o = { inc: $("inc").value, last: +$("last").value, sens: +$("sens").value, train: +$("train").value, det: +$("det").value };
+  $("lastbox").style.display = o.inc === "custom" ? "" : "none";
+  $("last-v").textContent = o.last; $("sens-v").textContent = o.sens; $("train-v").textContent = o.train; $("det-v").textContent = o.det;
+  const r = test(o);
+  const svg = $("sv");
+  svg.replaceChildren();
+  const X0 = 60, W = 880, Y0 = 20, H = 240, top = 1900;
+  const x = (i) => X0 + (i / N) * W, y = (v) => Y0 + H - (Math.max(0, Math.min(top, v)) / top) * H;
+  // Полоса нормы
+  const lo = r.mean - o.sens * r.sd, hi = r.mean + o.sens * r.sd;
+  el("rect", { x: x(N - o.train), y: y(hi), width: x(N) - x(N - o.train), height: Math.max(1, y(lo) - y(hi)), style: "fill:var(--soft)" }, svg);
+  el("line", { x1: x(N - o.train), x2: x(N), y1: y(r.mean), y2: y(r.mean), style: "stroke:var(--accent);stroke-dasharray:5 4" }, svg);
+  // Столбики
+  const bad = new Set(r.det.filter((d) => d.bad).map((d) => d.i)), detSet = new Set(r.det.map((d) => d.i));
+  r.s.forEach((v, i) => {
+    const fill = bad.has(i) ? "var(--warn)" : detSet.has(i) ? "var(--k0)" : i >= N - o.train ? "var(--muted)" : "var(--line)";
+    el("rect", { x: x(i) + 1, y: y(v), width: W / N - 2, height: Y0 + H - y(v), style: `fill:${fill};opacity:${i >= N - o.train ? 0.9 : 0.5}` }, svg);
+  });
+  for (const v of [0, 500, 898, 1500]) {
+    el("text", { x: X0 - 6, y: y(v) + 4, "text-anchor": "end", "font-size": 11, class: "muted" }, svg).textContent = v;
+    el("line", { x1: X0, x2: X0 + W, y1: y(v), y2: y(v), style: "stroke:var(--line);stroke-width:.5" }, svg);
+  }
+  el("text", { x: x(N - o.train), y: Y0 + H + 18, "font-size": 11, class: "muted" }, svg).textContent = `← обучение ${o.train} дней`;
+  el("text", { x: X0 + W, y: Y0 + H + 18, "text-anchor": "end", "font-size": 11, class: "muted" }, svg).textContent = "вчера";
+  // Сводка
+  const last = r.det.at(-1);
+  $("s-mean").textContent = f1(r.mean);
+  $("s-sd").textContent = f1(r.sd);
+  $("s-z").textContent = Number.isFinite(last.z) ? f1(last.z) : "∞";
+  const fail = r.det.some((d) => d.bad);
+  $("s-res").textContent = fail ? "FAIL" : "PASS"; $("s-res").className = fail ? "warn" : "ok";
+  let cap;
+  if (o.inc === "none") cap = "Все дни по 898 строк: σ = 0, z = 0. Тест проходит.";
+  else if (o.inc.startsWith("growth")) cap = fail
+    ? `Рост сети на 100 магазинов — нормальное событие, но тест его отметил: история ещё не знает новый уровень. Это ложное срабатывание. Окно обнаружения ${o.det} дн., z последнего дня ${f1(last.z)}.`
+    : "Новый уровень уже вошёл в обучение: среднее и σ выросли, полоса нормы расширилась, и тест молчит. Короткое окно быстрее «привыкает» к сдвигу.";
+  else cap = fail
+    ? `Последний день — ${last.v} строк, среднее ${f1(r.mean)}, σ ${f1(r.sd)}. |z| = ${f1(Math.abs(last.z))} больше ${o.sens}: тест падает. ` +
+      "Сам аномальный день входит в обучение и раздувает σ — поэтому слишком высокая чувствительность его пропустит."
+    : `|z| последнего дня ${Number.isFinite(last.z) ? f1(Math.abs(last.z)) : "∞"} не больше ${o.sens}: тест проходит. Снизь чувствительность или обучение, чтобы поймать отклонение.`;
+  $("cap").className = "caption " + (fail ? "bad" : "good");
+  $("cap").innerHTML = cap;
+}
+for (const id of ["inc", "last", "sens", "train", "det"]) $(id).addEventListener("input", render);
+render();
+</script>
+</body>
+</html>

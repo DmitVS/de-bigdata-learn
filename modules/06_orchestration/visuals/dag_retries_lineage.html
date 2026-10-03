@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ретраи и граф ассетов</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+  .log { font: .85rem/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg);
+         border-radius: 8px; padding: 8px 12px; margin-top: 12px; max-height: 260px; overflow: auto; white-space: pre; }
+  .log .warn { color: var(--warn); } .log .ok { color: var(--ok); } .log .m { color: var(--muted); }
+  svg .node { cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Оркестрация: ретраи, идемпотентность и граф ассетов</h1>
+  <p class="lead">Модуль 06, уроки <a href="../theory/01_orchestration_basics.md">01 «Основы оркестрации»</a>
+    и <a href="../theory/04_dbt_dlt_lineage.md">04 «dbt, dlt и lineage»</a>. Граф — наш демо-проект
+    <code>weather_orchestration</code>, партиция — один день, 18 городов. Политика ретраев как в
+    <code>weather_files</code>: <code>RetryPolicy(max_retries=3, delay=2, backoff=EXPONENTIAL)</code>.</p>
+
+  <section>
+    <h2>1. Сбой шага и повтор</h2>
+    <div class="controls">
+      <label>Сбой:
+        <select id="fault">
+          <option value="files">weather_files: источник недоступен 2 раза подряд</option>
+          <option value="bronze">weather_bronze: падение после записи 9 строк из 18</option>
+          <option value="stg">stg_weather: опечатка в SQL — падает всегда</option>
+        </select></label>
+    </div>
+    <div class="controls">
+      <label>Запись weather_bronze:
+        <select id="write"><option value="di">DELETE дня + INSERT</option><option value="append">append</option></select></label>
+      <label>Повтор:
+        <select id="retry">
+          <option value="step">RetryPolicy шага</option>
+          <option value="run">перезапуск всего запуска (до 4 раз)</option>
+          <option value="none">без повторов</option>
+        </select></label>
+    </div>
+    <div class="scroll"><svg id="tl" viewBox="0 0 960 230" role="img" aria-label="Шаги запуска"></svg></div>
+    <div class="stats">
+      <div class="stat"><b id="s-status">—</b><span>итог запуска</span></div>
+      <div class="stat"><b id="s-rows">—</b><span>строк weather_bronze за день (должно быть 18)</span></div>
+      <div class="stat"><b id="s-time">—</b><span>длительность</span></div>
+    </div>
+    <div class="caption" id="cap1"></div>
+    <div class="log" id="log1"></div>
+  </section>
+
+  <section>
+    <h2>2. Граф ассетов: что перезапускать</h2>
+    <p>Щёлкни ассет и выбери выражение. Подсветятся ассеты, которые выберет
+      <code>dagster asset materialize --select</code>.</p>
+    <div class="controls" id="sel">
+      <button data-s="x">x</button><button data-s="x*" class="on">x*</button><button data-s="x+">x+</button>
+      <button data-s="*x">*x</button><button data-s="+x">+x</button>
+    </div>
+    <div class="controls">
+      <button id="reload-x">Перезагрузить только выбранный ассет</button>
+      <button id="reload-xs" class="primary">Перезагрузить по выражению</button>
+      <button id="reset-g">Сначала</button>
+    </div>
+    <div class="scroll"><svg id="graph" viewBox="0 0 960 230" role="img" aria-label="Граф ассетов"></svg></div>
+    <div class="caption" id="cap2"></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+const sec = (t) => (Number.isInteger(t) ? t : t.toFixed(1).replace(".", ",")) + " с";
+
+/* ── Часть 1 ── */
+const STEPS = [
+  { key: "weather_files", dur: 1 }, { key: "weather_bronze", dur: 2 }, { key: "stg_weather", dur: 1 },
+  { key: "mart_city_rainy_days", dur: 1 }, { key: "rainy_cities_report", dur: 0.5 },
+];
+const DELAYS = [2, 6, 14];   // delay × (2^попытка − 1)
+
+function simulate(o) {
+  const bars = [], log = [];
+  let t = 0, rows = 0, status = "SUCCESS";
+  let filesFails = 0;   // источник недоступен 2 раза за всё время
+  const maxRuns = o.retry === "run" ? 4 : 1;
+  for (let run = 1; run <= maxRuns; run++) {
+    if (run > 1) {
+      const d = DELAYS[run - 2];   // та же растущая пауза, что у ретраев шага
+      log.push([`— пауза ${d} с, перезапуск всего запуска №${run}: все шаги заново —`, "m"]);
+      t += d;
+    }
+    let runFailed = false;
+    for (let si = 0; si < STEPS.length && !runFailed; si++) {
+      const s = STEPS[si];
+      const tries = o.retry === "step" ? 4 : 1;
+      let done = false;
+      for (let a = 1; a <= tries && !done; a++) {
+        let fail = false, partial = false;
+        if (o.fault === "files" && s.key === "weather_files" && filesFails < 2) { fail = true; filesFails++; }
+        if (o.fault === "bronze" && s.key === "weather_bronze" && run === 1 && a === 1) { fail = true; partial = true; }
+        if (o.fault === "stg" && s.key === "stg_weather") fail = true;
+        if (s.key === "weather_bronze") {
+          if (o.write === "di") rows = partial ? 9 : 18;      // DELETE дня очищает прошлую попытку
+          else rows += partial ? 9 : 18;                      // append дописывает
+        }
+        bars.push({ row: si, from: t, to: t + s.dur, fail, label: `${a > 1 ? "попытка " + a : run > 1 ? "запуск " + run : ""}` });
+        log.push([`${sec(t).padStart(6)}  ${s.key.padEnd(21)} ${fail ? "STEP_FAILURE" + (partial ? " (9 строк уже записаны)" : "") : "STEP_SUCCESS"}` +
+          (s.key === "weather_bronze" ? `  → строк за день: ${rows}` : ""), fail ? "warn" : "ok"]);
+        t += s.dur;
+        if (!fail) { done = true; break; }
+        if (a < tries) {
+          const d = DELAYS[a - 1];
+          bars.push({ row: si, from: t, to: t + d, wait: true });
+          log.push([`        STEP_UP_FOR_RETRY: retry in ${d} seconds`, "m"]);
+          t += d;
+        }
+      }
+      if (!done) runFailed = true;
+    }
+    if (!runFailed) { status = "SUCCESS"; break; }
+    status = "FAILURE";
+  }
+  log.push([`${sec(t).padStart(6)}  RUN_${status}`, status === "SUCCESS" ? "ok" : "warn"]);
+  return { bars, log, t, rows, status };
+}
+
+function render1() {
+  const o = { fault: $("fault").value, write: $("write").value, retry: $("retry").value };
+  const r = simulate(o);
+  const svg = $("tl");
+  svg.replaceChildren();
+  const X0 = 190, W = 740, T = Math.max(10, r.t * 1.03), x = (t) => X0 + (t / T) * W;
+  STEPS.forEach((s, i) => {
+    el("text", { x: X0 - 10, y: 30 + i * 40, "text-anchor": "end", "font-size": 13 }, svg).textContent = s.key;
+    el("line", { x1: X0, x2: X0 + W, y1: 25 + i * 40, y2: 25 + i * 40, style: "stroke:var(--line)" }, svg);
+  });
+  for (const b of r.bars) {
+    const y = 14 + b.row * 40;
+    if (b.wait) { el("rect", { x: x(b.from), y: y + 8, width: x(b.to) - x(b.from), height: 6, rx: 3, style: "fill:var(--line)" }, svg); continue; }
+    el("rect", { x: x(b.from), y, width: Math.max(4, x(b.to) - x(b.from) - 1), height: 22, rx: 4,
+      style: `fill:${b.fail ? "var(--warn)" : "var(--ok)"}` }, svg);
+  }
+  el("text", { x: X0, y: 222, "font-size": 11, class: "muted" }, svg).textContent = "0 с";
+  el("text", { x: X0 + W, y: 222, "text-anchor": "end", "font-size": 11, class: "muted" }, svg).textContent = sec(r.t);
+  $("s-status").textContent = r.status; $("s-status").className = r.status === "SUCCESS" ? "ok" : "warn";
+  $("s-rows").textContent = r.rows; $("s-rows").className = r.rows === 18 ? "ok" : "warn";
+  $("s-time").textContent = sec(r.t);
+  $("log1").innerHTML = r.log.map(([s, c]) => `<span class="${c}">${s}</span>`).join("\n");
+  let cap, cls;
+  if (o.fault === "stg") {
+    cls = "bad";
+    cap = o.retry === "none" ? "Постоянную ошибку повтор не лечит. Запуск честно упал сразу: читай лог и чини SQL."
+      : `Опечатка в SQL падает на каждой попытке. Повторы потратили ${sec(r.t)} и не помогли.`;
+    if (o.retry === "run" && o.write === "append") cap += ` Хуже того: перезапуск всего запуска каждый раз дописал bronze — ${r.rows} строк вместо 18.`;
+    else if (o.retry === "run") cap += " Перезапуск всего запуска заново выполнил успешные шаги. Идемпотентная запись спасла bronze от дублей.";
+  } else if (r.rows !== 18) {
+    cls = "bad";
+    cap = r.status === "SUCCESS"
+      ? `Запуск зелёный, но в bronze ${r.rows} строк за день: повтор дописал день поверх половины прошлой попытки. Пиши день как DELETE + INSERT — тогда повтор безопасен.`
+      : `Запуск упал, в bronze осталось ${r.rows} строк — половина дня. Следующий успешный запуск с DELETE + INSERT это исправит, с append — задвоит.`;
+  } else if (r.status !== "SUCCESS") {
+    cls = "bad"; cap = "Без повторов кратковременный сбой источника остановил запуск. Нужен ручной перезапуск.";
+  } else {
+    cls = "good";
+    cap = o.fault === "files" ? "Источник ответил на третьей попытке после пауз 2 и 6 с. Ручной разбор не понадобился."
+      : "Повтор после частичной записи безопасен: DELETE дня убрал 9 строк прошлой попытки, INSERT записал все 18.";
+    if (o.retry === "run") cap += " Но перезапуск всего запуска повторил и успешные шаги — это лишнее время.";
+  }
+  $("cap1").className = "caption " + cls; $("cap1").innerHTML = cap;
+}
+
+/* ── Часть 2: граф ассетов демо-проекта ── */
+const NODES = {
+  weather_files: { x: 90, y: 70, label: "weather_files", sub: "landing, по дням" },
+  weather_bronze: { x: 270, y: 70, label: "weather_bronze", sub: "dlt, по дням" },
+  stg_weather: { x: 450, y: 70, label: "stg_weather", sub: "dbt" },
+  mart_city_rainy_days: { x: 640, y: 70, label: "mart_city_rainy_days", sub: "dbt" },
+  rainy_cities_report: { x: 840, y: 70, label: "rainy_cities_report", sub: "отчёт" },
+  landing_sales_inventory: { x: 90, y: 170, label: "landing_sales_inventory", sub: "landing, по дням" },
+};
+const EDGES = [["weather_files", "weather_bronze"], ["weather_bronze", "stg_weather"],
+  ["stg_weather", "mart_city_rainy_days"], ["mart_city_rainy_days", "rainy_cities_report"]];
+const down = (k, depth = Infinity) => {
+  const out = new Set([k]);
+  let frontier = [k];
+  for (let d = 0; d < depth && frontier.length; d++) {
+    frontier = EDGES.filter(([a]) => frontier.includes(a)).map(([, b]) => b);
+    frontier.forEach((n) => out.add(n));
+  }
+  return out;
+};
+const up = (k, depth = Infinity) => {
+  const out = new Set([k]);
+  let frontier = [k];
+  for (let d = 0; d < depth && frontier.length; d++) {
+    frontier = EDGES.filter(([, b]) => frontier.includes(b)).map(([a]) => a);
+    frontier.forEach((n) => out.add(n));
+  }
+  return out;
+};
+let picked = "weather_bronze", selExpr = "x*";
+let version = {};   // номер версии данных ассета: Unsynced, если вход новее
+function resetVersions() { version = Object.fromEntries(Object.keys(NODES).map((k) => [k, 1])); }
+resetVersions();
+const selection = () => ({ "x": new Set([picked]), "x*": down(picked), "x+": down(picked, 1), "*x": up(picked), "+x": up(picked, 1) }[selExpr]);
+const stale = (k) => EDGES.some(([a, b]) => b === k && (version[a] > version[k] || stale(a)));
+
+function render2(msg) {
+  const svg = $("graph");
+  svg.replaceChildren();
+  const S = selection();
+  const defs = el("defs", {}, svg);
+  const m = el("marker", { id: "arr", viewBox: "0 0 10 10", refX: 10, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto" }, defs);
+  el("path", { d: "M0,0 L10,5 L0,10 z", style: "fill:var(--muted)" }, m);
+  for (const [a, b] of EDGES) {
+    el("line", { x1: NODES[a].x + 80, y1: NODES[a].y, x2: NODES[b].x - 82, y2: NODES[b].y,
+      style: "stroke:var(--muted);stroke-width:1.5", "marker-end": "url(#arr)" }, svg);
+  }
+  for (const [k, n] of Object.entries(NODES)) {
+    const g = el("g", { class: "node" }, svg);
+    const inSel = S.has(k), st = stale(k);
+    el("rect", { x: n.x - 80, y: n.y - 28, width: 160, height: 56, rx: 10,
+      style: `fill:${inSel ? "var(--soft)" : "var(--panel)"};stroke:${k === picked ? "var(--accent)" : st ? "var(--run)" : "var(--line)"};stroke-width:${k === picked ? 3 : 2}` }, g);
+    el("text", { x: n.x, y: n.y - 4, "text-anchor": "middle", "font-size": 12, "font-weight": 600 }, g).textContent = n.label;
+    el("text", { x: n.x, y: n.y + 14, "text-anchor": "middle", "font-size": 11, class: "muted" }, g)
+      .textContent = st ? "Unsynced: вход новее" : `${n.sub} · версия ${version[k]}`;
+    g.addEventListener("click", () => { picked = k; render2(); });
+  }
+  const sel = [...S].join(", ");
+  $("cap2").className = "caption " + (Object.keys(NODES).some(stale) ? "bad" : "");
+  $("cap2").innerHTML = msg || `<code>--select "${selExpr.replace("x", picked)}"</code> выберет: ${sel}.`;
+}
+
+$("sel").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+  selExpr = b.dataset.s;
+  $("sel").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+  render2();
+}));
+function materialize(set) {
+  // Материализуем в порядке графа: вход получает новую версию, потомки — версию входа
+  const order = Object.keys(NODES);
+  for (const k of order) if (set.has(k)) {
+    const parents = EDGES.filter(([, b]) => b === k).map(([a]) => version[a]);
+    version[k] = Math.max(version[k] + 1, ...parents);
+  }
+  const bad = Object.keys(NODES).filter(stale);
+  render2(bad.length
+    ? `Перезагружено: ${[...set].join(", ")}. Потомки остались по старым данным: <b>${bad.join(", ")}</b> — Unsynced. Перезапускай <code>x*</code>.`
+    : `Перезагружено: ${[...set].join(", ")}. Все потомки согласованы со своими входами.`);
+}
+$("reload-x").addEventListener("click", () => materialize(new Set([picked])));
+$("reload-xs").addEventListener("click", () => materialize(selection()));
+$("reset-g").addEventListener("click", () => { resetVersions(); render2(); });
+
+for (const id of ["fault", "write", "retry"]) $(id).addEventListener("input", render1);
+render1(); render2();
+</script>
+</body>
+</html>

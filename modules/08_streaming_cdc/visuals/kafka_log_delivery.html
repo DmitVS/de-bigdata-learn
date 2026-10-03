@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Партиции и доставка Kafka</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+  .ev { display: inline-block; min-width: 26px; padding: 2px 4px; margin: 2px; border-radius: 5px; text-align: center;
+        font: .8rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg); border: 1px solid var(--line); }
+  .ev.ok { background: color-mix(in srgb, var(--ok) 30%, transparent); }
+  .ev.dup { background: color-mix(in srgb, var(--k3) 40%, transparent); }
+  .ev.lost { background: color-mix(in srgb, var(--warn) 30%, transparent); text-decoration: line-through; }
+  .log { font: .85rem/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg);
+         border-radius: 8px; padding: 8px 12px; margin-top: 12px; max-height: 240px; overflow: auto; white-space: pre; }
+  .log .warn { color: var(--warn); } .log .m { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Kafka: партиции, группы потребителей и гарантии доставки</h1>
+  <p class="lead">Модуль 08, уроки <a href="../theory/01_log_and_kafka.md">01 «Лог и Kafka»</a> и
+    <a href="../theory/02_producers_and_schemas.md">02 «Producer, consumer и схемы»</a>. Топик —
+    <code>demo.weather_readings</code>: показания 898 магазинов за 3 дня, ключ — <code>city_id</code>.
+    Число магазинов в городах — из датасета. Партиция ключа считается как в нашем producer
+    (librdkafka): CRC32 ключа mod число партиций.</p>
+
+  <section>
+    <h2>1. Ключ → партиция → потребитель группы</h2>
+    <div class="controls">
+      <label>Партиций в топике: <input type="range" id="np" min="1" max="6" value="3"> <b id="np-v"></b></label>
+      <label>Потребителей в группе: <input type="range" id="nc" min="1" max="6" value="2"> <b id="nc-v"></b></label>
+      <button id="play" class="primary">▶ Читать 3 секунды</button>
+      <button id="reset">Сначала</button>
+    </div>
+    <div class="scroll"><svg id="kafka" viewBox="0 0 960 340" role="img" aria-label="Партиции и потребители"></svg></div>
+    <div class="stats">
+      <div class="stat"><b id="k-total">—</b><span>событий в топике</span></div>
+      <div class="stat"><b id="k-lag">—</b><span>lag группы</span></div>
+      <div class="stat"><b id="k-idle">—</b><span>потребителей простаивает</span></div>
+    </div>
+    <div class="caption" id="cap1"></div>
+  </section>
+
+  <section>
+    <h2>2. Порядок «обработать / закоммитить» и падение потребителя</h2>
+    <p>Потребитель читает 10 событий партиции и пишет их в приёмник. Где-то он падает и после
+      перезапуска продолжает с последнего закоммиченного офсета.</p>
+    <div class="controls">
+      <label>Порядок:
+        <select id="mode">
+          <option value="most">закоммитить → обработать (at-most-once)</option>
+          <option value="least" selected>обработать → закоммитить (at-least-once)</option>
+          <option value="idem">обработать → закоммитить, приёмник — merge по ключу</option>
+        </select></label>
+    </div>
+    <div class="controls">
+      <label>Падение на событии: <input type="range" id="crash" min="0" max="10" value="6"> <b id="crash-v"></b></label>
+      <label>Момент: <select id="when"><option value="mid">между двумя действиями</option><option value="none">падения нет</option></select></label>
+    </div>
+    <div id="sink"></div>
+    <div class="stats">
+      <div class="stat"><b id="d-lost">—</b><span>потеряно</span></div>
+      <div class="stat"><b id="d-dup">—</b><span>дублей в приёмнике</span></div>
+    </div>
+    <div class="caption" id="cap2"></div>
+    <div class="log" id="log2"></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+
+/* ── Часть 1 ── */
+const STORES = [290, 14, 11, 101, 34, 15, 43, 20, 3, 6, 6, 38, 107, 90, 9, 17, 89, 5];   // магазинов в городе 0…17
+const DAYS = 3, RATE = 300;   // событий в секунду на одного потребителя (условно)
+// CRC32 как в librdkafka (partitioner consistent_random для событий с ключом)
+const CRC = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = (s) => { let c = 0xffffffff; for (const ch of s) c = CRC[(c ^ ch.charCodeAt(0)) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+const COLORS = ["var(--k0)", "var(--k1)", "var(--k2)", "var(--k3)", "var(--k4)", "var(--k5)"];
+let committed = [], elapsed = 0, anim = null;
+
+function layout() {
+  const np = +$("np").value, nc = +$("nc").value;
+  const parts = Array.from({ length: np }, () => ({ cities: [], end: 0 }));
+  STORES.forEach((n, city) => { const p = crc32(String(city)) % np; parts[p].cities.push(city); parts[p].end += n * DAYS; });
+  // Распределение партиций в группе (range): подряд, по возможности поровну
+  const owner = [], k = Math.min(nc, np);
+  for (let c = 0, i = 0; c < k; c++)
+    for (let j = 0; j < Math.floor(np / k) + (c < np % k ? 1 : 0); j++) owner[i++] = c;
+  return { np, nc, parts, owner };
+}
+function resetPart1() { const { np } = layout(); committed = new Array(np).fill(0); elapsed = 0; render1(); }
+
+function render1() {
+  const L = layout();
+  $("np-v").textContent = L.np; $("nc-v").textContent = L.nc;
+  if (committed.length !== L.np) committed = new Array(L.np).fill(0);
+  const svg = $("kafka");
+  svg.replaceChildren();
+  const rowH = Math.min(52, 300 / L.np);
+  const maxEnd = Math.max(...L.parts.map((p) => p.end));
+  L.parts.forEach((p, i) => {
+    const y = 20 + i * rowH;
+    el("text", { x: 10, y: y + rowH / 2, "font-size": 12 }, svg).textContent = `партиция ${i}`;
+    el("text", { x: 10, y: y + rowH / 2 + 14, "font-size": 10, class: "muted" }, svg).textContent =
+      "города " + (p.cities.join(", ") || "—");
+    const w = 420 * (p.end / maxEnd);
+    el("rect", { x: 180, y: y + 4, width: Math.max(2, w), height: rowH - 14, rx: 4, style: "fill:var(--line)" }, svg);
+    const done = Math.min(p.end, committed[i]);
+    el("rect", { x: 180, y: y + 4, width: w * (p.end ? done / p.end : 0), height: rowH - 14, rx: 4,
+      style: `fill:${COLORS[L.owner[i] % 6]};opacity:.8` }, svg);
+    el("text", { x: 186 + Math.max(2, w), y: y + rowH / 2, "font-size": 11, class: "muted" }, svg)
+      .textContent = `конец ${p.end} · коммит ${done} · lag ${p.end - done}`;
+    // Потребитель-владелец
+    el("text", { x: 950, y: y + rowH / 2, "text-anchor": "end", "font-size": 12, style: `fill:${COLORS[L.owner[i] % 6]}` }, svg)
+      .textContent = `→ потребитель ${L.owner[i] + 1}`;
+  });
+  const y0 = 30 + L.np * rowH;
+  for (let c = 0; c < L.nc; c++) {
+    const own = L.owner.map((o, i) => (o === c ? i : -1)).filter((i) => i >= 0);
+    el("text", { x: 10 + (c % 3) * 310, y: y0 + Math.floor(c / 3) * 20, "font-size": 12, style: `fill:${own.length ? COLORS[c % 6] : "var(--muted)"}` }, svg)
+      .textContent = `потребитель ${c + 1}: ${own.length ? "партиции " + own.join(", ") : "простаивает"}`;
+  }
+  svg.setAttribute("viewBox", `0 0 960 ${y0 + 30}`);
+  const total = L.parts.reduce((a, p) => a + p.end, 0);
+  const lag = L.parts.reduce((a, p, i) => a + p.end - Math.min(p.end, committed[i]), 0);
+  const idle = Math.max(0, L.nc - L.np);
+  $("k-total").textContent = total; $("k-lag").textContent = lag; $("k-idle").textContent = idle;
+  const biggest = L.parts.reduce((m, p, i) => (p.end > L.parts[m].end ? i : m), 0);
+  let cap = `Ключ city_id всегда попадает в одну партицию, поэтому показания города читаются по порядку. Город 0 (290 магазинов) делает партицию ${biggest} самой тяжёлой.`;
+  if (idle) cap += ` Потребителей больше, чем партиций: ${idle} простаивает. Параллелизм чтения ограничен числом партиций.`;
+  if (L.np !== 3) cap += " Число партиций изменилось — CRC32 mod N разложил города иначе. Новые события ключа пойдут в другую партицию, чем старые.";
+  const worst = L.parts.reduce((m, p, i) => (p.end - committed[i] > L.parts[m].end - committed[m] ? i : m), 0);
+  if (elapsed > 0 && lag) cap += ` Через ${elapsed} с чтения lag = ${lag}, больше всего — у партиции ${worst}: её потребитель делит время с другими партициями или она самая тяжёлая.`;
+  if (elapsed > 0 && !lag) cap += ` Группа дочитала топик за ${elapsed} с.`;
+  $("cap1").innerHTML = cap;
+}
+function play() {
+  if (anim) clearInterval(anim);
+  let n = 0;
+  anim = setInterval(() => {
+    const L = layout();
+    // Каждый потребитель читает RATE событий в секунду, делит их между своими партициями
+    for (let c = 0; c < L.nc; c++) {
+      const own = L.owner.map((o, i) => (o === c ? i : -1)).filter((i) => i >= 0 && committed[i] < L.parts[i].end);
+      own.forEach((i) => { committed[i] = Math.min(L.parts[i].end, committed[i] + RATE / 10 / own.length); });
+    }
+    committed = committed.map(Math.round);
+    elapsed = Math.round((elapsed + 0.1) * 10) / 10;
+    render1();
+    if (++n >= 30) { clearInterval(anim); anim = null; }
+  }, 100);
+}
+$("np").addEventListener("input", resetPart1);
+$("nc").addEventListener("input", () => { render1(); });
+$("play").addEventListener("click", play);
+$("reset").addEventListener("click", resetPart1);
+
+/* ── Часть 2 ── */
+function run2() {
+  const mode = $("mode").value, crashAt = +$("crash").value, crash = $("when").value === "mid";
+  $("crash-v").textContent = crash ? crashAt : "—";
+  const sink = [], log = [];
+  let offset = 0, crashed = false;
+  const write = (e) => {
+    if (mode === "idem") { if (!sink.includes(e)) sink.push(e); log.push([`  merge событие ${e}`, ""]); }
+    else { sink.push(e); log.push([`  запись события ${e}`, ""]); }
+  };
+  while (offset < 10) {
+    const e = offset + 1;
+    if (mode === "most") {
+      log.push([`коммит офсета ${e}`, "m"]); const committedTo = e;
+      if (crash && !crashed && e === crashAt) { crashed = true; log.push([`✗ падение до обработки события ${e}`, "warn"]); log.push([`перезапуск: продолжаю с офсета ${committedTo}`, "m"]); offset = committedTo; continue; }
+      write(e); offset = committedTo;
+    } else {
+      write(e);
+      if (crash && !crashed && e === crashAt) { crashed = true; log.push([`✗ падение до коммита офсета ${e}`, "warn"]); log.push([`перезапуск: продолжаю с офсета ${offset}`, "m"]); continue; }
+      log.push([`коммит офсета ${e}`, "m"]); offset = e;
+    }
+  }
+  const counts = {}; sink.forEach((e) => { counts[e] = (counts[e] || 0) + 1; });
+  let lost = 0, dup = 0, html = "";
+  for (let e = 1; e <= 10; e++) {
+    const n = counts[e] || 0;
+    if (!n) lost++; if (n > 1) dup += n - 1;
+    html += `<span class="ev ${n === 0 ? "lost" : n > 1 ? "dup" : "ok"}">${e}${n > 1 ? "×" + n : ""}</span>`;
+  }
+  $("sink").innerHTML = "<b>Приёмник:</b> " + html;
+  $("d-lost").textContent = lost; $("d-lost").className = lost ? "warn" : "ok";
+  $("d-dup").textContent = dup; $("d-dup").className = dup ? "warn" : "ok";
+  $("log2").innerHTML = log.map(([s, c]) => `<span class="${c}">${s}</span>`).join("\n");
+  let cap, cls = "good";
+  if (!crash || crashAt === 0) cap = "Без падения все три порядка дают один результат. Разница видна только при сбое.";
+  else if (mode === "most") { cls = "bad"; cap = `Офсет закоммичен до обработки. После падения потребитель продолжил со следующего события, и событие ${crashAt} потеряно навсегда.`; }
+  else if (mode === "least") { cls = "bad"; cap = `Событие ${crashAt} записано, но офсет не закоммичен. После перезапуска оно обработано ещё раз — дубль. Так работает наш consumer демо: потерь нет, дубли убирает приёмник.`; }
+  else cap = `Событие ${crashAt} пришло дважды, но merge по ключу записал его один раз. Это и есть «exactly-once» на практике: at-least-once + идемпотентный приёмник.`;
+  $("cap2").className = "caption " + cls; $("cap2").innerHTML = cap;
+}
+for (const id of ["mode", "crash", "when"]) $(id).addEventListener("input", run2);
+
+resetPart1(); run2();
+</script>
+</body>
+</html>

@@ -24,6 +24,7 @@
   h1 { font-size: 1.6rem; margin: 0 0 4px; }
   h2 { font-size: 1.25rem; margin: 0 0 8px; }
   .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
   section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
             padding: 20px; margin-bottom: 24px; }
   .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
@@ -49,14 +50,38 @@
   .warn { color: var(--warn); } .ok { color: var(--ok); }
   .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
   .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+  .e-code { font: .9rem/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg);
+            border-radius: 8px; padding: 10px 12px; overflow-x: auto; margin: 8px 0; }
+  .e-code .done { color: var(--muted); } .e-code .cur { color: var(--accent); font-weight: 600; }
 </style>
 </head>
 <body>
 <main>
   <h1>Shuffle и перекос в Spark</h1>
-  <p class="lead">Модуль 07, уроки <a href="../theory/02_partitions_shuffle.md">02</a> и
-    <a href="../theory/03_joins_and_skew.md">03</a>. Цифры в подписях — замеры на нашем кластере
+  <p class="lead">Модуль 07, уроки <a href="../theory/01_execution_model.md">01</a>,
+    <a href="../theory/02_partitions_shuffle.md">02</a> и <a href="../theory/03_joins_and_skew.md">03</a>. Цифры в подписях — замеры на нашем кластере
     (4 ядра, train.parquet).</p>
+
+  <!-- ═══════════════ Часть 0: модель выполнения ═══════════════ -->
+  <section id="part0">
+    <h2>0. Трансформации, действие, job, стадии, задачи</h2>
+    <p>Выполняй строки по одной. Трансформации только достраивают план: кластер ничего не
+      считает. Действие отправляет план на сервер, и Spark запускает job. Shuffle делит job на
+      стадии, стадия — это задачи по одной на партицию. Цифры — из урока 01: файл читают 4 задачи,
+      shuffle — около 38 КБ, после AQE вторая стадия — 1 задача.</p>
+    <div class="controls">
+      <button id="e-next" class="primary">▶ Выполнить следующую строку</button>
+      <button id="e-reset">Сначала</button>
+    </div>
+    <pre id="e-code" class="e-code"></pre>
+    <svg id="e-svg" viewBox="0 0 960 250" role="img" aria-label="План и стадии"></svg>
+    <div class="caption" id="e-caption"></div>
+    <div class="stats">
+      <div class="stat"><b id="e-jobs">0</b><span>job запущено</span></div>
+      <div class="stat"><b id="e-stages">0</b><span>стадий выполнено</span></div>
+      <div class="stat"><b id="e-tasks">0</b><span>задач выполнено</span></div>
+    </div>
+  </section>
 
   <!-- ═══════════════ Часть 1: groupBy ═══════════════ -->
   <section id="part1">
@@ -106,12 +131,12 @@
       <div class="stat"><b id="s-shuffle">—</b><span>строк большой стороны в shuffle</span></div>
     </div>
     <h2 style="margin-top:20px">Замеры на нашем кластере</h2>
-    <table>
+    <div style="overflow-x:auto"><table>
       <tr><th>Вариант</th><th>Время</th><th>Shuffle</th><th>Задача: медиана / макс</th><th>Spill</th></tr>
       <tr><td>Sort-merge</td><td>12,0 с</td><td>193 МБ</td><td class="warn">4,2 / 9,1 с</td><td>188 МБ</td></tr>
       <tr><td>Sort-merge + соль 8</td><td>9,8 с</td><td>240 МБ</td><td class="ok">4,1 / 4,3 с</td><td>183 МБ</td></tr>
       <tr><td>Broadcast</td><td class="ok">1,1 с</td><td>≈ 1 КБ</td><td>—</td><td>0</td></tr>
-    </table>
+    </table></div>
   </section>
 </main>
 
@@ -127,6 +152,90 @@ const el = (tag, attrs = {}, parent) => {
 };
 const fmt = (n) => Math.round(n).toLocaleString("ru-RU");
 const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+/* ═══════════════ Часть 0: модель выполнения ═══════════════ */
+(() => {
+  const svg = document.getElementById("e-svg");
+  const LINES = [
+    { code: 'df = spark.read.parquet(".../train.parquet")', kind: "t", plan: "FileScan parquet",
+      cap: "Трансформация. Spark Connect запомнил шаг плана. На кластере ничего не произошло: стадий 0." },
+    { code: "day = df.where(\"dt = '2024-04-01'\")", kind: "t", plan: "Filter dt = '2024-04-01'",
+      cap: "Ещё одна трансформация — план вырос, вычислений нет. Ошибку в имени колонки здесь ещё не видно." },
+    { code: 'agg = day.groupBy("store_id").agg(F.sum("sale_amount"))', kind: "t", plan: "HashAggregate по store_id",
+      cap: "groupBy требует собрать строки одного магазина вместе. В физическом плане это частичная сумма → Exchange (shuffle) → финальная сумма." },
+    { code: "agg.count()", kind: "a",
+      cap: "Действие. План уходит на сервер, запускается job. Стадия 1: 4 задачи читают файл и суммируют внутри себя. Shuffle передаёт ≈ 4 × 898 частичных сумм (около 38 КБ). Стадия 2: AQE свёл 200 партиций в одну задачу. Результат — 898." },
+    { code: "agg.count()", kind: "a",
+      cap: "То же действие ещё раз — новый job, и всё считается с начала: файл читается снова. Без cache() результат прошлого действия не хранится." },
+  ];
+  let step = 0, jobs = 0, stages = 0, tasks = 0, anim = null;
+  const NS = "http://www.w3.org/2000/svg";
+  const mk = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); parent.appendChild(e); return e; };
+
+  function drawPlan(n) {
+    // План: дерево снизу вверх (как в explain)
+    const nodes = LINES.slice(0, Math.min(n, 3)).map((l) => l.plan);
+    mk("text", { x: 20, y: 22, "font-size": 13, class: "muted" }, svg).textContent = "План (читается снизу вверх)";
+    nodes.forEach((t, i) => {
+      const y = 210 - i * 50;
+      mk("rect", { x: 20, y: y - 18, width: 300, height: 34, rx: 8, style: "fill:var(--bg);stroke:var(--line)" }, svg);
+      mk("text", { x: 34, y: y + 4, "font-size": 13 }, svg).textContent = t;
+      if (i > 0) mk("line", { x1: 170, x2: 170, y1: y + 16, y2: y + 32, style: "stroke:var(--muted);stroke-width:2" }, svg);
+    });
+  }
+  function drawJob(progress) {
+    // Job: стадия 1 (4 задачи) → shuffle → стадия 2 (1 задача) → driver
+    const p1 = Math.min(1, progress * 2), p2 = Math.max(0, Math.min(1, progress * 2 - 1));
+    mk("text", { x: 370, y: 22, "font-size": 13, class: "muted" }, svg).textContent = `Job ${jobs}`;
+    mk("rect", { x: 370, y: 40, width: 220, height: 190, rx: 10, style: "fill:none;stroke:var(--accent)" }, svg);
+    mk("text", { x: 382, y: 60, "font-size": 13 }, svg).textContent = "Стадия 1: scan + filter + partial_sum";
+    for (let i = 0; i < 4; i++) {
+      const y = 76 + i * 36;
+      mk("rect", { x: 384, y, width: 192, height: 26, rx: 5, style: "fill:var(--bg);stroke:var(--line)" }, svg);
+      mk("rect", { x: 384, y, width: 192 * p1, height: 26, rx: 5, style: "fill:var(--k0);opacity:.75" }, svg);
+      mk("text", { x: 392, y: y + 18, "font-size": 12 }, svg).textContent = `задача ${i + 1}: ¼ файла`;
+    }
+    mk("line", { x1: 590, x2: 660, y1: 135, y2: 135, style: `stroke:var(--k1);stroke-width:${p1 >= 1 ? 4 : 1};stroke-dasharray:6 4` }, svg);
+    mk("text", { x: 625, y: 125, "text-anchor": "middle", "font-size": 12, style: "fill:var(--k1)" }, svg).textContent = "shuffle";
+    mk("text", { x: 625, y: 155, "text-anchor": "middle", "font-size": 11, class: "muted" }, svg).textContent = "≈ 38 КБ";
+    mk("rect", { x: 660, y: 40, width: 150, height: 190, rx: 10, style: "fill:none;stroke:var(--accent)" }, svg);
+    mk("text", { x: 672, y: 60, "font-size": 13 }, svg).textContent = "Стадия 2: final sum";
+    mk("rect", { x: 674, y: 122, width: 122, height: 26, rx: 5, style: "fill:var(--bg);stroke:var(--line)" }, svg);
+    mk("rect", { x: 674, y: 122, width: 122 * p2, height: 26, rx: 5, style: "fill:var(--k2);opacity:.8" }, svg);
+    mk("text", { x: 682, y: 140, "font-size": 12 }, svg).textContent = "задача 1";
+    mk("text", { x: 880, y: 140, "text-anchor": "middle", "font-size": progress >= 1 ? 22 : 13,
+      style: `fill:${progress >= 1 ? "var(--ok)" : "var(--muted)"}` }, svg).textContent = progress >= 1 ? "898" : "driver";
+  }
+  function render(progress = 1) {
+    svg.replaceChildren();
+    drawPlan(step);
+    if (LINES[step - 1] && LINES[step - 1].kind === "a") drawJob(progress);
+    else mk("text", { x: 590, y: 135, "text-anchor": "middle", "font-size": 14, class: "muted" }, svg)
+      .textContent = step === 0 ? "кластер ждёт" : "кластер ничего не делает: стадий 0";
+    document.getElementById("e-code").innerHTML = LINES.map((l, i) =>
+      `<span class="${i < step - 1 ? "done" : i === step - 1 ? "cur" : ""}">${l.code.replace(/</g, "&lt;")}` +
+      `${l.kind === "a" ? "   # действие" : "   # трансформация"}</span>`).join("\n");
+    document.getElementById("e-caption").textContent = step ? LINES[step - 1].cap : "Нажми «Выполнить следующую строку».";
+    document.getElementById("e-jobs").textContent = jobs;
+    document.getElementById("e-stages").textContent = stages;
+    document.getElementById("e-tasks").textContent = tasks;
+    document.getElementById("e-next").disabled = step >= LINES.length;
+  }
+  document.getElementById("e-next").addEventListener("click", () => {
+    if (step >= LINES.length) return;
+    step++;
+    if (LINES[step - 1].kind === "a") {
+      jobs++; stages += 2; tasks += 5;
+      if (anim) cancelAnimationFrame(anim);
+      const t0 = performance.now();
+      const tick = (now) => { const pr = Math.min(1, (now - t0) / 1600); render(pr); anim = pr < 1 ? requestAnimationFrame(tick) : null; };
+      anim = requestAnimationFrame(tick);
+    } else render();
+  });
+  document.getElementById("e-reset").addEventListener("click", () => { step = 0; jobs = stages = tasks = 0; render(); });
+  render();
+})();
 
 /* ═══════════════ Часть 1: groupBy ═══════════════ */
 (() => {

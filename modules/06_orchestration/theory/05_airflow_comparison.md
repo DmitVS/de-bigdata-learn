@@ -88,19 +88,20 @@ api-server по HTTP (Execution API) — так задачи можно запу
 падает ещё до своего кода, без логов кода.
 
 > [!warning] Ловушка: адрес Execution API — снова «чужой localhost»
-> При первой настройке слоя в compose был `AIRFLOW__API__BASE_URL: http://localhost:8081` —
+> Задавай внутренний адрес Execution API явно:
+> `AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://localhost:8080/execution/`. При первой настройке слоя в compose был `AIRFLOW__API__BASE_URL: http://localhost:8081` —
 > адрес UI **с хоста**. Airflow вывел из него адрес Execution API, и задачи внутри контейнера
 > стучались на `localhost:8081`, где никого нет (api-server слушает 8080). В логе scheduler:
 > `httpx.ConnectError: [Errno 111] Connection refused`, процесс задачи убит `SIGKILL`, в логе
 > задачи — только `Pre Execute`. Это та же ошибка, что в модуле 00 (урок 03): порт публикации
-> существует только на хосте. Исправление — явный внутренний адрес:
-> `AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://localhost:8080/execution/`.
+> существует только на хосте.
 
 > [!warning] Ловушка: пользователь образа и права на том
-> Официальный образ работает от пользователя с UID 50000. Смонтированный репозиторий принадлежит
+> Запускай Airflow со своим UID и группой 0: `user: "${HOST_UID:-1000}:0"`. Официальный образ
+> работает от пользователя с UID 50000. Смонтированный репозиторий принадлежит
 > тебе (UID 1000), поэтому задача падала с `PermissionError: [Errno 13] Permission denied:
-> '/workspace/data/airflow_demo'`. В compose — `user: "${HOST_UID:-1000}:0"`: свой UID и группа
-> 0, которую образ Airflow требует для своих папок (модуль 00, урок 06 — UID/GID и тома).
+> '/workspace/data/airflow_demo'`. Группу 0 образ Airflow требует для своих папок (модуль 00,
+> урок 06 — UID/GID и тома).
 
 ---
 
@@ -143,8 +144,8 @@ def weather_daily():
 | ⑦ | `outlets` — «эта задача обновила Asset» (шаг 4) |
 | ⑧ | результат `extract` передаётся в `load` через XCom |
 
-**Что из этого следует.** Airflow знает, что `load` после `extract`, но не знает, что `load`
-пишет таблицу `bronze_weather` и какие в ней дни: для него задача успешна, если функция
+**Что из этого следует.** Airflow знает, что `load` после `extract`. Но он не знает, что `load`
+пишет таблицу `bronze_weather`, и какие в ней дни. Для него задача успешна, если функция
 завершилась без исключения. Идемпотентность (`DELETE` дня + `INSERT`) — по-прежнему забота
 кода.
 

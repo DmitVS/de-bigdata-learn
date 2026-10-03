@@ -98,6 +98,7 @@ flowchart LR
 | 🗺️ Карты | [maps/](maps/) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — раздел «Стриминг и CDC» |
 | 🧪 Учебный проект | [demo/](demo/) |
+| 🎬 Визуализации | [Партиции и доставка Kafka](visuals/kafka_log_delivery.html) · [Окна и watermark](visuals/watermark_windows.html) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)

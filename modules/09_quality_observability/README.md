@@ -93,6 +93,7 @@ flowchart LR
 | 🗺️ Карты | [maps/](maps/) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — раздел «Качество и наблюдаемость» |
 | 🧪 Учебный проект | [demo/](demo/) |
+| 🎬 Визуализации | [Аномалии объёма Elementary](visuals/volume_anomalies.html) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)

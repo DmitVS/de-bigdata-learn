@@ -24,6 +24,10 @@ tags: [observability, elementary, anomaly-detection, dbt]
 > - [ ] найти результат и метрики в таблицах Elementary и собрать отчёт `edr report`;
 > - [ ] назвать, когда детектор ошибается, и что с этим делать.
 
+> [!tip] Визуализация темы
+> Интерактивная страница [volume_anomalies.html](../visuals/volume_anomalies.html). Ряд объёма по дням, полоса нормы и
+> z-оценка: настрой обучение, обнаружение и чувствительность.
+
 **Нужно для:** лаба [09.2](../labs/09.2_elementary/README.md).
 **Карта урока:** [observability-elementary.canvas](../maps/observability-elementary.canvas).
 
@@ -118,10 +122,10 @@ flowchart LR
 > cd .. && python build_demo_db.py
 > exit
 > ```
-> **Увидишь:** `FAIL 1 elementary_volume_anomalies_stg_store_sales_…`; в таблице результатов —
+> **Увидишь:** `FAIL 1 elementary_volume_anomalies_stg_store_sales_…`. В таблице результатов —
 > `fail` и описание вида `The last row_count value is 376.000. The average for this metric is
 > 880.600.`
-> **Почему:** в последнем дне осталось 376 магазинов из 898; это дальше трёх стандартных отклонений
+> **Почему:** в последнем дне осталось 376 магазинов из 898. Это дальше трёх стандартных отклонений
 > от среднего обучающего окна.
 
 ---
