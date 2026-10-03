@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SCD2 и версия на дату</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+  .cond { font: .88rem/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg);
+          border-radius: 8px; padding: 10px 12px; margin-top: 12px; overflow-x: auto; white-space: pre; }
+  .cond .t { color: var(--ok); font-weight: 600; } .cond .f { color: var(--muted); } .cond .n { color: var(--warn); font-weight: 600; }
+  input[type=range].wide { width: min(520px, 100%); }
+</style>
+</head>
+<body>
+<main>
+  <h1>SCD2: версии строки и соединение на дату</h1>
+  <p class="lead">Модуль 02, урок <a href="../theory/06_scd_and_alternatives.md">06 «SCD и альтернативы»</a>;
+    модуль 05, урок <a href="../../05_transformation_dbt/theory/05_snapshots_macros_packages.md">05 «Snapshots»</a>.
+    Магазин 214 меняет формат: «у дома» → «супермаркет». Продажи по дням — настоящие
+    (сумма <code>sale_amount</code> магазина 214 за день).</p>
+
+  <section>
+    <h2>1. Версии и продажи на шкале времени</h2>
+    <div class="controls">
+      <label>Схема:
+        <select id="style">
+          <option value="kimball">Kimball: BETWEEN, valid_to = день до смены, 9999-12-31</option>
+          <option value="dbt">dbt snapshot: [from, to), to = NULL у текущей</option>
+        </select></label>
+    </div>
+    <div class="controls">
+      <label>Дата смены формата: <input type="range" class="wide" id="change" min="10" max="80" value="48"> <b id="change-v"></b></label>
+    </div>
+    <div class="controls" id="defects">
+      <b>Ошибка в данных или запросе:</b>
+      <label><input type="radio" name="d" value="none" checked> нет</label>
+      <label><input type="radio" name="d" value="null"> NULL вместо 9999-12-31</label>
+      <label><input type="radio" name="d" value="overlap"> перекрытие 5 дней</label>
+      <label><input type="radio" name="d" value="gap"> дыра 5 дней</label>
+      <label><input type="radio" name="d" value="between"> BETWEEN по [from, to)</label>
+      <label><input type="radio" name="d" value="keyonly"> JOIN только по store_id</label>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--k0)"></i>у дома (sk 1)</span>
+      <span><i class="sw" style="background:var(--k2)"></i>супермаркет (sk 2)</span>
+      <span><i class="sw" style="background:var(--warn)"></i>версия не найдена — продажа выпала</span>
+      <span><i class="sw" style="background:var(--k3)"></i>две версии — продажа удвоилась</span>
+    </div>
+    <div class="scroll"><svg id="tl" viewBox="0 0 960 300" role="img" aria-label="Версии и продажи"></svg></div>
+    <div class="controls">
+      <label>Дата продажи: <input type="range" class="wide" id="day" min="0" max="89" value="48"> <b id="day-v"></b></label>
+    </div>
+    <div class="cond" id="cond"></div>
+    <div class="caption" id="cap"></div>
+  </section>
+
+  <section>
+    <h2>2. Отчёт «продажи по формату»</h2>
+    <p>«Как было» соединяет продажу с версией на её дату. «Как сейчас» берёт текущую версию для всех дат.</p>
+    <div class="scroll"><table id="report"></table></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+// Сумма sale_amount магазина 214 по дням, 2024-03-28 … 2024-06-25
+const SALES = [92.0,100.3,133.7,134.7,87.9,97.7,82.5,130.9,115.1,131.7,115.7,100.6,126.4,109.1,109.5,131.2,166.4,
+  155.4,104.0,111.5,124.6,101.2,130.0,166.1,184.0,112.2,146.0,97.1,108.5,109.7,159.4,131.1,94.5,119.0,137.7,103.1,
+  112.1,139.5,184.7,113.4,127.7,118.0,109.4,128.5,136.1,201.5,121.2,131.5,116.2,114.0,115.5,181.4,166.0,130.1,133.7,
+  102.0,103.3,108.4,173.7,179.0,124.0,125.7,107.5,109.6,124.0,166.4,174.1,112.3,120.3,100.8,100.2,115.4,160.6,134.1,
+  154.4,137.9,110.3,99.5,111.2,145.5,156.0,128.0,142.1,141.3,139.1,140.1,178.6,181.4,130.0,153.2];
+const DAYS = SALES.length, FAR = 99999;   // FAR — «9999-12-31»
+const day0 = Date.UTC(2024, 2, 28);
+const date = (i) => i >= FAR ? "9999-12-31" : new Date(day0 + i * 864e5).toISOString().slice(0, 10);
+const FORMATS = ["у дома", "супермаркет"], COLORS = ["var(--k0)", "var(--k2)"];
+
+function versions(o) {
+  const c = o.change;
+  let v;
+  if (o.style === "kimball")
+    v = [{ sk: 1, from: 0, to: c - 1, cur: false }, { sk: 2, from: c, to: FAR, cur: true }];
+  else   // dbt: to = момент смены, у текущей — NULL
+    v = [{ sk: 1, from: 0, to: c, cur: false }, { sk: 2, from: c, to: null, cur: true }];
+  if (o.defect === "null" && o.style === "kimball") v[1].to = null;
+  if (o.defect === "overlap") v[0].to += 5;
+  if (o.defect === "gap") v[1].from += 5;
+  return v;
+}
+
+/* Условие соединения для одной версии: true / false / null (неизвестно) */
+function match(o, v, d) {
+  if (o.defect === "keyonly") return true;
+  if (o.style === "kimball") {
+    if (v.to === null) return d >= v.from ? null : false;   // d <= NULL → неизвестно
+    return d >= v.from && d <= v.to;
+  }
+  const to = v.to === null ? FAR : v.to;   // coalesce(dbt_valid_to, '9999-12-31')
+  return o.defect === "between" ? d >= v.from && d <= to : d >= v.from && d < to;
+}
+function condText(o, v, d) {
+  const D = `'${date(d)}'`;
+  if (o.defect === "keyonly") return `f.store_id = d.store_id  -- условия на дату нет`;
+  if (o.style === "kimball")
+    return `${D} BETWEEN '${date(v.from)}' AND ${v.to === null ? "NULL" : `'${date(v.to)}'`}`;
+  const to = v.to === null ? "coalesce(NULL, '9999-12-31')" : `'${date(v.to)}'`;
+  return o.defect === "between" ? `${D} BETWEEN '${date(v.from)}' AND ${to}` : `${D} >= '${date(v.from)}' AND ${D} < ${to}`;
+}
+
+function opts() {
+  return { style: $("style").value, change: +$("change").value, day: +$("day").value,
+    defect: document.querySelector("input[name=d]:checked").value };
+}
+
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+
+function render() {
+  const o = opts(), V = versions(o);
+  $("change-v").textContent = date(o.change);
+  $("day-v").textContent = date(o.day);
+  const X0 = 160, W = 740, x = (i) => X0 + (Math.min(i, DAYS + 6) / (DAYS + 6)) * W;
+  const svg = $("tl");
+  svg.replaceChildren();
+  // Ось дат
+  for (let i = 0; i < DAYS; i += 14) {
+    el("line", { x1: x(i), x2: x(i), y1: 20, y2: 270, style: "stroke:var(--line)" }, svg);
+    el("text", { x: x(i), y: 290, "text-anchor": "middle", "font-size": 11, class: "muted" }, svg).textContent = date(i).slice(5);
+  }
+  el("text", { x: x(DAYS + 4), y: 290, "text-anchor": "middle", "font-size": 11, class: "muted" }, svg).textContent = "… 9999";
+  // Версии
+  V.forEach((v, i) => {
+    const y = 30 + i * 46;
+    el("text", { x: X0 - 10, y: y + 18, "text-anchor": "end", "font-size": 13 }, svg).textContent = `sk ${v.sk}: ${FORMATS[i]}`;
+    const end = v.to === null ? DAYS + 6 : v.to >= FAR ? DAYS + 6 : v.to + (o.style === "kimball" ? 1 : 0);
+    el("rect", { x: x(v.from), y, width: Math.max(2, x(end) - x(v.from)), height: 26, rx: 5,
+      style: `fill:${COLORS[i]};opacity:.85` }, svg);
+    const toLabel = v.to === null ? "NULL" : date(v.to);
+    el("text", { x: x(v.from) + 6, y: y + 18, "font-size": 12, style: "fill:#fff" }, svg)
+      .textContent = `${date(v.from)} … ${toLabel}${v.cur ? " · текущая" : ""}`;
+  });
+  // Продажи по дням: цвет — найденная версия
+  const maxS = Math.max(...SALES);
+  const rows = { asWas: [0, 0], asIs: [0, 0], lost: 0, dup: 0 };
+  const cur = V.findIndex((v) => v.cur);
+  el("text", { x: X0 - 10, y: 205, "text-anchor": "end", "font-size": 13 }, svg).textContent = "продажи";
+  for (let d = 0; d < DAYS; d++) {
+    const hits = V.map((v, i) => [i, match(o, v, d)]).filter(([, m]) => m === true).map(([i]) => i);
+    hits.forEach((i) => { rows.asWas[i] += SALES[d]; });
+    if (hits.length === 0) rows.lost += SALES[d];
+    if (hits.length > 1) rows.dup += SALES[d] * (hits.length - 1);
+    rows.asIs[cur] += SALES[d];
+    const h = (SALES[d] / maxS) * 90;
+    const fill = hits.length === 0 ? "var(--warn)" : hits.length > 1 ? "var(--k3)" : COLORS[hits[0]];
+    el("rect", { x: x(d) + 0.5, y: 260 - h, width: Math.max(1, x(d + 1) - x(d) - 1), height: h, style: `fill:${fill}` }, svg);
+  }
+  // Курсор даты продажи
+  el("line", { x1: x(o.day + 0.5), x2: x(o.day + 0.5), y1: 14, y2: 270, style: "stroke:var(--ink);stroke-width:1.5;stroke-dasharray:4 3" }, svg);
+
+  // Условия для выбранной даты
+  const res = V.map((v) => [v, match(o, v, o.day)]);
+  $("cond").innerHTML = res.map(([v, m]) => {
+    const cls = m === true ? "t" : m === null ? "n" : "f";
+    const word = m === true ? "true  → строка соединится" : m === null ? "NULL  → как false: строки нет" : "false";
+    return `sk ${v.sk}: ${condText(o, v, o.day).replace(/</g, "&lt;")}  →  <span class="${cls}">${word}</span>`;
+  }).join("\n");
+  const n = res.filter(([, m]) => m === true).length;
+  let cls = n === 1 ? "good" : "bad", text;
+  const D = date(o.day);
+  if (n === 1) text = `Продажа ${D} нашла ровно одну версию: «${FORMATS[res.findIndex(([, m]) => m === true)]}». ` +
+    (o.day === o.change ? "Это день смены: условие отнесло его к новой версии." : "");
+  else if (n === 0) text = `Продажа ${D} не нашла версию и выпала из отчёта. ` +
+    (o.defect === "null" ? "Сравнение с <code>NULL</code> даёт «неизвестно», а JOIN берёт только true. Пиши <code>9999-12-31</code>."
+      : o.defect === "gap" ? "Между версиями дыра: <code>valid_from</code> новой должен быть днём после <code>valid_to</code> старой." : "");
+  else text = `Продажа ${D} нашла ${n} версии и удвоилась. ` +
+    (o.defect === "keyonly" ? "Без условия на дату JOIN берёт все версии магазина."
+      : o.defect === "between" ? "В dbt <code>dbt_valid_to</code> равен <code>dbt_valid_from</code> следующей версии. BETWEEN включает обе границы, поэтому день смены попадает в две версии. Пиши <code>&gt;= from AND &lt; to</code>."
+      : "Интервалы версий перекрываются.");
+  if (o.defect === "null" && o.style === "dbt")
+    text = "В схеме dbt <code>NULL</code> у текущей версии — норма: запрос заменяет его через <code>coalesce</code>. " + text;
+  if (o.defect === "between" && o.style === "kimball")
+    text = "В схеме Kimball BETWEEN — норма: <code>valid_to</code> — день до смены, границы не совпадают. " + text;
+  $("cap").className = "caption " + cls;
+  $("cap").innerHTML = text;
+
+  // Отчёт
+  const total = SALES.reduce((a, b) => a + b, 0);
+  const f = (v) => v.toFixed(1).replace(".", ",");
+  const sumWas = rows.asWas[0] + rows.asWas[1];
+  $("report").innerHTML =
+    `<tr><th>Формат</th><th>Как было (версия на дату)</th><th>Как сейчас (текущая версия)</th></tr>` +
+    FORMATS.map((fmtName, i) => `<tr><td>${fmtName}</td><td>${f(rows.asWas[i])}</td><td>${f(rows.asIs[i])}</td></tr>`).join("") +
+    `<tr><td><b>Итого</b></td><td class="${Math.abs(sumWas - total) > 0.05 ? "warn" : "ok"}"><b>${f(sumWas)}</b>` +
+    (rows.lost ? ` <span class="warn">(выпало ${f(rows.lost)})</span>` : "") +
+    (rows.dup ? ` <span class="warn">(лишних ${f(rows.dup)})</span>` : "") +
+    `</td><td><b>${f(total)}</b></td></tr>` +
+    `<tr><td colspan="3" class="muted">Настоящий итог магазина 214 за 90 дней: ${f(total)}. Итог «как было» должен с ним совпасть.</td></tr>`;
+}
+
+for (const id of ["style", "change", "day"]) $(id).addEventListener("input", render);
+document.querySelectorAll("input[name=d]").forEach((r) => r.addEventListener("change", render));
+$("change").addEventListener("input", () => { $("day").value = $("change").value; render(); });
+render();
+</script>
+</body>
+</html>

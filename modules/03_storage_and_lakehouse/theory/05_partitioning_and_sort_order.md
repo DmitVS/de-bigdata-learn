@@ -24,6 +24,10 @@ tags: [iceberg, партиционирование, сортировка, про
 > - [ ] объяснить, почему сортировка при записи часто даёт больше, чем партиционирование;
 > - [ ] измерить отсечение: число и объём файлов в плане, `Total Files Read`, время (лаба 03.4).
 
+> [!tip] Визуализация темы
+> Интерактивная страница [parquet_pruning.html](../visuals/parquet_pruning.html). Раскладка «Партиции по месяцу»:
+> сначала отсекаются партиции, потом группы строк по min/max.
+
 **Нужно для:** лаба [03.4](../labs/03.4_partitioning_and_sort/README.md), все задачи.
 **Карта урока:** [partitioning-sort.canvas](../maps/partitioning-sort.canvas).
 
@@ -111,10 +115,9 @@ table = catalog.create_table("sandbox.sales_by_month", schema=table_schema, part
 1000), `name` — имя партиции в метаданных.
 
 > [!warning] Ловушка: преобразования требуют `pyiceberg-core`
-> `month`, `day`, `bucket` и другие преобразования PyIceberg 0.12 вычисляет через пакет
-> `pyiceberg-core`. Без него запись падает с `NotInstalledError: pyiceberg_core needs to be
-> installed`. В образе workspace он установлен: в `pyproject.toml` у `pyiceberg` есть extra
-> `pyiceberg-core`.
+> Ставь `pyiceberg` с extra `pyiceberg-core`: так сделано в `pyproject.toml` образа workspace.
+> `month`, `day`, `bucket` и другие преобразования PyIceberg 0.12 вычисляет через этот пакет.
+> Без него запись падает с `NotInstalledError: pyiceberg_core needs to be installed`.
 
 **Эволюция партиций.** Спецификацию можно поменять, не переписывая данные: старые файлы остаются
 со старой спецификацией, новые пишутся с новой, а читатель учитывает обе. Перейти с месяцев на дни
@@ -133,10 +136,9 @@ with table.update_spec() as u:
 отсекаются по своей месячной партиции.
 
 > [!warning] Ловушка: две временные партиции на одну колонку
-> Добавить `day(sale_date)`, не убрав `month(sale_date)`, Lakekeeper не даст:
+> Удаляй `month(sale_date)` в той же транзакции, в которой добавляешь `day(sale_date)`. День уже
+> содержит месяц, поэтому одна из двух партиций лишняя. Иначе Lakekeeper откажет:
 > `InvalidTableUpdate: Cannot add redundant partition with source id 3 and transform time`.
-> День уже содержит месяц, поэтому одна из двух партиций лишняя: старую нужно удалить в той же
-> транзакции.
 
 ---
 

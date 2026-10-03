@@ -99,6 +99,7 @@ flowchart LR
 | 🧠 Карточки для повторения | [flashcards.md](flashcards.md) |
 | 🗺️ Карты | [maps/](maps/) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — раздел «Роли, аналитика и архитектура» |
+| 🎬 Визуализации | [Перцентили задержки](visuals/latency_percentiles.html) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)

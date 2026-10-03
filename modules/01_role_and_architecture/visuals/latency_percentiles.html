@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Перцентили задержки</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+  .marks { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; }
+  .marks span { display: inline-flex; align-items: center; gap: 4px; }
+  .marks i { width: 14px; height: 3px; display: inline-block; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Перцентили задержки: почему среднее обманывает</h1>
+  <p class="lead">Модуль 01, урок <a href="../theory/05_nonfunctional_requirements.md">05 «Нефункциональные
+    требования»</a>, шаг 3. Основа — 100 замеров запроса «продажи по городам за 1 мая» на нашем
+    стеке (DuckDB, 2026-10-03). Медленные запросы добавляешь ты. Цифры урока — с другого
+    прогона того же запроса, поэтому немного отличаются.</p>
+
+  <section>
+    <h2>1. Распределение одного запроса</h2>
+    <p>Каждый столбик — сколько замеров попало в интервал времени. Шкала времени логарифмическая:
+      так видны и обычные запросы, и выбросы в секунды.</p>
+    <div class="controls">
+      <label>Медленных запросов: <input type="range" id="slow" min="0" max="15" value="0"> <b id="slow-v">0</b> из 100</label>
+      <label>Медленнее в: <input type="range" id="factor" min="2" max="150" value="40"> <b id="factor-v">40</b> раз</label>
+    </div>
+    <div class="controls">
+      <label>Замеров: <select id="count"><option>100</option><option>50</option><option>20</option></select></label>
+      <label><input type="checkbox" id="warm"> Отбросить первый запуск (прогрев)</label>
+      <label>Метод <code>quantiles</code>:
+        <select id="method"><option value="inclusive">inclusive</option><option value="exclusive">exclusive (по умолчанию)</option></select></label>
+      <button id="preset-10s">Пример урока: 99 × 10 мс и 1 × 10 с</button>
+    </div>
+    <div class="marks">
+      <span><i style="background:var(--k1)"></i>среднее</span>
+      <span><i style="background:var(--ok)"></i>p50</span>
+      <span><i style="background:var(--k0)"></i>p95</span>
+      <span><i style="background:var(--k3)"></i>p99</span>
+      <span><i style="background:var(--warn)"></i>максимум</span>
+    </div>
+    <div class="scroll"><svg id="hist" viewBox="0 0 960 300" role="img" aria-label="Гистограмма задержек"></svg></div>
+    <div class="stats">
+      <div class="stat"><b id="s-mean">—</b><span>среднее</span></div>
+      <div class="stat"><b id="s-p50">—</b><span>p50 (медиана)</span></div>
+      <div class="stat"><b id="s-p95">—</b><span>p95</span></div>
+      <div class="stat"><b id="s-p99">—</b><span>p99</span></div>
+      <div class="stat"><b id="s-max">—</b><span>максимум</span></div>
+    </div>
+    <div class="caption" id="cap1"></div>
+  </section>
+
+  <section>
+    <h2>2. Страница из нескольких запросов: усиление хвоста</h2>
+    <p>Дашборд показывается, когда пришёл <b>последний</b> из его запросов. Страница берёт
+      N случайных замеров из распределения выше и ждёт самый долгий. Модель повторяет это
+      2 000 раз.</p>
+    <div class="controls">
+      <label>Запросов на странице N: <input type="range" id="n" min="1" max="30" value="10"> <b id="n-v">10</b></label>
+    </div>
+    <div class="scroll"><svg id="amp" viewBox="0 0 960 170" role="img" aria-label="Задержка запроса и страницы"></svg></div>
+    <div class="stats">
+      <div class="stat"><b id="a-prob">—</b><span>страниц, где хотя бы один запрос медленнее p99 запроса: 1 − 0,99<sup>N</sup></span></div>
+      <div class="stat"><b id="a-p50">—</b><span>p50 страницы</span></div>
+      <div class="stat"><b id="a-p99">—</b><span>p99 страницы</span></div>
+    </div>
+    <div class="caption" id="cap2"></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+const $ = (id) => document.getElementById(id);
+const ms = (x) => x >= 1000 ? (x / 1000).toFixed(2).replace(".", ",") + " с" : x.toFixed(1).replace(".", ",") + " мс";
+
+// 100 замеров на нашем стеке, мс. Первый — холодный старт.
+const MEASURED = [97.9,80.0,64.8,74.3,79.4,78.6,75.6,69.0,74.3,67.6,80.5,78.5,81.8,80.9,64.9,70.2,76.1,77.1,
+  76.9,66.8,80.5,67.7,67.2,77.0,69.1,70.6,72.2,71.3,66.8,78.3,70.2,70.8,73.6,72.5,66.3,66.5,65.6,64.9,71.0,
+  64.1,65.7,65.3,65.1,64.8,66.8,69.2,65.2,78.2,67.7,66.8,67.3,63.3,68.8,67.4,66.6,66.4,69.4,80.9,70.4,70.1,
+  72.0,69.7,71.2,72.2,70.7,66.1,69.7,74.4,68.1,68.0,70.0,68.1,70.5,71.7,71.2,72.3,63.6,64.5,70.1,68.4,64.7,
+  67.5,65.8,68.9,67.0,65.1,64.8,64.4,68.6,64.9,70.1,69.0,66.4,67.7,67.6,69.3,64.9,69.1,71.3,69.5];
+// Какие замеры становятся медленными: фиксированный порядок, чтобы картина не прыгала
+const SLOW_ORDER = [37, 81, 12, 58, 94, 23, 66, 5, 47, 72, 30, 88, 16, 53, 99];
+let lessonExample = false;
+
+/* statistics.quantiles(data, n=100, method=…) из Python */
+function quantiles(xs, method) {
+  const d = [...xs].sort((a, b) => a - b), ld = d.length, n = 100, out = [];
+  for (let i = 1; i < n; i++) {
+    if (method === "inclusive") {
+      const m = ld - 1, j = Math.floor((i * m) / n), delta = i * m - j * n;
+      out.push((d[j] * (n - delta) + d[Math.min(j + 1, ld - 1)] * delta) / n);
+    } else {
+      const m = ld + 1;
+      let j = Math.floor((i * m) / n);
+      j = Math.min(Math.max(j, 1), ld - 1);
+      const delta = i * m - j * n;
+      out.push((d[j - 1] * (n - delta) + d[j] * delta) / n);
+    }
+  }
+  return out;
+}
+
+function sample() {
+  if (lessonExample) return [...Array(99).fill(10), 10000];
+  const k = +$("slow").value, f = +$("factor").value;
+  let xs = MEASURED.slice(0, +$("count").value).map((x, i) => (SLOW_ORDER.slice(0, k).includes(i) ? x * f : x));
+  if ($("warm").checked) xs = xs.slice(1);
+  return xs;
+}
+
+function stats(xs, method) {
+  const q = quantiles(xs, method);
+  return { mean: xs.reduce((a, b) => a + b, 0) / xs.length, p50: q[49], p95: q[94], p99: q[98], max: Math.max(...xs) };
+}
+
+/* Гистограмма в логарифмической шкале */
+function drawHist(xs, st) {
+  const svg = $("hist");
+  svg.replaceChildren();
+  const X0 = 50, W = 880, H = 220, Y0 = 20;
+  const lo = Math.log10(Math.min(...xs) * 0.9), hi = Math.log10(Math.max(st.max, st.p99) * 1.15);
+  const x = (v) => X0 + ((Math.log10(v) - lo) / (hi - lo)) * W;
+  const BINS = 60, counts = new Array(BINS).fill(0);
+  for (const v of xs) counts[Math.min(BINS - 1, Math.floor(((Math.log10(v) - lo) / (hi - lo)) * BINS))]++;
+  const top = Math.max(...counts);
+  counts.forEach((c, i) => {
+    if (!c) return;
+    const h = Math.max(3, (c / top) * H);
+    el("rect", { x: X0 + (i / BINS) * W + 1, y: Y0 + H - h, width: W / BINS - 2, height: h, rx: 2,
+      style: "fill:var(--line)" }, svg);
+  });
+  // Деления оси: 10, 20, 50, 100, 200, 500 мс, 1, 2, 5, 10 с
+  for (const t of [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]) {
+    const lt = Math.log10(t);
+    if (lt < lo || lt > hi) continue;
+    el("line", { x1: x(t), x2: x(t), y1: Y0 + H, y2: Y0 + H + 5, style: "stroke:var(--muted)" }, svg);
+    el("text", { x: x(t), y: Y0 + H + 20, "text-anchor": "middle", "font-size": 12, class: "muted" }, svg)
+      .textContent = t >= 1000 ? t / 1000 + " с" : t + " мс";
+  }
+  el("line", { x1: X0, x2: X0 + W, y1: Y0 + H, y2: Y0 + H, style: "stroke:var(--muted)" }, svg);
+  const marks = [["mean", "var(--k1)", "среднее"], ["p50", "var(--ok)", "p50"], ["p95", "var(--k0)", "p95"],
+    ["p99", "var(--k3)", "p99"], ["max", "var(--warn)", "max"]];
+  const used = [];
+  for (const [k, color, label] of marks) {
+    const px = x(st[k]);
+    let row = 0;
+    while (used.some(([ux, ur]) => ur === row && Math.abs(ux - px) < 70)) row++;
+    used.push([px, row]);
+    el("line", { x1: px, x2: px, y1: Y0 - 4, y2: Y0 + H, style: `stroke:${color};stroke-width:2.5` }, svg);
+    el("text", { x: px + 4, y: Y0 + 8 + row * 15, "font-size": 12, style: `fill:${color}` }, svg).textContent = label;
+  }
+}
+
+/* Детерминированный генератор: одинаковая картина при каждой загрузке */
+function rng(seed) { return () => ((seed = (seed * 16807) % 2147483647) / 2147483647); }
+
+function drawAmp(xs, st) {
+  const N = +$("n").value;
+  $("n-v").textContent = N;
+  const r = rng(42), pages = [];
+  for (let s = 0; s < 2000; s++) {
+    let m = 0;
+    for (let i = 0; i < N; i++) m = Math.max(m, xs[Math.floor(r() * xs.length)]);
+    pages.push(m);
+  }
+  const ps = stats(pages, "inclusive");
+  const prob = 1 - Math.pow(0.99, N);
+  $("a-prob").textContent = (prob * 100).toFixed(1).replace(".", ",") + " %";
+  $("a-p50").textContent = ms(ps.p50);
+  $("a-p99").textContent = ms(ps.p99);
+
+  const svg = $("amp");
+  svg.replaceChildren();
+  const rows = [["Один запрос", st], [`Страница из ${N}`, ps]];
+  const hi = Math.log10(Math.max(st.max, ps.max) * 1.15), lo = Math.log10(Math.min(...xs) * 0.9);
+  const x = (v) => 170 + ((Math.log10(v) - lo) / (hi - lo)) * 760;
+  rows.forEach(([label, s], i) => {
+    const y = 40 + i * 65;
+    el("text", { x: 160, y: y + 5, "text-anchor": "end", "font-size": 14 }, svg).textContent = label;
+    el("line", { x1: x(s.p50), x2: x(s.p99), y1: y, y2: y, style: "stroke:var(--line);stroke-width:10;stroke-linecap:round" }, svg);
+    for (const [k, color, dy] of [["p50", "var(--ok)", 24], ["p95", "var(--k0)", -13], ["p99", "var(--k3)", 24]]) {
+      el("circle", { cx: x(s[k]), cy: y, r: 7, style: `fill:${color}` }, svg);
+      el("text", { x: x(s[k]), y: y + dy, "text-anchor": k === "p99" ? "end" : "middle", "font-size": 11, class: "muted" }, svg)
+        .textContent = `${k} ${ms(s[k])}`;
+    }
+  });
+  $("cap2").innerHTML = N === 1
+    ? "Страница из одного запроса ведёт себя как сам запрос."
+    : `p50 страницы (${ms(ps.p50)}) больше p50 запроса (${ms(st.p50)}): страница ждёт самый долгий из ${N}. ` +
+      `Хвост в 1 % для одного запроса превращается в ${(prob * 100).toFixed(0)} % для страницы. ` +
+      "Поэтому требования к задержке пишут по p95 и p99, а не по среднему.";
+}
+
+function update() {
+  $("slow-v").textContent = $("slow").value;
+  $("factor-v").textContent = $("factor").value;
+  const xs = sample(), method = $("method").value, st = stats(xs, method);
+  for (const k of ["mean", "p50", "p95", "p99", "max"]) $("s-" + k).textContent = ms(st[k]);
+  $("s-p99").className = st.p99 > st.max ? "warn" : "";
+  drawHist(xs, st);
+  const k = +$("slow").value;
+  let cap;
+  if (lessonExample)
+    cap = `Пример урока: среднее ${ms(st.mean)}, хотя ни один запрос так не выполнялся. Медиана — 10 мс, ` +
+      "максимум — 10 с. Сдвинь любой ползунок, чтобы вернуться к замерам стека.";
+  else if (st.p99 > st.max)
+    cap = `Метод <code>exclusive</code> дал p99 = ${ms(st.p99)} — больше максимума ${ms(st.max)}. Он экстраполирует ` +
+      `за пределы замеров: их всего ${xs.length}. Для задержки бери <code>inclusive</code>.`;
+  else if ($("method").value === "exclusive")
+    cap = `Метод <code>exclusive</code> на ${xs.length} замерах дал p99 = ${ms(st.p99)} при максимуме ${ms(st.max)}. ` +
+      "При 100 замерах он остаётся внутри. Выбери 20 замеров и отметь «Отбросить первый запуск»: p99 выйдет за максимум.";
+  else if (k === 0)
+    cap = `Замеры без выбросов: среднее ${ms(st.mean)} почти равно медиане ${ms(st.p50)}. Максимум ${ms(st.max)} — ` +
+      ($("warm").checked ? "уже без первого запуска." : "первый запуск, холодный кэш. Отметь «Отбросить первый запуск».");
+  else
+    cap = `${k} медленных запросов из 100. Медиана почти не сдвинулась: ${ms(st.p50)}. Среднее выросло до ${ms(st.mean)}, ` +
+      `но не показывает, что ${k} % пользователей ждут ${ms(st.max)}. ` + (k >= 5 ? "Это видит p95." : k >= 1 ? "Это видит p99." : "");
+  $("cap1").innerHTML = cap;
+  drawAmp(xs, st);
+}
+
+for (const id of ["slow", "factor", "count", "warm", "method"]) $(id).addEventListener("input", () => { lessonExample = false; update(); });
+$("n").addEventListener("input", update);
+$("preset-10s").addEventListener("click", () => { lessonExample = true; update(); });
+update();
+</script>
+</body>
+</html>

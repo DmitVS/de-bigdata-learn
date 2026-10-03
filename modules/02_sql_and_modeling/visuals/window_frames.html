@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Оконные функции и рамки</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+  .sql { font: .95rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg);
+         border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; margin-top: 8px; }
+  .sql .kw { color: var(--accent); font-weight: 600; }
+  #grid td, #grid th { font-variant-numeric: tabular-nums; }
+  #grid tr { cursor: pointer; }
+  #grid tr.part td { background: var(--soft); }
+  #grid tr.other td { opacity: .35; }
+  #grid tr.frame td { background: color-mix(in srgb, var(--run) 30%, transparent); }
+  #grid tr.cur td { box-shadow: inset 0 2px var(--accent), inset 0 -2px var(--accent); font-weight: 600; }
+  #grid tr.cur td:first-child { box-shadow: inset 2px 2px var(--accent), inset 0 -2px var(--accent); }
+  #grid tr.sep td { border-top: 3px solid var(--muted); }
+  #grid td.res { font-weight: 600; }
+  .legend .sw { width: 18px; height: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Оконные функции: партиция, порядок, рамка</h1>
+  <p class="lead">Модуль 02, урок <a href="../theory/02_window_functions.md">02 «Оконные функции»</a>.
+    Данные — настоящие: товар 38 в магазинах 0 и 1, продажи с 1 по 7 апреля 2024
+    (<code>sale_amount</code> нормализован). Собери окно и щёлкни строку: подсветится её окно.</p>
+
+  <section>
+    <h2>1. Собери окно</h2>
+    <div class="controls">
+      <label>Функция: <select id="fn">
+        <option value="sum">sum(sale_amount)</option>
+        <option value="avg">avg(sale_amount)</option>
+        <option value="count">count(*)</option>
+        <option value="row_number">row_number()</option>
+        <option value="rank">rank()</option>
+        <option value="lag">lag(sale_amount)</option>
+        <option value="last_value">last_value(sale_amount)</option>
+      </select></label>
+      <label>PARTITION BY: <select id="part">
+        <option value="">—</option><option value="store_id" selected>store_id</option></select></label>
+      <label>ORDER BY: <select id="ord">
+        <option value="">—</option><option value="dt" selected>dt</option>
+        <option value="sale_amount">sale_amount</option><option value="sale_amount DESC">sale_amount DESC</option></select></label>
+    </div>
+    <div class="controls">
+      <label>Рамка: <select id="frame">
+        <option value="default">по умолчанию (не указана)</option>
+        <option value="ru">ROWS UNBOUNDED PRECEDING</option>
+        <option value="r2" selected>ROWS BETWEEN 2 PRECEDING AND CURRENT ROW</option>
+        <option value="r11">ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING</option>
+        <option value="rall">ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</option>
+        <option value="rng">RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</option>
+      </select></label>
+    </div>
+    <div class="controls" id="presets">
+      <b>Рецепты урока:</b>
+      <button data-p="ma3">Скользящая сумма 3 дня</button>
+      <button data-p="run">Накопительный итог</button>
+      <button data-p="lag">Вчерашнее значение</button>
+      <button data-p="lastbug">Ловушка last_value</button>
+      <button data-p="peers">Ловушка: равные значения</button>
+      <button data-p="share">Итог группы</button>
+    </div>
+    <div class="sql" id="sql"></div>
+  </section>
+
+  <section>
+    <h2>2. Результат и окно выбранной строки</h2>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--soft)"></i>партиция строки</span>
+      <span><i class="sw" style="background:color-mix(in srgb, var(--run) 30%, transparent)"></i>рамка строки</span>
+      <span><i class="sw" style="outline:2px solid var(--accent)"></i>текущая строка</span>
+    </div>
+    <p class="muted" style="font-size:.9rem">Строки показаны в порядке, в котором их видит окно: по партиции, затем по ORDER BY.</p>
+    <div class="scroll"><table id="grid"></table></div>
+    <div class="caption" id="cap"></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+// Настоящие строки: товар 38, магазины 0 и 1, 1–7 апреля 2024
+const RAW = [[0,"04-01",0.2],[0,"04-02",0.1],[0,"04-03",0.1],[0,"04-04",0.2],[0,"04-05",0.0],[0,"04-06",0.2],[0,"04-07",0.0],
+  [1,"04-01",0.1],[1,"04-02",0.1],[1,"04-03",0.1],[1,"04-04",0.2],[1,"04-05",0.1],[1,"04-06",0.3],[1,"04-07",0.2]];
+const ROWS = RAW.map(([store_id, dt, sale_amount], id) => ({ id, store_id, dt, sale_amount }));
+const FRAMES = {
+  default: "", ru: "ROWS UNBOUNDED PRECEDING", r2: "ROWS BETWEEN 2 PRECEDING AND CURRENT ROW",
+  r11: "ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING", rall: "ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING",
+  rng: "RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW",
+};
+const PRESETS = {
+  ma3: { fn: "sum", part: "store_id", ord: "dt", frame: "r2" },
+  run: { fn: "sum", part: "store_id", ord: "dt", frame: "ru" },
+  lag: { fn: "lag", part: "store_id", ord: "dt", frame: "default" },
+  lastbug: { fn: "last_value", part: "store_id", ord: "dt", frame: "default" },
+  peers: { fn: "sum", part: "store_id", ord: "sale_amount", frame: "default" },
+  share: { fn: "sum", part: "store_id", ord: "", frame: "default" },
+};
+let selected = 3;   // id выбранной строки
+const fmt = (v) => v === null ? "NULL" : Number.isInteger(v) ? String(v) : v.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+
+function opts() { return { fn: $("fn").value, part: $("part").value, ord: $("ord").value, frame: $("frame").value }; }
+
+/* Порядок, в котором окно видит строки */
+function ordered(o) {
+  const key = (r) => o.ord === "dt" ? r.dt : o.ord ? r.sale_amount : 0;
+  const dir = o.ord === "sale_amount DESC" ? -1 : 1;
+  return [...ROWS].sort((a, b) =>
+    (o.part ? a.store_id - b.store_id : 0) ||
+    (key(a) < key(b) ? -dir : key(a) > key(b) ? dir : 0) ||
+    a.id - b.id);   // равные значения: порядок не гарантирован, здесь — по исходной строке
+}
+
+/* Вычисление окна: для каждой строки — партиция, рамка и значение */
+function compute(o) {
+  const list = ordered(o);
+  const key = (r) => o.ord === "dt" ? r.dt : o.ord ? r.sale_amount : null;
+  const out = new Map();
+  const parts = new Map();
+  for (const r of list) {
+    const k = o.part ? r.store_id : "all";
+    if (!parts.has(k)) parts.set(k, []);
+    parts.get(k).push(r);
+  }
+  for (const rows of parts.values()) {
+    rows.forEach((r, i) => {
+      // Рамка в позициях внутри партиции
+      let frame;
+      const peersEnd = () => { let j = i; while (j + 1 < rows.length && key(rows[j + 1]) === key(r)) j++; return j; };
+      const f = o.frame === "default" ? (o.ord ? "rng" : "rall") : o.frame;
+      if (f === "ru") frame = [0, i];
+      else if (f === "r2") frame = [Math.max(0, i - 2), i];
+      else if (f === "r11") frame = [Math.max(0, i - 1), Math.min(rows.length - 1, i + 1)];
+      else if (f === "rall") frame = [0, rows.length - 1];
+      else frame = [0, o.ord ? peersEnd() : rows.length - 1];   // RANGE … CURRENT ROW: с равными
+      const inFrame = rows.slice(frame[0], frame[1] + 1);
+      let v;
+      const vals = inFrame.map((x) => x.sale_amount);
+      if (o.fn === "sum") v = Math.round(vals.reduce((a, b) => a + b, 0) * 1000) / 1000;
+      else if (o.fn === "avg") v = Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 1000) / 1000;
+      else if (o.fn === "count") v = vals.length;
+      else if (o.fn === "last_value") v = vals.at(-1);
+      else if (o.fn === "row_number") v = i + 1;
+      else if (o.fn === "rank") { let j = i; while (j > 0 && key(rows[j - 1]) === key(r)) j--; v = j + 1; }
+      else if (o.fn === "lag") v = i > 0 ? rows[i - 1].sale_amount : null;
+      const usesFrame = ["sum", "avg", "count", "last_value"].includes(o.fn);
+      const frameIds = usesFrame ? inFrame.map((x) => x.id)
+        : o.fn === "lag" ? (i > 0 ? [rows[i - 1].id] : []) : rows.slice(0, i + 1).map((x) => x.id);
+      out.set(r.id, { v, partIds: rows.map((x) => x.id), frameIds, usesFrame, effFrame: f });
+    });
+  }
+  return { list, out };
+}
+
+function sqlText(o) {
+  const fn = { sum: "sum(sale_amount)", avg: "avg(sale_amount)", count: "count(*)", row_number: "row_number()",
+    rank: "rank()", lag: "lag(sale_amount)", last_value: "last_value(sale_amount)" }[o.fn];
+  const parts = [];
+  if (o.part) parts.push(`<span class="kw">PARTITION BY</span> ${o.part}`);
+  if (o.ord) parts.push(`<span class="kw">ORDER BY</span> ${o.ord}`);
+  if (o.frame !== "default") parts.push(FRAMES[o.frame].replace(/(ROWS|RANGE|BETWEEN|AND|UNBOUNDED|PRECEDING|FOLLOWING|CURRENT ROW)/g, '<span class="kw">$1</span>'));
+  return `<span class="kw">SELECT</span> store_id, dt, sale_amount,\n       ${fn} <span class="kw">OVER</span> (${parts.join("\n         ")}) <span class="kw">AS</span> w\n` +
+    `<span class="kw">FROM</span> sales <span class="kw">WHERE</span> product_id = 38 <span class="kw">AND</span> store_id <span class="kw">IN</span> (0, 1)`;
+}
+
+function caption(o, res) {
+  const r = res.out.get(selected), row = ROWS[selected];
+  const where = `Строка «магазин ${row.store_id}, ${row.dt}».`;
+  const needsOrder = ["row_number", "rank", "lag"].includes(o.fn);
+  if (needsOrder && !o.ord)
+    return ["bad", `${where} <code>${o.fn}</code> без ORDER BY даёт порядок, который база не гарантирует. ` +
+      "Результат может меняться от запуска к запуску. Задай ORDER BY."];
+  if (!r.usesFrame && o.frame !== "default")
+    return ["", `${where} <code>${o.fn}</code> не использует рамку: она смотрит только на порядок строк в партиции. ` +
+      "Рамка влияет на агрегаты и <code>first_value</code>/<code>last_value</code>."];
+  if (o.fn === "last_value" && r.effFrame === "rng" && o.ord === "dt")
+    return ["bad", `${where} Ловушка: рамка по умолчанию заканчивается на текущей строке. Поэтому <code>last_value</code> ` +
+      `вернул ${fmt(r.v)} — значение самой строки. Выбери рамку «UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING».`];
+  if (r.effFrame === "rng" && o.ord && o.ord !== "dt") {
+    const peers = res.list.filter((x) => res.out.get(x.id).partIds.includes(selected) &&
+      x.sale_amount === row.sale_amount).length;
+    return [peers > 1 ? "bad" : "", `${where} Рамка по умолчанию — <code>RANGE … CURRENT ROW</code>. Она включает ` +
+      `все строки с тем же значением ORDER BY. Строк со значением ${fmt(row.sale_amount)}: ${peers}. ` +
+      "Поэтому у равных строк одинаковый «накопительный» итог. Для подсчёта по строкам пиши <code>ROWS</code>."];
+  }
+  if (r.effFrame === "rall" && !o.ord && o.fn === "sum")
+    return ["good", `${where} Без ORDER BY рамка — вся партиция. Каждая строка получила итог своего магазина: ${fmt(r.v)}. ` +
+      "Так считают долю: <code>sale_amount / sum(sale_amount) OVER (PARTITION BY store_id)</code>."];
+  if (o.fn === "lag")
+    return ["good", `${where} <code>lag</code> взял предыдущую строку партиции: ${fmt(r.v)}. У первой строки ` +
+      "каждого магазина предыдущей нет — <code>NULL</code>. Без PARTITION BY первый день магазина 1 получил бы значение магазина 0."];
+  if (r.usesFrame)
+    return ["", `${where} Строк в рамке: ${r.frameIds.length}, ${o.fn} = ${fmt(r.v)}. ` +
+      (o.part ? "Рамка не выходит за границу партиции." : "Партиции нет: рамка идёт через оба магазина подряд.")];
+  return ["", `${where} ${o.fn} = ${fmt(r.v)}.`];
+}
+
+function render() {
+  const o = opts();
+  $("sql").innerHTML = sqlText(o);
+  const res = compute(o);
+  const r = res.out.get(selected);
+  let html = "<tr><th>store_id</th><th>dt</th><th>sale_amount</th><th>w</th></tr>";
+  let prevStore = null;
+  for (const row of res.list) {
+    const cls = [];
+    if (!r.partIds.includes(row.id)) cls.push("other");
+    else if (r.frameIds.includes(row.id)) cls.push("frame");
+    else cls.push("part");
+    if (row.id === selected) cls.push("cur");
+    if (o.part && prevStore !== null && row.store_id !== prevStore) cls.push("sep");
+    prevStore = row.store_id;
+    html += `<tr data-id="${row.id}" class="${cls.join(" ")}"><td>${row.store_id}</td><td>2024-${row.dt}</td>` +
+      `<td>${fmt(row.sale_amount)}</td><td class="res">${fmt(res.out.get(row.id).v)}</td></tr>`;
+  }
+  $("grid").innerHTML = html;
+  $("grid").querySelectorAll("tr[data-id]").forEach((tr) =>
+    tr.addEventListener("click", () => { selected = +tr.dataset.id; render(); }));
+  const [cls, text] = caption(o, res);
+  $("cap").className = "caption " + cls;
+  $("cap").innerHTML = text;
+}
+
+document.querySelectorAll("#presets button").forEach((b) => b.addEventListener("click", () => {
+  const p = PRESETS[b.dataset.p];
+  for (const k of ["fn", "part", "ord", "frame"]) $(k).value = p[k];
+  document.querySelectorAll("#presets button").forEach((x) => x.classList.toggle("on", x === b));
+  render();
+}));
+for (const id of ["fn", "part", "ord", "frame"]) $(id).addEventListener("change", () => {
+  document.querySelectorAll("#presets button").forEach((x) => x.classList.remove("on"));
+  render();
+});
+render();
+</script>
+</body>
+</html>

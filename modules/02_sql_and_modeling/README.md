@@ -98,6 +98,7 @@ flowchart LR
 | 🧠 Карточки для повторения | [flashcards.md](flashcards.md) |
 | 🗺️ Карты | [maps/](maps/) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — раздел «SQL и моделирование» |
+| 🎬 Визуализации | [Оконные функции и рамки](visuals/window_frames.html) · [SCD2 и версия на дату](visuals/scd2_timeline.html) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)

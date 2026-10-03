@@ -24,6 +24,10 @@ tags: [dbt, snapshots, scd2, jinja, macros, packages, dbt_utils]
 > - [ ] выполнить макрос-операцию через `run-operation`;
 > - [ ] подключить пакет и использовать `generate_surrogate_key`, `date_spine` (лабы 05.2, 05.5).
 
+> [!tip] Визуализация темы
+> Интерактивная страница [scd2_timeline.html](../../02_sql_and_modeling/visuals/scd2_timeline.html). Схема «dbt snapshot»: почему интервал
+> `[dbt_valid_from, dbt_valid_to)` полуоткрытый и что делает с днём смены BETWEEN.
+
 **Нужно для:** лаб [05.2](../labs/05.2_star_schema_marts/README.md) (задачи 2–3) и
 [05.5](../labs/05.5_incremental_and_snapshots/README.md).
 **Карта урока:** [snapshots-macros.canvas](../maps/snapshots-macros.canvas).
