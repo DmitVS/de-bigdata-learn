@@ -11,5 +11,7 @@
 - [Выбор стека](decisions/stack.md) — Silo вместо MinIO, Lakekeeper, Dagster, версии образов
 - [Obsidian](decisions/obsidian.md) — папка проекта = хранилище Obsidian, конвенции ссылок/врезок, плагины
 - [Lineage и документация](decisions/lineage-and-docs.md) — где в курсе lineage, OpenLineage, `dbt docs` в CI и отчёты-страницы Evidence
+- [Визуальные объяснения](decisions/visual-explanations.md) — сложные темы: схема + HTML-страница + видео Manim/Piper
+- [Стиль ASD-STE100](decisions/writing-style-ste.md) — тексты на русском по правилам STE (не меньше 80 %)
 
 ## Lessons

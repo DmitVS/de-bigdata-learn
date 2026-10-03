@@ -12,5 +12,6 @@ include:
   - orchestration.yaml   # модуль 06: Dagster (профиль orchestration), Airflow (профиль airflow)
   - spark.yaml           # модуль 07: Spark master, 2 workers, Spark Connect (профиль spark)
   - streaming.yaml       # модуль 08: Redpanda, Console, Kafka Connect/Debezium, Flink (профиль streaming)
+  - media.yaml           # видео-объяснения: Manim + Piper (профиль media, запуск — make video)
   # - serving.yaml         # модуль 10: ClickHouse, Trino, Superset
   # - governance.yaml      # модуль 11: OpenMetadata

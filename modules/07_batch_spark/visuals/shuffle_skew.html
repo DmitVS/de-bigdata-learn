@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shuffle и перекос</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  input[type=range] { width: 140px; }
+  .caption { min-height: 4.5em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Shuffle и перекос в Spark</h1>
+  <p class="lead">Модуль 07, уроки <a href="../theory/02_partitions_shuffle.md">02</a> и
+    <a href="../theory/03_joins_and_skew.md">03</a>. Цифры в подписях — замеры на нашем кластере
+    (4 ядра, train.parquet).</p>
+
+  <!-- ═══════════════ Часть 1: groupBy ═══════════════ -->
+  <section id="part1">
+    <h2>1. groupBy изнутри: частичная агрегация</h2>
+    <p>Каждая точка — строка. Цвет — ключ (магазин). Четыре задачи слева читают свои партиции
+      файла. Три задачи справа получают строки своих ключей после shuffle.</p>
+    <div class="controls">
+      <button id="g-prev">← Назад</button>
+      <button id="g-next" class="primary">Вперёд →</button>
+      <button id="g-reset">Сначала</button>
+      <label><input type="checkbox" id="g-partial" checked> Частичная агрегация</label>
+    </div>
+    <svg id="g-svg" viewBox="0 0 960 420" role="img" aria-label="Анимация groupBy"></svg>
+    <div class="caption" id="g-caption"></div>
+    <div class="stats">
+      <div class="stat"><b id="g-shipped">—</b><span>строк передано по сети</span></div>
+      <div class="stat"><b id="g-step">0 / 3</b><span>шаг</span></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ Часть 2: перекос ═══════════════ -->
+  <section id="part2">
+    <h2>2. Соединение по city_id и перекос</h2>
+    <p>Модель: почасовые продажи (108 млн строк) соединяются со справочником городов. Доли городов —
+      настоящие: город 0 — 52 % строк. Задачи выполняются на 4 ядрах. Время — в условных единицах
+      (у.е.): соединение 1 % строк через shuffle стоит 1 у.е., через broadcast — 0,1 у.е. Модель
+      упрощена: хеш — (город·31 + соль) mod P, стадия записи shuffle не показана.</p>
+    <div class="controls">
+      <label><input type="radio" name="mode" value="smj" checked> Sort-merge</label>
+      <label><input type="radio" name="mode" value="salt"> Sort-merge + соль</label>
+      <label><input type="radio" name="mode" value="bhj"> Broadcast</label>
+    </div>
+    <div class="controls">
+      <label>Партиций после shuffle: <input type="range" id="s-parts" min="3" max="24" value="8">
+        <b id="s-parts-v">8</b></label>
+      <label id="s-salt-box">Соль N: <input type="range" id="s-salt" min="2" max="16" value="8">
+        <b id="s-salt-v">8</b></label>
+      <button id="s-play" class="primary">▶ Выполнить стадию</button>
+    </div>
+    <svg id="s-bars" viewBox="0 0 960 230" role="img" aria-label="Размеры партиций"></svg>
+    <svg id="s-gantt" viewBox="0 0 960 200" role="img" aria-label="Загрузка ядер"></svg>
+    <div class="caption" id="s-caption"></div>
+    <div class="stats">
+      <div class="stat"><b id="s-median">—</b><span>медиана задачи, у.е.</span></div>
+      <div class="stat"><b id="s-max">—</b><span>самая долгая задача, у.е.</span></div>
+      <div class="stat"><b id="s-stage">—</b><span>время стадии, у.е.</span></div>
+      <div class="stat"><b id="s-shuffle">—</b><span>строк большой стороны в shuffle</span></div>
+    </div>
+    <h2 style="margin-top:20px">Замеры на нашем кластере</h2>
+    <table>
+      <tr><th>Вариант</th><th>Время</th><th>Shuffle</th><th>Задача: медиана / макс</th><th>Spill</th></tr>
+      <tr><td>Sort-merge</td><td>12,0 с</td><td>193 МБ</td><td class="warn">4,2 / 9,1 с</td><td>188 МБ</td></tr>
+      <tr><td>Sort-merge + соль 8</td><td>9,8 с</td><td>240 МБ</td><td class="ok">4,1 / 4,3 с</td><td>183 МБ</td></tr>
+      <tr><td>Broadcast</td><td class="ok">1,1 с</td><td>≈ 1 КБ</td><td>—</td><td>0</td></tr>
+    </table>
+  </section>
+</main>
+
+<script>
+"use strict";
+const NS = "http://www.w3.org/2000/svg";
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const el = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+const fmt = (n) => Math.round(n).toLocaleString("ru-RU");
+const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+/* ═══════════════ Часть 1: groupBy ═══════════════ */
+(() => {
+  const svg = document.getElementById("g-svg");
+  const KEYS = 6, MAPS = 4, REDS = 3, PER_TASK = 20;
+  // Детерминированный «случайный» набор строк: одинаковый при каждой загрузке
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const rows = [];
+  for (let t = 0; t < MAPS; t++)
+    for (let i = 0; i < PER_TASK; i++) rows.push({ id: rows.length, task: t, key: Math.floor(rnd() * KEYS) });
+
+  const mapBox = (t) => ({ x: 20, y: 20 + t * 98, w: 250, h: 86 });
+  const redBox = (r) => ({ x: 690, y: 30 + r * 128, w: 250, h: 112 });
+
+  // Фон: рамки задач и подписи
+  const bg = el("g", {}, svg);
+  for (let t = 0; t < MAPS; t++) {
+    const b = mapBox(t);
+    el("rect", { x: b.x, y: b.y, width: b.w, height: b.h, rx: 10, fill: "none",
+                 stroke: css("--line"), "stroke-width": 1.5 }, bg);
+    el("text", { x: b.x + 8, y: b.y + 16, "font-size": 12, class: "muted" }, bg).textContent =
+      `map-задача ${t + 1} · партиция файла`;
+  }
+  for (let r = 0; r < REDS; r++) {
+    const b = redBox(r);
+    el("rect", { x: b.x, y: b.y, width: b.w, height: b.h, rx: 10, fill: "none",
+                 stroke: css("--line"), "stroke-width": 1.5 }, bg);
+    el("text", { x: b.x + 8, y: b.y + 16, "font-size": 12, class: "muted" }, bg).textContent =
+      `reduce-задача ${r + 1} · hash(ключ) mod 3 = ${r}`;
+  }
+  const net = el("text", { x: 480, y: 400, "text-anchor": "middle", "font-size": 13, class: "muted" }, bg);
+  net.textContent = "сеть: shuffle";
+  el("line", { x1: 300, y1: 210, x2: 660, y2: 210, stroke: css("--line"), "stroke-dasharray": "6 6" }, bg);
+
+  // Слой точек: одна группа (круг + число) на строку
+  const layer = el("g", {}, svg);
+  const nodes = rows.map((row) => {
+    const g = el("g", {}, layer);
+    const c = el("circle", { r: 7, fill: css(`--k${row.key}`) }, g);
+    const tx = el("text", { "text-anchor": "middle", "dominant-baseline": "central",
+                            "font-size": 10, "font-weight": 700, fill: "#fff" }, g);
+    return { g, c, tx };
+  });
+
+  const gridPos = (box, i, cols, top = 30) => ({
+    x: box.x + 18 + (i % cols) * 24, y: box.y + top + Math.floor(i / cols) * 22,
+  });
+
+  // Состояние шага: для каждой строки — позиция, видимость, число в кружке
+  function state(step, partial) {
+    const s = rows.map((r) => ({ x: 0, y: 0, vis: 1, count: 1 }));
+    // шаг 0: строки в своих map-задачах
+    for (let t = 0; t < MAPS; t++) {
+      rows.filter((r) => r.task === t).forEach((r, i) => Object.assign(s[r.id], gridPos(mapBox(t), i, 10)));
+    }
+    if (step === 0) return s;
+    // шаг 1: частичная агрегация внутри каждой map-задачи
+    let survivors = rows.map((r) => r.id);
+    if (partial) {
+      survivors = [];
+      for (let t = 0; t < MAPS; t++) {
+        const inTask = rows.filter((r) => r.task === t);
+        let slot = 0;
+        for (let k = 0; k < KEYS; k++) {
+          const grp = inTask.filter((r) => r.key === k);
+          if (!grp.length) continue;
+          const p = gridPos(mapBox(t), slot++, 10, 46);
+          grp.forEach((r, i) => {
+            Object.assign(s[r.id], p);
+            s[r.id].vis = i === 0 ? 1 : 0;
+            s[r.id].count = i === 0 ? grp.length : 1;
+          });
+          survivors.push(grp[0].id);
+        }
+      }
+    }
+    if (step === 1) return s;
+    // шаг 2: shuffle — выжившие точки летят в reduce-задачу своего ключа
+    for (let r = 0; r < REDS; r++) {
+      const mine = survivors.filter((id) => rows[id].key % REDS === r)
+                            .sort((a, b) => rows[a].key - rows[b].key);
+      mine.forEach((id, i) => {
+        const p = gridPos(redBox(r), i, 9);
+        rows.forEach((row) => {           // спрятанные строки следуют за своей выжившей
+          if (s[row.id].vis === 0 && row.task === rows[id].task && row.key === rows[id].key && partial)
+            Object.assign(s[row.id], p);
+        });
+        Object.assign(s[id], p);
+      });
+    }
+    if (step === 2) return s;
+    // шаг 3: финальная агрегация — одна точка на ключ
+    for (let r = 0; r < REDS; r++) {
+      let slot = 0;
+      for (let k = 0; k < KEYS; k++) {
+        if (k % REDS !== r) continue;
+        const grp = rows.filter((row) => row.key === k);
+        const p = gridPos(redBox(r), slot++, 9, 50);
+        const total = grp.length;
+        const first = grp[0].id;
+        grp.forEach((row) => {
+          Object.assign(s[row.id], p);
+          s[row.id].vis = row.id === first ? 1 : 0;
+          s[row.id].count = row.id === first ? total : 1;
+        });
+      }
+    }
+    return s;
+  }
+
+  const captions = {
+    0: "Шаг 0. Каждая map-задача читает свою партицию файла. На кластере таких задач 4 — по одной на ядро.",
+    "1p": "Шаг 1. Частичная агрегация (partial_sum): каждая задача суммирует свои строки по ключу. Вместо 20 строк остаётся до 6 сумм.",
+    "1n": "Шаг 1. Частичной агрегации нет (так работает, например, collect_list). Все строки остаются как есть.",
+    2: "Шаг 2. Shuffle: строка ключа k уходит в reduce-задачу hash(k) mod 3. Стадия до shuffle должна закончиться полностью.",
+    3: "Шаг 3. Финальная агрегация: reduce-задача складывает частичные суммы своих ключей. Результат — одна строка на ключ.",
+  };
+
+  let step = 0, cur = state(0, true), anim = null;
+  const partialBox = document.getElementById("g-partial");
+
+  function draw(st) {
+    st.forEach((p, i) => {
+      nodes[i].g.setAttribute("transform", `translate(${p.x},${p.y})`);
+      nodes[i].g.setAttribute("opacity", p.vis);
+      const big = p.count > 1;
+      nodes[i].c.setAttribute("r", big ? 10 : 7);
+      nodes[i].tx.textContent = big ? p.count : "";
+    });
+  }
+
+  function go(to) {
+    const partial = partialBox.checked;
+    const target = state(to, partial);
+    const from = cur.map((p) => ({ ...p }));
+    const t0 = performance.now(), dur = 900;
+    cancelAnimationFrame(anim);
+    const tick = (now) => {
+      const k = ease(Math.min(1, (now - t0) / dur));
+      const mid = from.map((a, i) => {
+        const b = target[i];
+        return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k,
+                 vis: a.vis + (b.vis - a.vis) * k, count: k < 0.5 ? a.count : b.count };
+      });
+      draw(mid);
+      if (k < 1) anim = requestAnimationFrame(tick); else cur = target;
+    };
+    anim = requestAnimationFrame(tick);
+    step = to;
+    const capKey = to === 1 ? (partial ? "1p" : "1n") : to;
+    document.getElementById("g-caption").textContent = captions[capKey];
+    document.getElementById("g-step").textContent = `${to} / 3`;
+    const moved = partial
+      ? state(1, true).filter((p) => p.vis === 1).length
+      : rows.length;
+    document.getElementById("g-shipped").textContent = to >= 2 ? `${moved} из ${rows.length}` : "—";
+    document.getElementById("g-prev").disabled = to === 0;
+    document.getElementById("g-next").disabled = to === 3;
+  }
+
+  document.getElementById("g-next").onclick = () => step < 3 && go(step + 1);
+  document.getElementById("g-prev").onclick = () => step > 0 && go(step - 1);
+  document.getElementById("g-reset").onclick = () => go(0);
+  partialBox.onchange = () => go(step);
+  draw(cur);
+  go(0);
+})();
+
+/* ═══════════════ Часть 2: перекос ═══════════════ */
+(() => {
+  // Строки train по городам × 24 часа (почасовой вид)
+  const TRAIN = [2322990, 40590, 36630, 238320, 102690, 60930, 214560, 39960, 5850, 17730,
+                 32850, 168300, 460530, 210240, 44370, 72270, 407520, 23670];
+  const ROWS = TRAIN.map((n) => n * 24);
+  const TOTAL = ROWS.reduce((a, b) => a + b, 0);
+  const CORES = 4;
+  // Условная единица времени (у.е.): соединение через shuffle 1 % всех строк — 1 у.е.
+  // (запись файлов shuffle, передача, сортировка). Broadcast: строку ищут в хеш-таблице в памяти,
+  // shuffle и сортировки нет — коэффициент 0,1 (на кластере broadcast был в 9–11 раз быстрее).
+  const UNIT = TOTAL / 100;
+  const BHJ_COST = 0.1;
+
+  const bars = document.getElementById("s-bars");
+  const gantt = document.getElementById("s-gantt");
+  const parts = document.getElementById("s-parts");
+  const salt = document.getElementById("s-salt");
+  const mode = () => document.querySelector("input[name=mode]:checked").value;
+
+  // Партиции после shuffle: город (или кусок города с солью) → hash mod P.
+  // Хеш упрощён до (город·31 + соль) mod P — для модели этого достаточно.
+  function partitions() {
+    const P = +parts.value, m = mode();
+    if (m === "bhj") {
+      // broadcast: большой стороны в shuffle нет; 4 map-задачи делят файл поровну
+      return Array.from({ length: CORES }, (_, i) => ({ rows: TOTAL / CORES, cities: { all: 1 }, label: `map ${i + 1}` }));
+    }
+    const N = m === "salt" ? +salt.value : 1;
+    const out = Array.from({ length: P }, (_, i) => ({ rows: 0, cities: {}, label: `p${i}` }));
+    ROWS.forEach((n, city) => {
+      for (let s = 0; s < N; s++) {
+        const p = (city * 31 + s * 7) % P;
+        out[p].rows += n / N;
+        out[p].cities[city] = (out[p].cities[city] || 0) + n / N;
+      }
+    });
+    return out;
+  }
+
+  // Планировщик: задачи по порядку берут первое свободное ядро
+  function schedule(ps, cost) {
+    const free = Array(CORES).fill(0);
+    return ps.map((p, i) => {
+      const core = free.indexOf(Math.min(...free));
+      const start = free[core], dur = (p.rows / UNIT) * cost;
+      free[core] = start + dur;
+      return { i, core, start, dur, end: start + dur, p };
+    });
+  }
+
+  function drawBars(ps) {
+    bars.innerHTML = "";
+    const max = Math.max(...ps.map((p) => p.rows));
+    const w = 900 / ps.length;
+    el("text", { x: 30, y: 16, "font-size": 13, class: "muted" }, bars).textContent =
+      "Размер партиций после shuffle (строк). Красная — содержит город 0.";
+    ps.forEach((p, i) => {
+      const h = max ? (p.rows / max) * 160 : 0;
+      const hot = p.cities[0] !== undefined;
+      el("rect", { x: 30 + i * w + 2, y: 200 - h, width: Math.max(2, w - 4), height: h, rx: 3,
+                   fill: hot ? css("--warn") : css("--accent") }, bars);
+      if (ps.length <= 12)
+        el("text", { x: 30 + i * w + w / 2, y: 216, "text-anchor": "middle", "font-size": 11, class: "muted" }, bars)
+          .textContent = p.label;
+      if (h > 14 && w > 34)
+        el("text", { x: 30 + i * w + w / 2, y: 196 - h, "text-anchor": "middle", "font-size": 10 }, bars)
+          .textContent = (p.rows / 1e6).toFixed(1) + " млн";
+    });
+  }
+
+  let raf = null;
+  function drawGantt(tasks, progress) {
+    gantt.innerHTML = "";
+    const stage = Math.max(...tasks.map((t) => t.end));
+    const scale = 860 / Math.max(stage, 1);
+    el("text", { x: 30, y: 16, "font-size": 13, class: "muted" }, gantt).textContent =
+      "Ядра executors во времени: каждая полоса — задача";
+    for (let c = 0; c < CORES; c++) {
+      el("text", { x: 30, y: 46 + c * 36, "font-size": 11, class: "muted" }, gantt).textContent = `ядро ${c + 1}`;
+      el("line", { x1: 80, y1: 50 + c * 36, x2: 940, y2: 50 + c * 36, stroke: css("--line") }, gantt);
+    }
+    const now = progress * stage;
+    tasks.forEach((t) => {
+      if (now <= t.start) return;
+      const len = Math.min(t.dur, now - t.start) * scale;
+      const hot = t.p.cities[0] !== undefined;
+      el("rect", { x: 80 + t.start * scale, y: 36 + t.core * 36, width: Math.max(1, len - 1), height: 24, rx: 4,
+                   fill: hot ? css("--warn") : css("--accent"), opacity: t.end <= now ? 0.85 : 0.55 }, gantt);
+    });
+    el("line", { x1: 80 + now * scale, y1: 28, x2: 80 + now * scale, y2: 184,
+                 stroke: css("--ink"), "stroke-width": 1, "stroke-dasharray": "3 3" }, gantt);
+  }
+
+  function update(play) {
+    const m = mode();
+    document.getElementById("s-salt-box").style.display = m === "salt" ? "" : "none";
+    document.getElementById("s-parts-v").textContent = parts.value;
+    document.getElementById("s-salt-v").textContent = salt.value;
+    parts.disabled = m === "bhj";
+    const ps = partitions();
+    const nonEmpty = ps.filter((p) => p.rows > 0);
+    const tasks = schedule(nonEmpty, m === "bhj" ? BHJ_COST : 1);
+    const durs = tasks.map((t) => t.dur).sort((a, b) => a - b);
+    const median = durs[Math.floor((durs.length - 1) / 2)];
+    const stage = Math.max(...tasks.map((t) => t.end));
+    drawBars(ps);
+    document.getElementById("s-median").textContent = median.toFixed(1);
+    document.getElementById("s-max").textContent = durs[durs.length - 1].toFixed(1);
+    document.getElementById("s-stage").textContent = stage.toFixed(1);
+    document.getElementById("s-shuffle").textContent = m === "bhj" ? "0" : fmt(TOTAL);
+    const caps = {
+      smj: `Sort-merge: все ${fmt(TOTAL)} строк идут в shuffle по city_id. Город 0 целиком попадает в одну партицию. Её задача идёт дольше остальных, и стадия ждёт её.`,
+      salt: `Соль ${salt.value}: город 0 делится на ${salt.value} кусков с разными ключами (city_id, salt). Куски попадают в разные партиции. Справочник городов размножается в ${salt.value} раз, поэтому shuffle немного больше.`,
+      bhj: "Broadcast: справочник городов (18 строк) уходит на каждый executor. Большая сторона не перемешивается и не сортируется. Каждая map-задача соединяет свою часть файла сама, поиском в хеш-таблице в памяти.",
+    };
+    document.getElementById("s-caption").textContent = caps[m];
+    cancelAnimationFrame(raf);
+    if (!play) { drawGantt(tasks, 1); return; }
+    const t0 = performance.now(), dur = 2500;
+    const tick = (now) => {
+      const k = Math.min(1, (now - t0) / dur);
+      drawGantt(tasks, k);
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+  }
+
+  document.querySelectorAll("input[name=mode]").forEach((r) => (r.onchange = () => update(true)));
+  parts.oninput = () => update(false);
+  salt.oninput = () => update(false);
+  document.getElementById("s-play").onclick = () => update(true);
+  update(false);
+})();
+</script>
+</body>
+</html>

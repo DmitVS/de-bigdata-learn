@@ -98,6 +98,7 @@ flowchart LR
 | 🗺️ Карты | [maps/](maps/) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — раздел «Батч-обработка (Spark)» |
 | 🧪 Учебный проект | [demo/](demo/) |
+| 🎬 Визуализации | [shuffle и перекос: страница](visuals/shuffle_skew.html) · [видео](visuals/shuffle_skew.mp4) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)

@@ -17,6 +17,7 @@
 | `spark.yaml` | Spark master, 2 workers (по 2 ядра, 3 ГБ), Spark Connect (driver) — профиль `spark` | ~5,5 ГБ | 07 | ✅ |
 | `streaming.yaml` | Redpanda (+ Schema Registry) + Console, Kafka Connect/Debezium, Flink (jobmanager + taskmanager) — профиль `streaming` | ~4–5 ГБ | 08 | ✅ |
 | `serving.yaml` | ClickHouse, Trino, Superset | 4–5 ГБ | 10 | ⬜ |
+| `media.yaml` | `media` — Manim + Piper для видео-объяснений (запуск по `make video`, не сервис) | по вызову | все | ✅ |
 | `governance.yaml` | OpenMetadata + Elasticsearch | 5–6 ГБ | 11 | ⬜ |
 
 Машина: Ryzen 7 9700X (16 потоков), 30 ГБ RAM, ~89 ГБ свободно на диске. Комфортная сессия —
@@ -167,6 +168,7 @@ SHOW ALL TABLES;
 | Dagster CLI / оболочка (модуль 06) | `make dagster ARGS="asset list"`, `make dagster-shell` |
 | Redpanda CLI (модуль 08) | `make rpk ARGS="topic list"` |
 | Flink SQL (модуль 08) | `make flink-sql ARGS="-f /workspace/…sql"` |
+| Видео-объяснение | `make video SCENE=modules/…/<тема>_video.py [Q=l] [VOICE=piper]` → `<тема>.mp4` рядом (по умолчанию ElevenLabs) |
 | Остановить тяжёлый слой | `docker compose --env-file .env -f infra/docker/compose.yaml stop <сервисы>` |
 | Остановить (данные сохраняются) | `make down` |
 | Удалить всё вместе с данными | `make clean` |

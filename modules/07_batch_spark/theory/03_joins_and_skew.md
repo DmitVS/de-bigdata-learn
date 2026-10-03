@@ -24,6 +24,11 @@ tags: [spark, join, broadcast, sort-merge, skew, salting, aqe]
 > - [ ] устранить перекос broadcast'ом или солью и измерить эффект;
 > - [ ] объяснить, что делает AQE с соединениями и почему на него нельзя полностью полагаться.
 
+> [!tip] Визуализация темы
+> - Интерактивная страница: [visuals/shuffle_skew.html](../visuals/shuffle_skew.html) — открой файл в
+>   браузере. Шаги groupBy и модель перекоса с ползунками.
+> - Видео с озвучкой (1:49): [visuals/shuffle_skew.mp4](../visuals/shuffle_skew.mp4).
+
 **Нужно для:** лаб [07.3](../labs/07.3_spark_ui_shuffle_skew/README.md),
 [07.5](../labs/07.5_spark_mini_project/README.md).
 **Карта урока:** [joins-skew.canvas](../maps/joins-skew.canvas).

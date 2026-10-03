@@ -24,6 +24,10 @@ tags: [docker, dockerfile, образ]
 > - [ ] объяснить, зачем в образе пользователь с твоим UID и что будет с правами без него;
 > - [ ] добавить Python-пакет в workspace правильным путём (задача 5).
 
+> [!tip] Визуализация темы
+> Видео с озвучкой (2:51): [visuals/dockerfile_layers.mp4](../visuals/dockerfile_layers.mp4) — слои
+> workspace, каскад кэша, порядок инструкций, почему образ только растёт, UID.
+
 **Нужно для:** лаба [00.1](../labs/00.1_compose_anatomy/README.md), задача 5.
 **Карта урока:** [dockerfile-layers.canvas](../maps/dockerfile-layers.canvas).
 

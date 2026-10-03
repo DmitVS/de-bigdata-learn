@@ -110,3 +110,10 @@ metadata:
   периодический выпуск) — демо опоздавших на топике с одной партицией и `on-event`.
 - Образы слоя большие (Flink ~1 ГБ); на канале ~0,3 МБ/с первая загрузка заняла ~40 мин —
   BuildKit при этом «зависал» без вывода, отдельный `docker pull` помог.
+
+## Дополнение от 2026-10-03: слой media (видео-объяснения)
+
+- Образ `debd/media:local`: база `ghcr.io/astral-sh/uv:python3.12-bookworm-slim`, Manim 0.21.0,
+  manim-voiceover 0.4.0, piper-tts 1.8.0 с голосом `ru_RU-ruslan-medium` (встроен в образ). Версии
+  закреплены в `infra/docker/media/requirements.txt` — отдельно от `uv.lock`: системные библиотеки
+  Manim (cairo, pango) не нужны в workspace. Сборка ролика 1:49 в 1080p60 — около 40 с.

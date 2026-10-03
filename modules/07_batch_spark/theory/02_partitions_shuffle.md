@@ -24,6 +24,11 @@ tags: [spark, shuffle, partitions, aqe, groupby, spill]
 > - [ ] объяснить, откуда 200 партиций после shuffle и что с ними делает AQE;
 > - [ ] выбрать между `repartition` и `coalesce` и объяснить spill на диск.
 
+> [!tip] Визуализация темы
+> - Интерактивная страница: [visuals/shuffle_skew.html](../visuals/shuffle_skew.html) — открой файл в
+>   браузере. Шаги groupBy и модель перекоса с ползунками.
+> - Видео с озвучкой (1:49): [visuals/shuffle_skew.mp4](../visuals/shuffle_skew.mp4).
+
 **Нужно для:** лаба [07.3](../labs/07.3_spark_ui_shuffle_skew/README.md).
 **Карта урока:** [partitions-shuffle.canvas](../maps/partitions-shuffle.canvas).
 

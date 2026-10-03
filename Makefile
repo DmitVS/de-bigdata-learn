@@ -10,7 +10,7 @@ UV_RUN   := docker run --rm -u $$(id -u):$$(id -g) -v $(CURDIR):/w -w /w \
             -e UV_CACHE_DIR=/tmp/uv-cache $(UV_IMAGE) uv
 
 .DEFAULT_GOAL := help
-.PHONY: help init lock uv build up down restart ps logs shell sql check data lint fmt test obsidian clean dagster dagster-shell rpk flink-sql
+.PHONY: help init lock uv build up down restart ps logs shell sql check data lint fmt test obsidian clean dagster dagster-shell rpk flink-sql video
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n",$$1,$$2}'
@@ -60,6 +60,11 @@ rpk: ## CLI Redpanda (модуль 08), напр.: make rpk ARGS="topic list"
 
 flink-sql: ## Flink SQL-клиент (модуль 08); скрипт: make flink-sql ARGS="-f /workspace/…sql"
 	$(COMPOSE) exec flink-jobmanager ./bin/sql-client.sh $(ARGS)
+
+Q ?= h
+VOICE ?= elevenlabs
+video: ## Видео Manim + озвучка: make video SCENE=modules/…/x_video.py [Q=l|m|h] [VOICE=piper] → x.mp4
+	$(COMPOSE) --profile media run --rm -e VOICE=$(VOICE) media "scripts/media/render.sh $(SCENE) $(Q)"
 
 check: ## Smoke-тест инфраструктуры (S3, Postgres, Iceberg-каталог, DuckDB)
 	$(EXEC) python scripts/check_stack.py

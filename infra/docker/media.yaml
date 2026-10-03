@@ -1,0 +1,21 @@
+# Слой media: сборка видео-объяснений (Manim + Piper). Не сервис, а инструмент по вызову:
+#   make video SCENE=modules/07_batch_spark/visuals/shuffle_skew_video.py
+# Образ — media/Dockerfile. Результат — в data/videos (вне git) и копия MP4 рядом со сценой.
+
+services:
+  media:
+    build:
+      context: ./media
+      args:
+        UID: ${HOST_UID:-1000}
+        GID: ${HOST_GID:-1000}
+    image: debd/media:local
+    profiles: [media]
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+    environment:
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-} # пусто — озвучка Piper
+    entrypoint: ["bash", "-c"]
+    command: ["echo 'media: запускается через make video'"]
+    restart: "no"
