@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Порядок запуска стека</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px 20px; }
+  .dep { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .dep b { display: block; font-size: .9rem; }
+  .log { font: .85rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); border-radius: 8px; padding: 8px 12px; max-height: 260px;
+         overflow-y: auto; margin-top: 12px; }
+  .log div { white-space: pre-wrap; }
+  .log .warn { color: var(--warn); } .log .ok { color: var(--ok); }
+  .log .future { opacity: .25; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Порядок запуска стека: <code>depends_on</code> и healthcheck</h1>
+  <p class="lead">Модуль 00, урок <a href="../theory/02_startup_order.md">02 «Порядок запуска»</a>.
+    Время условное и близко к замерам урока: healthcheck раз в 5 с, 10 провалов подряд —
+    <code>unhealthy</code>.</p>
+
+  <section>
+    <h2>1. Настрой условия и запусти <code>make up</code></h2>
+    <p>Каждая строка — контейнер нашего стека. Контейнер стартует, когда выполнены
+      <b>его собственные</b> условия <code>depends_on</code>. Поменяй условие и посмотри, кто
+      ждёт, кто стартует раньше времени и где <code>up</code> вернёт ошибку.</p>
+    <div class="controls" id="presets">
+      <b>Сценарии:</b>
+      <button data-p="ours" class="on">Как у нас</button>
+      <button data-p="race">Гонка на чистой установке</button>
+      <button data-p="pgdown">Postgres не поднялся</button>
+      <button data-p="oneshot">One-shot через service_healthy</button>
+      <button data-p="early">Init не ждёт healthy</button>
+    </div>
+    <div class="grid">
+      <div class="dep"><b>lakekeeper-migrate → postgres</b>
+        <select id="c-mig">
+          <option value="healthy">service_healthy</option>
+          <option value="started">service_started</option>
+        </select></div>
+      <div class="dep"><b>lakekeeper → lakekeeper-migrate</b>
+        <select id="c-lk">
+          <option value="completed">service_completed_successfully</option>
+          <option value="started">service_started</option>
+          <option value="none">нет зависимости</option>
+        </select></div>
+      <div class="dep"><b>lakekeeper-init → lakekeeper</b>
+        <select id="c-init">
+          <option value="healthy">service_healthy</option>
+          <option value="started">service_started</option>
+        </select></div>
+      <div class="dep"><b>workspace → lakekeeper-init</b>
+        <select id="c-ws">
+          <option value="completed">service_completed_successfully</option>
+          <option value="healthy">service_healthy</option>
+        </select></div>
+    </div>
+    <div class="controls">
+      <label><input type="checkbox" id="o-clean" checked> Чистая установка (после <code>make clean</code>)</label>
+      <label><input type="checkbox" id="o-pg"> Postgres не может стартовать</label>
+      <button id="play" class="primary">▶ make up</button>
+      <button id="show">Показать всё сразу</button>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--line)"></i>ждёт условие</span>
+      <span><i class="sw" style="background:var(--k0)"></i>starting</span>
+      <span><i class="sw" style="background:var(--ok)"></i>healthy / running</span>
+      <span><i class="sw" style="background:var(--run)"></i>one-shot работает</span>
+      <span><i class="sw" style="background:var(--warn)"></i>ошибка</span>
+    </div>
+    <div class="scroll"><svg id="gantt" viewBox="0 0 960 330" role="img" aria-label="Шкала времени запуска"></svg></div>
+    <div class="caption" id="caption"></div>
+    <div class="stats">
+      <div class="stat"><b id="st-up">—</b><span>код выхода <code>make up</code></span></div>
+      <div class="stat"><b id="st-t">—</b><span>когда <code>up</code> вернул управление</span></div>
+      <div class="stat"><b id="st-ws">—</b><span>статус workspace</span></div>
+    </div>
+    <div class="log" id="log" aria-live="polite"></div>
+  </section>
+
+  <section>
+    <h2>2. Что проверить на схеме</h2>
+    <table>
+      <tr><th>Вопрос</th><th>Где увидеть</th></tr>
+      <tr><td>Почему <code>silo-init</code> и <code>lakekeeper-migrate</code> стартуют одновременно?</td>
+        <td>Сценарий «Как у нас»: у <code>silo</code> и <code>postgres</code> одинаковый
+          <code>interval</code>, оба становятся <code>healthy</code> на 5-й секунде.</td></tr>
+      <tr><td>Почему гонку не видно при повторном запуске?</td>
+        <td>«Гонка на чистой установке», затем сними флажок «Чистая установка». Схема базы уже
+          размечена, и Lakekeeper не падает.</td></tr>
+      <tr><td>Сколько ждать, пока <code>up</code> сдастся на сломанном Postgres?</td>
+        <td>«Postgres не поднялся»: 5 с × 10 проверок ≈ 50 с.</td></tr>
+      <tr><td>На что тратится большая часть времени запуска?</td>
+        <td>Серые полосы ожидания до первого успешного healthcheck. One-shot работает 1–2
+          секунды.</td></tr>
+    </table>
+  </section>
+</main>
+
+<script>
+"use strict";
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+const $ = (id) => document.getElementById(id);
+const sec = (t) => t.toFixed(1).replace(".", ",") + " с";
+
+const NAMES = ["postgres", "silo", "silo-init", "lakekeeper-migrate", "lakekeeper",
+  "lakekeeper-init", "workspace"];
+const D = 0.5;          // от выполнения условия до старта контейнера
+const INF = Infinity;
+
+const PRESETS = {
+  ours:    { mig: "healthy", lk: "completed", init: "healthy", ws: "completed", clean: true, pg: false },
+  race:    { mig: "healthy", lk: "none", init: "healthy", ws: "completed", clean: true, pg: false },
+  pgdown:  { mig: "healthy", lk: "completed", init: "healthy", ws: "completed", clean: true, pg: true },
+  oneshot: { mig: "healthy", lk: "completed", init: "healthy", ws: "healthy", clean: true, pg: false },
+  early:   { mig: "healthy", lk: "completed", init: "started", ws: "completed", clean: true, pg: false },
+};
+
+function readOptions() {
+  return { mig: $("c-mig").value, lk: $("c-lk").value, init: $("c-init").value,
+    ws: $("c-ws").value, clean: $("o-clean").checked, pg: $("o-pg").checked };
+}
+
+/* Модель запуска. Возвращает полосы по сервисам, журнал событий и итог up. */
+function simulate(o) {
+  const rows = Object.fromEntries(NAMES.map((n) => [n, []]));
+  const log = [];
+  let fail = null;
+  const bar = (n, from, to, kind, label = "") => rows[n].push({ from, to, kind, label });
+  const ev = (t, n, text, cls = "") => log.push({ t, n, text, cls });
+  const setFail = (t, msg) => { if (!fail || t < fail.t) fail = { t, msg }; };
+  const blocked = (t) => fail && fail.t <= t;
+
+  // Долгоживущие сервисы без зависимостей
+  const pg = o.pg ? { ready: INF, healthy: INF, bad: 50 } : { ready: 3, healthy: 5 };
+  ev(0, "postgres", "контейнер запущен");
+  if (o.pg) {
+    bar("postgres", 0, 50, "start", "starting");
+    bar("postgres", 50, INF, "bad", "unhealthy");
+    ev(50, "postgres", "10 проверок подряд провалены → unhealthy", "warn");
+  } else {
+    bar("postgres", 0, 5, "start", "starting");
+    bar("postgres", 5, INF, "ok", "healthy");
+    ev(3, "postgres", "принимает соединения");
+    ev(5, "postgres", "healthcheck прошёл → healthy", "ok");
+  }
+  ev(0, "silo", "контейнер запущен");
+  bar("silo", 0, 5, "start", "starting");
+  bar("silo", 5, INF, "ok", "healthy");
+  ev(5, "silo", "healthcheck прошёл → healthy", "ok");
+
+  // silo-init ждёт silo: service_healthy
+  const si = { start: 5 + D, done: 5 + D + 0.5 };
+  bar("silo-init", 0, si.start, "wait");
+  bar("silo-init", si.start, si.done, "run", "mc mb");
+  bar("silo-init", si.done, INF, "done", "exited (0)");
+  ev(si.start, "silo-init", "условие выполнено (silo healthy) → старт");
+  ev(si.done, "silo-init", "бакеты есть → exited (0)", "ok");
+
+  // lakekeeper-migrate ждёт postgres
+  const mig = { start: null, exit: null, done: null };
+  if (o.mig === "healthy") {
+    if (pg.healthy === INF) {
+      bar("lakekeeper-migrate", 0, 50, "wait");
+      bar("lakekeeper-migrate", 50, INF, "never", "Created");
+      setFail(50, "dependency failed to start: container debd-postgres-1 is unhealthy");
+    } else mig.start = pg.healthy + D;
+  } else mig.start = D;
+  if (mig.start !== null) {
+    bar("lakekeeper-migrate", 0, mig.start, "wait");
+    const connectAt = mig.start + 0.3;
+    ev(mig.start, "lakekeeper-migrate", o.mig === "healthy"
+      ? "условие выполнено (postgres healthy) → старт" : "postgres запущен → старт, готовность не проверена");
+    if (pg.ready > connectAt) {
+      mig.exit = 1; mig.done = connectAt;
+      bar("lakekeeper-migrate", mig.start, connectAt, "run");
+      bar("lakekeeper-migrate", connectAt, INF, "bad", "exited (1)");
+      ev(connectAt, "lakekeeper-migrate", "Postgres ещё не принимает соединения → exited (1)", "warn");
+    } else {
+      mig.exit = 0; mig.done = mig.start + (o.clean ? 2 : 0.3);
+      bar("lakekeeper-migrate", mig.start, mig.done, "run", "migrate");
+      bar("lakekeeper-migrate", mig.done, INF, "done", "exited (0)");
+      ev(mig.done, "lakekeeper-migrate", o.clean
+        ? "разметила схему базы lakekeeper → exited (0)" : "схема уже размечена → exited (0)", "ok");
+    }
+  }
+
+  // lakekeeper ждёт silo-init (completed) и migrate (по выбору)
+  const lk = { start: null, ready: INF, healthy: INF, crashes: 0, loop: false };
+  let gate = si.done;
+  if (o.lk === "completed") {
+    if (mig.exit === 0) gate = Math.max(gate, mig.done);
+    else {
+      gate = null;
+      if (mig.exit === 1) setFail(mig.done, 'service "lakekeeper-migrate" didn\'t complete successfully: exit 1');
+    }
+  } else if (o.lk === "started") gate = mig.start === null ? null : Math.max(gate, mig.start);
+  if (gate === null || blocked(gate)) {
+    const until = fail ? fail.t : INF;
+    bar("lakekeeper", 0, until, "wait");
+    if (until < INF) bar("lakekeeper", until, INF, "never", "Created");
+  } else {
+    lk.start = gate + D;
+    bar("lakekeeper", 0, lk.start, "wait");
+    ev(lk.start, "lakekeeper", "условия выполнены → старт");
+    // Когда в базе появится схема: на чистой установке — после migrate
+    const schemaAt = o.clean ? (mig.exit === 0 ? mig.done : INF) : -1;
+    let t = lk.start;
+    for (;;) {
+      const readAt = t + 0.3;
+      const reason = pg.ready > readAt ? "нет соединения с Postgres"
+        : readAt < schemaAt ? "relation does not exist (схемы ещё нет)" : null;
+      if (!reason) {
+        lk.ready = t + 3; lk.healthy = t + 5;
+        bar("lakekeeper", t, lk.healthy, "start", "starting");
+        bar("lakekeeper", lk.healthy, INF, "ok", "healthy");
+        ev(lk.healthy, "lakekeeper", "healthcheck прошёл → healthy", "ok");
+        break;
+      }
+      lk.crashes++;
+      bar("lakekeeper", t, readAt, "start");
+      bar("lakekeeper", readAt, readAt + 1, "bad", "↻");
+      ev(readAt, "lakekeeper", `${reason} → exited (1), restart: unless-stopped`, "warn");
+      t = readAt + 1;
+      if (lk.crashes >= 5) {
+        lk.loop = true;
+        bar("lakekeeper", t, INF, "bad", "Restarting (1)");
+        setFail(t, "dependency failed to start: container debd-lakekeeper-1 exited (1)");
+        break;
+      }
+    }
+  }
+
+  // lakekeeper-init ждёт lakekeeper
+  const init = { start: null, exit: null, done: null };
+  if (lk.start !== null) {
+    const g = o.init === "healthy" ? lk.healthy : lk.start;
+    if (g < INF && !blocked(g)) init.start = g + D;
+  }
+  if (init.start === null) {
+    const until = fail ? fail.t : INF;
+    bar("lakekeeper-init", 0, until, "wait");
+    if (until < INF) bar("lakekeeper-init", until, INF, "never", "Created");
+  } else {
+    bar("lakekeeper-init", 0, init.start, "wait");
+    ev(init.start, "lakekeeper-init", o.init === "healthy"
+      ? "условие выполнено (lakekeeper healthy) → старт" : "lakekeeper запущен → старт, готовность не проверена");
+    const curlAt = init.start + 0.3;
+    if (lk.ready > curlAt) {
+      init.exit = 7; init.done = curlAt;
+      bar("lakekeeper-init", init.start, curlAt, "run");
+      bar("lakekeeper-init", curlAt, INF, "bad", "exited (7)");
+      ev(curlAt, "lakekeeper-init", "curl: порт 8181 ещё не слушают (exit 7) → exited (7)", "warn");
+    } else {
+      init.exit = 0; init.done = init.start + 1;
+      bar("lakekeeper-init", init.start, init.done, "run", "init.sh");
+      bar("lakekeeper-init", init.done, INF, "done", "exited (0)");
+      ev(init.done, "lakekeeper-init", "warehouse lakehouse есть → exited (0)", "ok");
+    }
+  }
+
+  // workspace ждёт lakekeeper-init
+  let ws = { start: null, status: "Created" };
+  if (init.start !== null) {
+    if (o.ws === "healthy") {
+      setFail(init.start, "dependency failed to start: у one-shot debd-lakekeeper-init-1 нет healthcheck");
+    } else if (init.exit !== 0) {
+      setFail(init.done, `service "lakekeeper-init" didn't complete successfully: exit ${init.exit}`);
+    } else if (!blocked(init.done)) ws.start = init.done + D;
+  }
+  if (ws.start === null) {
+    const until = fail ? fail.t : INF;
+    bar("workspace", 0, until, "wait");
+    if (until < INF) bar("workspace", until, INF, "never", "Created");
+  } else {
+    ws.status = "running";
+    bar("workspace", 0, ws.start, "wait");
+    bar("workspace", ws.start, INF, "ok", "running");
+    ev(ws.start, "workspace", "условие выполнено (init exited 0) → старт", "ok");
+  }
+
+  const up = fail ? { t: fail.t, code: 1, msg: fail.msg } : { t: ws.start, code: 0, msg: "" };
+  ev(up.t, "make up", up.code ? `ошибка: ${up.msg}` : "все сервисы готовы → exit 0", up.code ? "warn" : "ok");
+  log.sort((a, b) => a.t - b.t);
+  return { rows, log, up, ws, lk, mig, init, o };
+}
+
+/* Подпись: что произошло и почему */
+function explain(r) {
+  const { o, up, lk, mig, init } = r;
+  if (o.pg && o.mig === "healthy")
+    return ["bad", "Postgres так и не стал <code>healthy</code>. Через 5 с × 10 проверок он получил статус " +
+      "<code>unhealthy</code>. Compose не запустил зависимые контейнеры, и <code>up</code> вернул ошибку. " +
+      "Это правильное поведение: стек падает сразу и сообщает причину."];
+  if (mig.exit === 1)
+    return ["bad", "Миграция стартовала по <code>service_started</code>, пока Postgres ещё не принимал соединения. " +
+      "Она упала с кодом 1. Используй <code>service_healthy</code> для долгоживущего соседа с healthcheck."];
+  if (lk.loop)
+    return ["bad", "Lakekeeper падает в цикле: ему не к чему подключиться. Docker перезапускает его по " +
+      "<code>restart: unless-stopped</code>, но причина не уходит."];
+  if (o.ws === "healthy" && init.start !== null)
+    return ["bad", "У one-shot <code>lakekeeper-init</code> нет healthcheck, статуса <code>healthy</code> у него " +
+      "не бывает. Workspace не запустится никогда. Для one-shot пиши <code>service_completed_successfully</code>."];
+  if (init.exit === 7)
+    return ["bad", "<code>lakekeeper-init</code> стартовал по <code>service_started</code>, когда Lakekeeper ещё " +
+      "загружался. curl не смог подключиться (exit 7), и workspace остался в <code>Created</code>. " +
+      "«Запущен» — это не «готов»."];
+  if (lk.crashes > 0)
+    return ["bad", `Гонка: Lakekeeper стартовал до конца миграции и упал ${lk.crashes} раз. Docker перезапустил ` +
+      "его, и со второй попытки он поднялся. Стек работает, но в логах трейсы, а <code>up --wait</code> мог " +
+      "вернуть ошибку. Сними флажок «Чистая установка»: гонка пропадёт, поэтому её не видно при обычных запусках."];
+  if (up.code === 0 && o.lk !== "completed")
+    return ["", "Гонки нет, потому что схема базы уже размечена. На чистой установке этот же порядок сломается: " +
+      "включи флажок «Чистая установка»."];
+  return ["good", `Все условия выполнены, <code>up</code> вернул 0 через ${sec(up.t)}. Большая часть времени — ` +
+    "ожидание первого успешного healthcheck. Сама работа one-shot занимает 1–2 секунды."];
+}
+
+/* Рисование */
+const svg = $("gantt");
+const X0 = 170, W = 760, ROW = 38, Y0 = 20;
+let result, tEnd, clip, cursor, anim = null;
+
+function color(kind) {
+  return { wait: "var(--line)", start: "var(--k0)", ok: "var(--ok)", run: "var(--run)",
+    done: "var(--muted)", bad: "var(--warn)", never: "var(--line)" }[kind];
+}
+
+function draw() {
+  result = simulate(readOptions());
+  tEnd = Math.max(16, Math.ceil(result.up.t + 3));
+  const x = (t) => X0 + (Math.min(t, tEnd) / tEnd) * W;
+  svg.replaceChildren();
+  const defs = el("defs", {}, svg);
+  const cp = el("clipPath", { id: "reveal" }, defs);
+  clip = el("rect", { x: 0, y: 0, width: X0, height: 330 }, cp);
+
+  const step = tEnd > 40 ? 10 : tEnd > 20 ? 5 : 2;
+  for (let t = 0; t <= tEnd; t += step) {
+    el("line", { x1: x(t), x2: x(t), y1: Y0 - 6, y2: Y0 + NAMES.length * ROW, stroke: "var(--line)" }, svg);
+    el("text", { x: x(t), y: Y0 + NAMES.length * ROW + 16, "text-anchor": "middle", "font-size": 12,
+      class: "muted" }, svg).textContent = t + " с";
+  }
+  const g = el("g", { "clip-path": "url(#reveal)" }, svg);
+  NAMES.forEach((n, i) => {
+    const y = Y0 + i * ROW;
+    el("text", { x: X0 - 10, y: y + 22, "text-anchor": "end", "font-size": 14 }, svg).textContent = n;
+    for (const b of result.rows[n]) {
+      const x1 = x(b.from), x2 = x(b.to);
+      if (x2 - x1 < 0.5) continue;
+      const h = b.kind === "wait" || b.kind === "never" ? 6 : 22;
+      el("rect", { x: x1, y: y + 16 - h / 2, width: x2 - x1, height: h, rx: 4, fill: color(b.kind),
+        opacity: b.kind === "done" ? 0.35 : 1 }, g);
+      if (b.label && x2 - x1 > 40)
+        el("text", { x: (x1 + x2) / 2, y: y + 20, "text-anchor": "middle", "font-size": 12,
+          style: `fill:${b.kind === "never" || b.kind === "done" ? "var(--muted)" : "#fff"}` }, g).textContent = b.label;
+    }
+  });
+  // Момент, когда up вернул управление
+  const ux = x(result.up.t);
+  const um = el("g", { "clip-path": "url(#reveal)" }, svg);
+  el("line", { x1: ux, x2: ux, y1: 4, y2: Y0 + NAMES.length * ROW, stroke: result.up.code ? "var(--warn)" : "var(--ok)",
+    "stroke-width": 2, "stroke-dasharray": "5 4" }, um);
+  el("text", { x: Math.min(ux + 6, 860), y: 14, "font-size": 12, style: `fill:${result.up.code ? "var(--warn)" : "var(--ok)"}` }, um)
+    .textContent = `up → exit ${result.up.code}`;
+  cursor = el("line", { x1: X0, x2: X0, y1: 4, y2: Y0 + NAMES.length * ROW, stroke: "var(--accent)",
+    "stroke-width": 2 }, svg);
+  svg.dataset.x0 = X0;
+  setTime(tEnd);
+}
+
+function setTime(t) {
+  const x = X0 + (Math.min(t, tEnd) / tEnd) * W;
+  clip.setAttribute("width", x + 2);
+  cursor.setAttribute("x1", x); cursor.setAttribute("x2", x);
+  cursor.style.display = t >= tEnd ? "none" : "";
+  const done = t >= tEnd;
+  const r = result;
+  $("st-up").textContent = done || t >= r.up.t ? String(r.up.code) : "…";
+  $("st-up").className = done || t >= r.up.t ? (r.up.code ? "warn" : "ok") : "";
+  $("st-t").textContent = done || t >= r.up.t ? sec(r.up.t) : sec(t);
+  $("st-ws").textContent = done || t >= r.up.t ? r.ws.status : "…";
+  const logEl = $("log");
+  logEl.replaceChildren();
+  for (const e of r.log) {
+    const d = document.createElement("div");
+    d.textContent = `${sec(e.t).padStart(7)}  ${e.n.padEnd(19)} ${e.text}`;
+    d.className = (e.cls || "") + (e.t > t ? " future" : "");
+    logEl.appendChild(d);
+  }
+  if (done) {
+    const [cls, html] = explain(r);
+    $("caption").className = "caption " + cls;
+    $("caption").innerHTML = html;
+  } else {
+    $("caption").className = "caption";
+    $("caption").textContent = `Идёт make up: ${sec(t)}`;
+  }
+}
+
+function play() {
+  if (anim) cancelAnimationFrame(anim);
+  const t0 = performance.now(), dur = 900 + tEnd * 180;
+  const tick = (now) => {
+    const t = ((now - t0) / dur) * tEnd;
+    setTime(t);
+    anim = t < tEnd ? requestAnimationFrame(tick) : null;
+  };
+  anim = requestAnimationFrame(tick);
+}
+
+function applyPreset(name) {
+  const p = PRESETS[name];
+  $("c-mig").value = p.mig; $("c-lk").value = p.lk; $("c-init").value = p.init; $("c-ws").value = p.ws;
+  $("o-clean").checked = p.clean; $("o-pg").checked = p.pg;
+  document.querySelectorAll("#presets button").forEach((b) => b.classList.toggle("on", b.dataset.p === name));
+  draw(); play();
+}
+
+document.querySelectorAll("#presets button").forEach((b) => b.addEventListener("click", () => applyPreset(b.dataset.p)));
+for (const id of ["c-mig", "c-lk", "c-init", "c-ws", "o-clean", "o-pg"])
+  $(id).addEventListener("change", () => {
+    document.querySelectorAll("#presets button").forEach((b) => b.classList.remove("on"));
+    draw(); play();
+  });
+$("play").addEventListener("click", () => { draw(); play(); });
+$("show").addEventListener("click", () => { if (anim) cancelAnimationFrame(anim); anim = null; setTime(tEnd); });
+draw();
+</script>
+</body>
+</html>

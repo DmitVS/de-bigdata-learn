@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Дерево диагностики</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+  .incidents { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+  .incidents button { text-align: left; }
+  .incidents button small { display: block; color: var(--muted); font-size: .8rem; }
+  .crumbs { display: flex; flex-wrap: wrap; gap: 6px; font-size: .85rem; color: var(--muted); margin: 12px 0; }
+  .crumbs span { background: var(--bg); border-radius: 6px; padding: 2px 8px; }
+  .card { background: var(--bg); border-radius: 10px; padding: 14px 16px; }
+  .card h3 { margin: 0 0 8px; font-size: 1.1rem; }
+  .term { font: .85rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #111114;
+          color: #e6e6ea; border-radius: 8px; padding: 10px 12px; margin: 10px 0; white-space: pre-wrap;
+          overflow-x: auto; }
+  .term .p { color: #8fb4ff; }
+  .answers { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .leaf dt { font-weight: 600; margin-top: 8px; }
+  .leaf dd { margin: 2px 0 0; }
+  .verdict { margin-top: 12px; padding: 10px 12px; border-radius: 8px; }
+  .verdict.good { background: color-mix(in srgb, var(--ok) 15%, transparent); }
+  .verdict.bad { background: color-mix(in srgb, var(--warn) 15%, transparent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Дерево диагностики стека</h1>
+  <p class="lead">Модуль 00, урок <a href="../theory/08_diagnostics.md">08 «Диагностика»</a>.
+    Выбери инцидент и найди причину по дереву. На каждом шаге выполни команду и прочитай её
+    вывод, затем выбери ответ. Без инцидента дерево работает как справочник.</p>
+
+  <section>
+    <h2>1. Инцидент</h2>
+    <div class="incidents" id="incidents"></div>
+    <div class="caption" id="symptom">Инцидент не выбран: режим справочника.</div>
+  </section>
+
+  <section>
+    <h2>2. Маршрут</h2>
+    <div class="crumbs" id="crumbs"></div>
+    <div class="card" id="card"></div>
+    <div class="controls">
+      <button id="back">← Шаг назад</button>
+      <button id="restart">В начало дерева</button>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/* Команды, вывод которых показывает инцидент */
+const CMD = {
+  up: "make up",
+  ps: "make ps",
+  inspect: "docker inspect <c> --format 'exit={{.State.ExitCode}} restarts={{.RestartCount}} oom={{.State.OOMKilled}}'",
+  logs: "docker logs <c> 2>&1 | grep -iE 'error|fatal' | head -3",
+  health: "docker inspect <c> --format '{{json .State.Health}}' | python3 -m json.tool",
+  port: "docker ps --filter publish=<порт> --format '{{.Names}}\\t{{.Ports}}'",
+  curl: "curl -sf <адрес>; echo \"exit=$?\"",
+};
+
+/* Дерево: вопрос → ответы → следующий узел; лист — причина, проверка, починка */
+const TREE = {
+  start: { q: "Что сказал make up?", cmd: "up", answers: [
+    ["service \"X\" didn't complete successfully: exit N", "ps"],
+    ["dependency failed to start: … is unhealthy", "unhealthy"],
+    ["port is already allocated", "port"],
+    ["network … could not be found / address pool", "L_network"],
+    ["make up прошёл, но что-то не работает", "ps"]] },
+  ps: { q: "Есть контейнер в статусе Created?", cmd: "ps", hint: "Created — контейнер ждал зависимость, которая не выполнилась.", answers: [
+    ["Да", "created"], ["Нет", "exited"]] },
+  created: { q: "Иди вверх по depends_on. Есть у зависимости Exited ≠ 0 или Restarting?", cmd: "ps", answers: [
+    ["Да", "code"], ["Нет, зависимость unhealthy", "unhealthy"]] },
+  exited: { q: "Есть Exited ≠ 0 или Restarting у того, кто должен работать?", cmd: "ps", hint: "Exited (0) у one-shot — норма.", answers: [
+    ["Да", "code"], ["Нет", "unhealthy2"]] },
+  code: { q: "Какой код выхода?", cmd: "inspect", answers: [
+    ["1, 2, 3… — программа сообщила об ошибке", "logs"],
+    ["125 — ошибка самого Docker", "L_125"],
+    ["126 / 127 — нельзя запустить / нет команды", "L_127"],
+    ["137 — SIGKILL", "oom"],
+    ["143 — SIGTERM", "L_143"]] },
+  oom: { q: "oom=true?", cmd: "inspect", answers: [["Да", "L_oom"], ["Нет", "L_kill"]] },
+  logs: { q: "О чём первая ошибка в логе?", cmd: "logs", hint: "Читай первую ошибку, а не последнюю: последняя — часто следствие.", answers: [
+    ["уже существует / already own it", "L_idem"],
+    ["password authentication failed", "L_drift"],
+    ["connection refused / could not resolve", "L_dep"],
+    ["relation does not exist", "L_race"]] },
+  unhealthy: { q: "Что пишет вывод healthcheck?", cmd: "health", answers: [
+    ["проверка падает: сервис не отвечает", "L_unhealthy"],
+    ["проверка не находит команду", "L_hccmd"]] },
+  unhealthy2: { q: "Есть unhealthy?", cmd: "ps", answers: [["Да", "unhealthy"], ["Нет, всё Up и healthy", "net"]] },
+  net: { q: "Ошибка сетевая? Что вернул curl?", cmd: "curl", answers: [
+    ["exit 6", "L_c6"], ["exit 7", "L_c7"], ["exit 28", "L_c28"], ["exit 0 или 22 — сеть в порядке", "L_drift"]] },
+  port: { q: "docker ps --filter publish=P что-то нашёл?", cmd: "port", answers: [
+    ["Да, контейнер", "L_portc"], ["Нет", "L_porth"]] },
+
+  L_network: { cause: "Нет внешней сети или новая сеть без подсети на машине с VPN.", check: "docker network ls; docker network inspect debd_default",
+    fix: "Подними проект — хозяин сети. Для новой сети задай subnet.", lesson: "03_networking.md" },
+  L_125: { cause: "Ошибка самого Docker: нет образа, порт занят, неверный флаг.", check: "Вывод make up или docker run",
+    fix: "Прочитай сообщение Docker, а не логи контейнера: контейнер не стартовал.", lesson: "08_diagnostics.md" },
+  L_127: { cause: "Команда не найдена (127) или файл нельзя запустить (126).", check: "entrypoint и command в compose, права файла",
+    fix: "Исправь опечатку в command или добавь программу в образ. Для скрипта: chmod +x.", lesson: "08_diagnostics.md" },
+  L_143: { cause: "Процесс завершился по SIGTERM. Обычно это штатный docker stop.", check: "docker events --since 10m",
+    fix: "Ничего не чини, если останавливал ты. Иначе найди, кто вызвал stop.", lesson: "08_diagnostics.md" },
+  L_oom: { cause: "Контейнеру не хватило памяти: ядро убило процесс (OOM).", check: "docker inspect <c> --format '{{.State.OOMKilled}}'; docker stats",
+    fix: "Уменьши объём данных в памяти (лимит DuckDB memory_limit) или дай контейнеру больше памяти.", lesson: "08_diagnostics.md" },
+  L_kill: { cause: "SIGKILL без OOM: docker kill или docker stop, который не дождался выхода.", check: "docker events --since 10m",
+    fix: "Программа должна обрабатывать SIGTERM. Иначе добавь init: true.", lesson: "08_diagnostics.md" },
+  L_idem: { cause: "Init-скрипт не идемпотентен: второй запуск падает на «уже существует».", check: "docker logs <init-контейнер>",
+    fix: "Перед действием проверяй «уже есть?» или используй флаг вроде --ignore-existing.", lesson: "06_volumes_and_state.md" },
+  L_drift: { cause: "Дрейф состояния: том помнит старую настройку (пароль, warehouse), а .env — новую.", check: "Сравни .env с тем, что записано в базе или томе",
+    fix: "Поменяй значение в самой базе (ALTER USER …) или верни старое в .env. make clean — только осознанно: он удалит данные.", lesson: "08_diagnostics.md" },
+  L_dep: { cause: "Сервис стартовал раньше соседа или ищет его не по тому адресу.", check: "depends_on и condition у сервиса; адрес соседа в его настройках",
+    fix: "Добавь depends_on с service_healthy. Адрес — имя сервиса и порт контейнера.", lesson: "02_startup_order.md" },
+  L_race: { cause: "Гонка: сервис стартовал до конца миграции.", check: "make clean && make up на чистой установке, логи сервиса",
+    fix: "depends_on: migrate: condition: service_completed_successfully.", lesson: "02_startup_order.md" },
+  L_unhealthy: { cause: "Сервис не отвечает на проверку: не стартовал, упал внутри или ждёт ресурс.", check: "Health.Log в inspect, затем логи сервиса",
+    fix: "Чини сам сервис по его логам. Интервал проверки не трогай.", lesson: "02_startup_order.md" },
+  L_hccmd: { cause: "Healthcheck вызывает программу, которой нет в образе.", check: "docker exec <c> which <программа>",
+    fix: "Используй в test команду, которая есть в образе.", lesson: "02_startup_order.md" },
+  L_c6: { cause: "Имени нет в справочнике этой сети: запуск на хосте, другая сеть или сервис остановлен.", check: "getent hosts <сервис>; docker network inspect debd_default",
+    fix: "На хосте — localhost:<опубликованный порт>. Из другого проекта — external-сеть.", lesson: "03_networking.md" },
+  L_c7: { cause: "Адрес жив, на порту никого: localhost в контейнере или неверный порт.", check: "getent hosts <сервис>; ports в compose",
+    fix: "В контейнере пиши <сервис>:<порт контейнера>.", lesson: "03_networking.md" },
+  L_c28: { cause: "Ответа нет вообще: файрвол или неверный IP.", check: "ip route; правила файрвола",
+    fix: "Проверь адрес и маршрут. Внутри сети Docker пиши имя сервиса, а не IP.", lesson: "03_networking.md" },
+  L_portc: { cause: "Порт хоста держит другой контейнер, возможно из чужого проекта.", check: "docker ps --filter publish=P",
+    fix: "Выясни, нужен ли он. Затем останови его или опубликуй свой сервис на другом порту хоста.", lesson: "08_diagnostics.md" },
+  L_porth: { cause: "Порт держит программа на хосте.", check: "ss -ltn | grep ':P '; sudo ss -ltnp | grep ':P '",
+    fix: "Опубликуй сервис на другом порту хоста: 127.0.0.1:<другой>:<порт контейнера>.", lesson: "08_diagnostics.md" },
+};
+
+/* Инциденты: вывод команд и правильный лист */
+const PS_OK = `NAME                    STATUS
+debd-postgres-1         Up 3 minutes (healthy)
+debd-silo-1             Up 3 minutes (healthy)
+debd-silo-init-1        Exited (0) 3 minutes ago
+debd-lakekeeper-migrate-1  Exited (0) 3 minutes ago
+debd-lakekeeper-1       Up 3 minutes (healthy)
+debd-lakekeeper-init-1  Exited (0) 3 minutes ago
+debd-workspace-1        Up 3 minutes`;
+const INCIDENTS = [
+  { id: "idem", title: "Второй make up падает", sub: "после правки silo-init", answer: "L_idem",
+    symptom: "Первый make up прошёл. Ты переписал команду silo-init. Второй make up упал.",
+    out: {
+      up: `service "silo-init" didn't complete successfully: exit 1`,
+      ps: PS_OK.replace("debd-silo-init-1        Exited (0)", "debd-silo-init-1        Exited (1)")
+        .replace("debd-lakekeeper-1       Up 3 minutes (healthy)", "debd-lakekeeper-1       Created")
+        .replace("debd-lakekeeper-init-1  Exited (0) 3 minutes ago", "debd-lakekeeper-init-1  Created")
+        .replace("debd-workspace-1        Up 3 minutes", "debd-workspace-1        Created"),
+      inspect: "exit=1 restarts=0 oom=false",
+      logs: "mc: <ERROR> Unable to make bucket `local/landing`. Your previous request to create the named bucket succeeded and you already own it.",
+    } },
+  { id: "port", title: "Порт занят", sub: "make up сразу падает", answer: "L_portc",
+    symptom: "Утром ты запустил ещё один Jupyter в другом проекте. Теперь make up падает.",
+    out: {
+      up: "Error response from daemon: failed to set up container networking: Bind for 127.0.0.1:8888 failed: port is already allocated",
+      port: "lab-jupyter-1\t127.0.0.1:8888->8888/tcp",
+    } },
+  { id: "drift", title: "Сменил пароль в .env", sub: "migrate падает", answer: "L_drift",
+    symptom: "Ты поменял POSTGRES_PASSWORD в .env и сделал make restart. Стек не поднялся.",
+    out: {
+      up: `service "lakekeeper-migrate" didn't complete successfully: exit 1`,
+      ps: PS_OK.replace("debd-lakekeeper-migrate-1  Exited (0)", "debd-lakekeeper-migrate-1  Exited (1)")
+        .replace("debd-lakekeeper-1       Up 3 minutes (healthy)", "debd-lakekeeper-1       Created")
+        .replace("debd-lakekeeper-init-1  Exited (0) 3 minutes ago", "debd-lakekeeper-init-1  Created")
+        .replace("debd-workspace-1        Up 3 minutes", "debd-workspace-1        Created"),
+      inspect: "exit=1 restarts=0 oom=false",
+      logs: `FATAL: password authentication failed for user "de"`,
+    } },
+  { id: "c7", title: "make check: exit 7", sub: "всё healthy", answer: "L_c7",
+    symptom: "make up прошёл. Твой скрипт в make shell обращается к http://localhost:8181 и падает.",
+    out: {
+      up: "✔ Container debd-workspace-1  Started   (exit 0)",
+      ps: PS_OK,
+      curl: "exit=7",
+    } },
+  { id: "oom", title: "workspace пропал", sub: "во время запроса DuckDB", answer: "L_oom",
+    symptom: "Ты запустил тяжёлый запрос DuckDB в make shell. Сессия оборвалась.",
+    out: {
+      up: "(make up не запускался: стек уже работал)",
+      ps: PS_OK.replace("debd-workspace-1        Up 3 minutes", "debd-workspace-1        Exited (137) 1 minute ago"),
+      inspect: "exit=137 restarts=0 oom=true",
+    } },
+  { id: "unh", title: "Postgres unhealthy", sub: "make up ждёт ~50 с", answer: "L_unhealthy",
+    symptom: "make up думал почти минуту и упал.",
+    out: {
+      up: "dependency failed to start: container debd-postgres-1 is unhealthy",
+      ps: PS_OK.replace("debd-postgres-1         Up 3 minutes (healthy)", "debd-postgres-1         Up 1 minute (unhealthy)"),
+      health: `{"Status": "unhealthy", "FailingStreak": 10,
+ "Log": [{"ExitCode": 2, "Output": "/var/run/postgresql:5432 - no response"}]}`,
+    } },
+];
+
+let incident = null, path = ["start"];
+
+function renderIncidents() {
+  $("incidents").innerHTML = INCIDENTS.map((i) =>
+    `<button data-i="${i.id}" class="${incident && incident.id === i.id ? "on" : ""}">${i.title}<small>${i.sub}</small></button>`).join("") +
+    `<button data-i="" class="${incident ? "" : "on"}">Справочник<small>без инцидента</small></button>`;
+  $("incidents").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+    incident = INCIDENTS.find((i) => i.id === b.dataset.i) || null;
+    path = ["start"];
+    renderIncidents(); render();
+  }));
+  $("symptom").innerHTML = incident ? `<b>Симптом.</b> ${esc(incident.symptom)}` : "Инцидент не выбран: режим справочника.";
+}
+
+function term(key) {
+  const cmd = `<span class="p">$</span> ${esc(CMD[key])}`;
+  if (!incident) return `<div class="term">${cmd}</div>`;
+  const out = incident.out[key] ?? "(ничего необычного)";
+  return `<div class="term">${cmd}\n${esc(out)}</div>`;
+}
+
+function render() {
+  const id = path.at(-1), n = TREE[id];
+  $("crumbs").innerHTML = path.map((p, i) => `<span>${i + 1}. ${esc(TREE[p].q || "Причина")}</span>`).join("");
+  $("back").disabled = path.length < 2;
+  if (n.q) {
+    $("card").innerHTML = `<h3>${esc(n.q)}</h3>${term(n.cmd)}` +
+      (n.hint ? `<p class="muted">${esc(n.hint)}</p>` : "") +
+      `<div class="answers">${n.answers.map(([label, to], i) =>
+        `<button data-to="${to}">${esc(label)}</button>`).join("")}</div>`;
+    $("card").querySelectorAll("[data-to]").forEach((b) =>
+      b.addEventListener("click", () => { path.push(b.dataset.to); render(); }));
+  } else {
+    let verdict = "";
+    if (incident) {
+      const ok = id === incident.answer;
+      verdict = `<div class="verdict ${ok ? "good" : "bad"}">${ok
+        ? "Верно: это причина инцидента."
+        : "Это не та причина. Вернись на шаг назад и перечитай вывод команды."}</div>`;
+    }
+    $("card").innerHTML = `<h3>Причина</h3><dl class="leaf"><dt>Что случилось</dt><dd>${esc(n.cause)}</dd>` +
+      `<dt>Как проверить</dt><dd><code>${esc(n.check)}</code></dd><dt>Как чинить</dt><dd>${esc(n.fix)}</dd>` +
+      `<dt>Подробнее</dt><dd><a href="../theory/${n.lesson}">урок ${n.lesson.slice(0, 2)}</a></dd></dl>${verdict}`;
+  }
+}
+
+$("back").addEventListener("click", () => { if (path.length > 1) { path.pop(); render(); } });
+$("restart").addEventListener("click", () => { path = ["start"]; render(); });
+renderIncidents(); render();
+</script>
+</body>
+</html>

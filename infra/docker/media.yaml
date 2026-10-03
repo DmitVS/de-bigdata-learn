@@ -1,6 +1,8 @@
-# Слой media: сборка видео-объяснений (Manim + Piper). Не сервис, а инструмент по вызову:
-#   make video SCENE=modules/07_batch_spark/visuals/shuffle_skew_video.py
-# Образ — media/Dockerfile. Результат — в data/videos (вне git) и копия MP4 рядом со сценой.
+# Слой media: инструменты визуальных объяснений, запускаются по вызову.
+#   make video SCENE=modules/07_batch_spark/visuals/shuffle_skew_video.py — видео Manim + озвучка.
+#     Образ — media/Dockerfile. Результат — в data/videos (вне git) и копия MP4 рядом со сценой.
+#   make page-check PAGE=modules/00_just_enough/visuals/networking.html — проверка HTML-страницы:
+#     chrome (headless, CDP) + page-check (Node). Скриншот — в data/shots (вне git).
 
 services:
   media:
@@ -18,4 +20,24 @@ services:
       ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-} # пусто — озвучка Piper
     entrypoint: ["bash", "-c"]
     command: ["echo 'media: запускается через make video'"]
+    restart: "no"
+
+  chrome:
+    image: chromedp/headless-shell:151.0.7922.109
+    profiles: [media]
+    command: ["--no-sandbox", "--disable-gpu"]
+    volumes:
+      - ../..:/workspace:ro
+    restart: "no"
+
+  page-check:
+    image: node:22.20.0-slim
+    profiles: [media]
+    network_mode: "service:chrome" # CDP Chrome на 127.0.0.1:9222 без публикации порта
+    depends_on: [chrome]
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+    entrypoint: ["node", "scripts/visuals/page_check.mjs"]
     restart: "no"

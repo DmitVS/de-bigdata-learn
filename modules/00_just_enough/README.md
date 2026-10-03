@@ -115,7 +115,7 @@ flowchart LR
 | 🗺️ Карты | [maps/](maps/) — Canvas; свои рисунки Excalidraw клади туда же (ПКМ по папке → *Create new drawing*) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — общий словарь курса |
 | ✍️ Шпаргалка | `cheatsheet.md` — пишешь сам по итогам лабы 00.1 |
-| 🎬 Визуализации | [Dockerfile и слои: видео](visuals/dockerfile_layers.mp4) |
+| 🎬 Визуализации | [Порядок запуска](visuals/startup_order.html) · [Сеть: откуда → куда](visuals/networking.html) · [Тома и состояние](visuals/volumes_state.html) · [Дерево диагностики](visuals/diagnostics_tree.html) · [Dockerfile и слои: видео](visuals/dockerfile_layers.mp4) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)

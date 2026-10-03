@@ -10,7 +10,7 @@ UV_RUN   := docker run --rm -u $$(id -u):$$(id -g) -v $(CURDIR):/w -w /w \
             -e UV_CACHE_DIR=/tmp/uv-cache $(UV_IMAGE) uv
 
 .DEFAULT_GOAL := help
-.PHONY: help init lock uv build up down restart ps logs shell sql check data lint fmt test obsidian clean dagster dagster-shell rpk flink-sql video
+.PHONY: help init lock uv build up down restart ps logs shell sql check data lint fmt test obsidian clean dagster dagster-shell rpk flink-sql video ste
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n",$$1,$$2}'
@@ -66,11 +66,19 @@ VOICE ?= elevenlabs
 video: ## Видео Manim + озвучка: make video SCENE=modules/…/x_video.py [Q=l|m|h] [VOICE=piper] → x.mp4
 	$(COMPOSE) --profile media run --rm -e VOICE=$(VOICE) media "scripts/media/render.sh $(SCENE) $(Q)"
 
+W ?= 1100
+page-check: ## Проверка HTML-страницы в Chrome: make page-check PAGE=modules/…/visuals/x.html [W=390] [THEME=dark]
+	$(COMPOSE) --profile media run --rm page-check $(PAGE) $(W) $(THEME); \
+	  rc=$$?; $(COMPOSE) --profile media rm -sf chrome >/dev/null 2>&1; exit $$rc
+
 check: ## Smoke-тест инфраструктуры (S3, Postgres, Iceberg-каталог, DuckDB)
 	$(EXEC) python scripts/check_stack.py
 
 data: ## Скачать датасет FreshRetailNet-50K в data/raw
 	$(EXEC) python datasets/download_freshretail.py
+
+ste: ## Стиль уроков по ASD-STE100: make ste [P=modules/00_just_enough/theory] [V=-v]
+	$(EXEC) python scripts/ste_check.py $(V) $(P)
 
 lint: ## Линтеры: ruff, sqlfmt --check, yamllint
 	$(EXEC) sh -c 'ruff check . && ruff format --check . && sqlfmt --check . && yamllint -s infra'

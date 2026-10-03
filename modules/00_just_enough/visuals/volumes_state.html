@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тома и состояние</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+  .world { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+  .cell { background: var(--bg); border-radius: 10px; padding: 10px 12px; border: 2px solid transparent;
+          transition: border-color .3s; }
+  .cell h3 { margin: 0 0 2px; font-size: .95rem; }
+  .cell .kind { font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+  .cell.changed { border-color: var(--accent); animation: pulse .9s ease-out; }
+  @keyframes pulse { from { box-shadow: 0 0 0 6px var(--soft); } to { box-shadow: 0 0 0 0 transparent; } }
+  .item { font-size: .88rem; padding: 3px 0; display: flex; gap: 6px; }
+  .item.gone { color: var(--muted); text-decoration: line-through; }
+  .item.lost { color: var(--warn); text-decoration: line-through; }
+  .item.new { color: var(--ok); }
+  .item > b { width: 1em; flex: none; font-weight: 400; }
+  .cmds { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+  .cmds button { text-align: left; }
+  .cmds button small { display: block; color: var(--muted); font-size: .78rem; }
+  .cmds button.primary small { color: #fff; opacity: .85; }
+  button.danger { border-color: var(--warn); }
+  .log { font: .85rem/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg);
+         border-radius: 8px; padding: 8px 12px; max-height: 180px; overflow-y: auto; margin-top: 12px; white-space: pre-wrap; }
+  tr.hl td { background: var(--soft); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Тома и состояние: что переживёт команда</h1>
+  <p class="lead">Модуль 00, урок <a href="../theory/06_volumes_and_state.md">06 «Тома и состояние»</a>.
+    Выполняй команды в любом порядке. Страница показывает, какие данные стека остались, а какие
+    пропали.</p>
+
+  <section>
+    <h2>1. Команды</h2>
+    <div class="cmds" id="cmds">
+      <button data-c="up" class="primary">make up<small>создать и запустить стек</small></button>
+      <button data-c="work">Поработать в стеке<small>загрузить таблицы, файл в /tmp</small></button>
+      <button data-c="stop">docker stop<small>остановить контейнеры</small></button>
+      <button data-c="start">docker start<small>запустить те же контейнеры</small></button>
+      <button data-c="reboot">Перезагрузка хоста<small>restart: unless-stopped</small></button>
+      <button data-c="down">make down<small>удалить контейнеры</small></button>
+      <button data-c="restart">make restart<small>down + up</small></button>
+      <button data-c="clean" class="danger">make clean<small>down -v: удалить и тома</small></button>
+      <button data-c="rmi">docker image rm<small>удалить образы стека</small></button>
+      <button data-c="prune">docker volume prune<small>неподключённые анонимные тома</small></button>
+      <button data-c="prunea" class="danger">docker volume prune -a<small>все неподключённые тома</small></button>
+      <button data-c="reset">↺ Сначала<small>пустая машина</small></button>
+    </div>
+    <div class="caption" id="caption">Начни с <code>make up</code>.</div>
+    <div class="world" id="world"></div>
+    <div class="log" id="log"></div>
+  </section>
+
+  <section>
+    <h2>2. Сводная таблица урока</h2>
+    <p>Строка последней команды подсвечена. <span class="ok">✓</span> — данные целы, <span class="warn">✗</span> — удалены.</p>
+    <div class="scroll"><table id="matrix">
+      <tr><th>Команда</th><th>Процесс</th><th>Контейнер и слой записи</th><th>Named volume</th><th>Bind mount (<code>data/</code>)</th><th>Образ</th></tr>
+      <tr data-c="stop start"><td><code>docker stop</code> / <code>start</code></td><td>■ → ▶</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+      <tr data-c="reboot"><td>Перезагрузка хоста</td><td>■ → ▶ (unless-stopped)</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+      <tr data-c="down"><td><code>make down</code></td><td>■</td><td class="warn">✗</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+      <tr data-c="restart"><td><code>make restart</code></td><td>■ → ▶</td><td><span class="warn">✗</span> → новый</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+      <tr data-c="clean"><td><code>make clean</code></td><td>■</td><td class="warn">✗</td><td class="warn">✗</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+      <tr data-c="rmi"><td><code>docker image rm</code></td><td>—</td><td>—</td><td class="ok">✓</td><td class="ok">✓</td><td><span class="warn">✗</span> (скачается / соберётся)</td></tr>
+    </table></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const ANON_IDS = ["18fc86", "7a2d41", "c93e05", "4b17aa", "e2f6d8", "91c0b3", "5d84fe", "a07c2e"];
+
+let S, prev, log, anonN;
+function fresh() {
+  anonN = 0;
+  return { image: false, containers: false, running: false, stoppedByUser: false, layer: false,
+    pgVol: false, siloVol: false, bases: false, buckets: false, tables: false, anon: [] };
+}
+const clone = (s) => JSON.parse(JSON.stringify(s));
+
+/* Команды меняют состояние и возвращают пояснение [класс, html] */
+const CMDS = {
+  up(s) {
+    const notes = [];
+    if (!s.image) { s.image = true; notes.push("образы скачаны и собраны"); }
+    if (s.containers) {
+      if (s.running) return ["", "Стек уже запущен. <code>up</code> ничего не меняет."];
+      s.running = true; s.stoppedByUser = false;
+      return ["good", "Контейнеры уже есть. <code>up</code> запустил их, слои записи на месте."];
+    }
+    s.containers = true; s.running = true; s.stoppedByUser = false; s.layer = false;
+    s.anon.push({ id: ANON_IDS[anonN++ % ANON_IDS.length], owned: true });
+    notes.push("созданы новые контейнеры с пустыми слоями записи");
+    if (!s.pgVol) { s.pgVol = true; s.bases = true; notes.push("том Postgres пуст → initdb создал базы"); }
+    else notes.push("том Postgres не пуст → initdb пропущен, базы и таблицы на месте");
+    if (!s.siloVol) s.siloVol = true;
+    if (!s.buckets) { s.buckets = true; notes.push("silo-init создал бакеты"); }
+    else notes.push("silo-init: бакеты уже есть, пропуск");
+    notes.push(`silo-init получил новый анонимный том ${s.anon.at(-1).id}`);
+    const text = notes.join("; ") + ".";
+    return [s.tables ? "good" : "", text[0].toUpperCase() + text.slice(1)];
+  },
+  work(s) {
+    if (!s.running) return ["bad", "Стек не запущен. Сначала <code>make up</code> или <code>docker start</code>."];
+    s.tables = true; s.layer = true;
+    return ["good", "Таблицы Iceberg загружены: метаданные — в базе lakekeeper (том Postgres), файлы — в бакете " +
+      "warehouse (том Silo). В <code>/tmp</code> workspace лежит <code>scratch.csv</code> — это слой записи."];
+  },
+  stop(s) {
+    if (!s.running) return ["", "Запущенных контейнеров нет."];
+    s.running = false; s.stoppedByUser = true;
+    return ["", "Процессы остановлены, контейнеры в статусе <code>Exited</code>. Слои записи и тома целы."];
+  },
+  start(s) {
+    if (!s.containers) return ["bad", "Контейнеров нет: их удалил <code>down</code>. <code>start</code> запускает только существующие. Нужен <code>make up</code>."];
+    if (s.running) return ["", "Контейнеры уже работают."];
+    s.running = true; s.stoppedByUser = false;
+    return ["good", "Запущены <b>те же</b> контейнеры. Файл в <code>/tmp</code> на месте."];
+  },
+  reboot(s) {
+    if (!s.containers) return ["", "Контейнеров нет — запускать после загрузки нечего. Тома на диске целы."];
+    if (s.stoppedByUser) { s.running = false;
+      return ["", "Ты остановил контейнеры вручную, поэтому <code>unless-stopped</code> их не запускает. Данные целы."]; }
+    s.running = true;
+    return ["good", "Демон Docker запустил контейнеры по <code>restart: unless-stopped</code>. Это те же контейнеры " +
+      "со своими слоями записи. Внимание: стартуют все сразу, без <code>depends_on</code>."];
+  },
+  down(s) {
+    if (!s.containers) return ["", "Контейнеров уже нет."];
+    const hadLayer = s.layer;
+    s.containers = false; s.running = false; s.layer = false; s.stoppedByUser = false;
+    s.anon.forEach((a) => (a.owned = false));
+    return [hadLayer ? "bad" : "", "Контейнеры и их слои записи удалены" + (hadLayer ? " — файл в <code>/tmp</code> пропал" : "") +
+      ". Тома compose не тронул. Анонимный том silo-init остался без хозяина."];
+  },
+  restart(s) {
+    const a = CMDS.down(s), b = CMDS.up(s);
+    return [a[0] === "bad" ? "bad" : b[0], a[1] + " Затем: " + b[1]];
+  },
+  clean(s) {
+    const had = s.tables;
+    s.containers = false; s.running = false; s.layer = false; s.stoppedByUser = false;
+    s.pgVol = false; s.siloVol = false; s.bases = false; s.buckets = false; s.tables = false;
+    s.anon = s.anon.filter((a) => !a.owned);
+    return [had ? "bad" : "", "<code>down -v</code>: удалены контейнеры, named volumes и анонимный том текущего silo-init" +
+      (had ? ". <b>Все таблицы и бакеты потеряны.</b>" : ".") +
+      (s.anon.length ? ` Сироты от прошлых запусков (${s.anon.length}) остались: compose про них не знает.` : "")];
+  },
+  rmi(s) {
+    if (!s.image) return ["", "Образов нет."];
+    if (s.containers) return ["bad", "Ошибка: образ используется контейнером. Сначала <code>make down</code>."];
+    s.image = false;
+    return ["", "Образы удалены. Тома целы. Следующий <code>make up</code> скачает и соберёт образы заново."];
+  },
+  prune(s) {
+    const n = s.anon.filter((a) => !a.owned).length;
+    s.anon = s.anon.filter((a) => a.owned);
+    return ["good", n ? `Удалено анонимных томов-сирот: ${n}. Named volumes не тронуты.` : "Сирот нет, удалять нечего."];
+  },
+  prunea(s) {
+    const named = !s.containers && (s.pgVol || s.siloVol);
+    const had = s.tables;
+    s.anon = s.anon.filter((a) => a.owned);
+    if (named) { s.pgVol = false; s.siloVol = false; s.bases = false; s.buckets = false; s.tables = false; }
+    if (!named) return ["", "Контейнеры существуют, их тома подключены, поэтому <code>-a</code> удалил только сирот."];
+    return ["bad", "Контейнеров нет, поэтому named volumes не подключены. Флаг <code>-a</code> удалил их вместе с сиротами" +
+      (had ? ": <b>таблицы потеряны</b>" : "") + ". «Неподключённый» не значит «ненужный»."];
+  },
+  reset() { S = fresh(); return ["", "Пустая машина: нет образов, контейнеров и томов. Папка <code>data/</code> в репозитории есть всегда."]; },
+};
+
+/* Отрисовка «мира»: ячейки и элементы с пометкой, что изменилось */
+function item(label, now, before, lostIsBad = true) {
+  const cls = now ? (before ? "" : "new") : before ? (lostIsBad ? "lost" : "gone") : "gone";
+  const mark = now ? "✓" : before ? "✗" : "·";
+  return `<div class="item ${cls}"><b>${mark}</b> <span>${label}</span></div>`;
+}
+function render(changed) {
+  const s = S, p = prev;
+  const proc = s.running ? "работают" : s.containers ? "Exited" : "нет";
+  const cells = [
+    ["proc", "Процессы", "контейнеров стека",
+      `<div class="item ${s.running ? "" : "gone"}"><b>${s.running ? "▶" : "■"}</b> <span>${proc}</span></div>`],
+    ["cont", "Контейнеры и слои записи", "удаляются с контейнером",
+      item("контейнеры debd-*", s.containers, p.containers, false) +
+      item("workspace: <code>/tmp/scratch.csv</code>", s.layer, p.layer) +
+      item("workspace: расширения DuckDB в <code>~</code>", s.layer, p.layer)],
+    ["named", "Named volumes", "переживают down",
+      item("<code>debd_postgres-data</code>", s.pgVol, p.pgVol) +
+      item("базы lakekeeper, retail_oltp", s.bases, p.bases) +
+      item("<code>debd_silo-data</code>: бакеты", s.buckets, p.buckets) +
+      item("твои таблицы Iceberg", s.tables, p.tables)],
+    ["anon", "Анонимные тома", "VOLUME /data у silo-init",
+      s.anon.length ? s.anon.map((a) => `<div class="item ${a.owned ? "" : "lost"}" style="text-decoration:none">` +
+        `<b>${a.owned ? "●" : "○"}</b> <span><code>${a.id}…</code> ${a.owned ? "подключён к silo-init" : "сирота"}</span></div>`).join("")
+        : `<div class="item gone"><b>·</b> <span>нет</span></div>`],
+    ["bind", "Bind mount", "твоя папка, не объект Docker",
+      item("<code>data/</code>: датасет, код, ноутбуки", true, true)],
+    ["img", "Образы", "из них создаются контейнеры",
+      item("образы стека", s.image, p.image, false)],
+  ];
+  $("world").innerHTML = cells.map(([id, h, k, body]) =>
+    `<div class="cell ${changed.includes(id) ? "changed" : ""}"><h3>${h}</h3><div class="kind">${k}</div>${body}</div>`).join("");
+}
+function diffCells(a, b) {
+  const c = [];
+  if (a.running !== b.running) c.push("proc");
+  if (a.containers !== b.containers || a.layer !== b.layer) c.push("cont");
+  if (a.pgVol !== b.pgVol || a.bases !== b.bases || a.buckets !== b.buckets || a.tables !== b.tables) c.push("named");
+  if (JSON.stringify(a.anon) !== JSON.stringify(b.anon)) c.push("anon");
+  if (a.image !== b.image) c.push("img");
+  return c;
+}
+
+function run(cmd) {
+  prev = clone(S);
+  const [cls, html] = CMDS[cmd](S);
+  if (cmd === "reset") prev = clone(S);
+  $("caption").className = "caption " + cls;
+  $("caption").innerHTML = html;
+  render(diffCells(prev, S));
+  const label = document.querySelector(`[data-c="${cmd}"]`).firstChild.textContent.trim();
+  log.push(cmd === "reset" ? "— сначала —" : `$ ${label}`);
+  $("log").textContent = log.join("\n");
+  $("log").scrollTop = $("log").scrollHeight;
+  document.querySelectorAll("#matrix tr[data-c]").forEach((tr) =>
+    tr.classList.toggle("hl", tr.dataset.c.split(" ").includes(cmd)));
+}
+
+document.querySelectorAll("#cmds button").forEach((b) => b.addEventListener("click", () => run(b.dataset.c)));
+S = fresh(); prev = clone(S); log = [];
+render([]);
+</script>
+</body>
+</html>

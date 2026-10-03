@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сеть Docker: откуда и куда</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+  .cmd { font: .95rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg);
+         border-radius: 8px; padding: 10px 12px; overflow-x: auto; white-space: pre; }
+  .stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin-top: 12px; }
+  .stage { background: var(--bg); border-radius: 8px; padding: 8px 12px; border-top: 3px solid var(--line); }
+  .stage.pass { border-top-color: var(--ok); } .stage.fail { border-top-color: var(--warn); }
+  .stage.skip { opacity: .45; }
+  .stage > b { display: block; }
+  .stage p { margin: 4px 0 0; font-size: .9rem; }
+  @keyframes flow { to { stroke-dashoffset: -24; } }
+  .packet { fill: none; stroke: var(--accent); stroke-width: 3; stroke-dasharray: 8 4;
+            animation: flow .6s linear infinite; }
+  .packet.bad { stroke: var(--warn); }
+  @media (prefers-reduced-motion: reduce) { .packet { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Сеть Docker: откуда → куда</h1>
+  <p class="lead">Модуль 00, урок <a href="../theory/03_networking.md">03 «Сеть Docker»</a>.
+    Выбери, откуда запускаешь curl и какой адрес пишешь. Страница покажет путь пакета, этап, на
+    котором curl сдался, и код выхода. Коды HTTP — замеры на нашем стеке.</p>
+
+  <section>
+    <h2>1. Собери запрос</h2>
+    <div class="controls" id="presets">
+      <b>Частые случаи:</b>
+      <button data-p="ok-host">Браузер на хосте</button>
+      <button data-p="ok-ws">Из make shell по имени</button>
+      <button data-p="lh-ws">localhost в контейнере</button>
+      <button data-p="name-host">Имя сервиса на хосте</button>
+      <button data-p="guest">Чужой проект</button>
+      <button data-p="nope">Неверный путь</button>
+    </div>
+    <div class="controls">
+      <label>Откуда:
+        <select id="src">
+          <option value="host">хост (твой терминал, браузер)</option>
+          <option value="workspace">контейнер workspace (make shell)</option>
+          <option value="guest">контейнер другого проекта, своя сеть</option>
+          <option value="guestx">контейнер другого проекта, сеть debd_default подключена</option>
+        </select></label>
+    </div>
+    <div class="controls">
+      <label>Имя: <select id="name">
+        <option>localhost</option><option>silo</option><option>lakekeeper</option></select></label>
+      <label>Порт: <select id="port">
+        <option>9000</option><option>8181</option><option>9999</option></select></label>
+      <label>Путь: <select id="path">
+        <option value="ok">проверка здоровья сервиса</option><option value="nope">/nope</option></select></label>
+      <label><input type="checkbox" id="f"> флаг <code>-f</code></label>
+      <label><input type="checkbox" id="stopped"> Lakekeeper остановлен</label>
+    </div>
+    <div class="cmd" id="cmd"></div>
+    <div class="scroll"><svg id="net" viewBox="0 0 960 380" role="img" aria-label="Путь пакета"></svg></div>
+    <div class="stages">
+      <div class="stage" id="s1"><b>1. Имя → IP</b><p></p></div>
+      <div class="stage" id="s2"><b>2. Соединение TCP</b><p></p></div>
+      <div class="stage" id="s3"><b>3. Разговор HTTP</b><p></p></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="exit">—</b><span>код выхода curl (<code>echo $?</code>)</span></div>
+      <div class="stat"><b id="http">—</b><span>HTTP-код (<code>-w '%{http_code}'</code>)</span></div>
+    </div>
+    <div class="caption" id="caption"></div>
+  </section>
+
+  <section>
+    <h2>2. Как читать результат</h2>
+    <div class="scroll"><table>
+      <tr><th>Код выхода</th><th>Этап</th><th>Что значит</th><th>Что проверить</th></tr>
+      <tr><td><b>6</b></td><td>1. Имя → IP</td><td>справочник этой сети не знает имя</td>
+        <td>не та сеть? запуск на хосте? сервис остановлен?</td></tr>
+      <tr><td><b>7</b></td><td>2. Соединение</td><td>адрес жив, на порту никого — ответ RST мгновенно</td>
+        <td><code>localhost</code> в контейнере? неверный порт? порт не опубликован?</td></tr>
+      <tr><td><b>0</b></td><td>3. Разговор</td><td>сервер ответил. Ответ может быть ошибкой: 403, 404</td>
+        <td>смотри HTTP-код</td></tr>
+      <tr><td><b>22</b></td><td>3. Разговор</td><td>сервер ответил ошибкой, и задан <code>-f</code></td>
+        <td>путь в URL, права</td></tr>
+    </table></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+const $ = (id) => document.getElementById(id);
+
+const SERVICES = {   // сервис → порт в контейнере, путь проверки, адрес в сети debd_default
+  silo: { port: "9000", path: "/minio/health/live", nope: 403 },
+  lakekeeper: { port: "8181", path: "/health", nope: 404 },
+};
+const PUBLISHED = { "9000": "silo", "8181": "lakekeeper" };   // 127.0.0.1:P → сервис
+
+const PRESETS = {
+  "ok-host":   { src: "host", name: "localhost", port: "8181", path: "ok", f: true, stopped: false },
+  "ok-ws":     { src: "workspace", name: "silo", port: "9000", path: "ok", f: true, stopped: false },
+  "lh-ws":     { src: "workspace", name: "localhost", port: "8181", path: "ok", f: true, stopped: false },
+  "name-host": { src: "host", name: "silo", port: "9000", path: "ok", f: true, stopped: false },
+  "guest":     { src: "guest", name: "lakekeeper", port: "8181", path: "ok", f: true, stopped: false },
+  "nope":      { src: "workspace", name: "silo", port: "9000", path: "nope", f: false, stopped: false },
+};
+
+/* Три этапа curl. Каждый этап: pass | fail | skip и пояснение. */
+function trace(o) {
+  const st = [], res = { exit: 0, http: "000", route: [], failAt: null };
+  const isHost = o.src === "host";
+  const srcName = isHost ? "хоста" : "контейнера";
+  // Этап 1. Имя → IP
+  let target = null;           // куда идёт пакет: "self" или имя сервиса
+  if (o.name === "localhost") {
+    target = "self";
+    st.push(["pass", isHost
+      ? "<code>localhost</code> → 127.0.0.1 хоста. Справочник не нужен."
+      : "<code>localhost</code> → 127.0.0.1 <b>этого же контейнера</b>. У каждого контейнера свой localhost."]);
+  } else if (isHost) {
+    st.push(["fail", "Хост спрашивает свой DNS. Имена сервисов знает только DNS Docker 127.0.0.11 внутри сети. → <b>exit 6</b>"]);
+    res.exit = 6; res.failAt = "dns-host";
+  } else if (o.src === "guest") {
+    st.push(["fail", `В сети чужого проекта свой справочник. Имени <code>${o.name}</code> в нём нет. → <b>exit 6</b>`]);
+    res.exit = 6; res.failAt = "dns-guest";
+  } else if (o.name === "lakekeeper" && o.stopped) {
+    st.push(["fail", "Остановленный контейнер отключён от сети и пропадает из справочника. → <b>exit 6</b>"]);
+    res.exit = 6; res.failAt = "dns-debd";
+  } else {
+    target = o.name;
+    st.push(["pass", `DNS 127.0.0.11 сети debd_default: <code>${o.name}</code> → IP контейнера в 172.28.0.0/24.`]);
+  }
+  // Этап 2. Соединение
+  let server = null;
+  if (res.exit) st.push(["skip", "Не выполнялся: нет IP."]);
+  else if (target === "self" && isHost) {
+    const svc = PUBLISHED[o.port];
+    if (!svc) {
+      st.push(["fail", `На 127.0.0.1:${o.port} хоста никто не слушает: порт не опубликован. Ядро отвечает RST. → <b>exit 7</b> мгновенно`]);
+      res.exit = 7; res.failAt = "host";
+    } else if (svc === "lakekeeper" && o.stopped) {
+      st.push(["fail", "Контейнер остановлен, docker-proxy для 127.0.0.1:8181 тоже. Порт пуст. → <b>exit 7</b>"]);
+      res.exit = 7; res.failAt = "host";
+    } else {
+      server = svc;
+      st.push(["pass", `docker-proxy слушает 127.0.0.1:${o.port} и передаёт соединение в <code>${svc}:${SERVICES[svc].port}</code>.`]);
+      res.route = ["curl", "proxy", svc];
+    }
+  } else if (target === "self") {
+    st.push(["fail", `Пакет не покидает контейнер: на его порту ${o.port} никого. Ядро отвечает RST. → <b>exit 7</b> мгновенно`]);
+    res.exit = 7; res.failAt = "self";
+  } else if (SERVICES[target].port !== o.port) {
+    st.push(["fail", `IP контейнера <code>${target}</code> жив, но на порту ${o.port} никто не слушает (сервис слушает ${SERVICES[target].port}). → <b>exit 7</b>`]);
+    res.exit = 7; res.failAt = target; res.route = [o.src, target];
+  } else {
+    server = target;
+    st.push(["pass", `Мост debd_default передаёт пакет напрямую в <code>${target}:${o.port}</code>. Публикация порта не нужна.`]);
+    res.route = [o.src, target];
+  }
+  // Этап 3. HTTP
+  if (!server) st.push(["skip", "Не выполнялся: нет соединения."]);
+  else {
+    const s = SERVICES[server];
+    if (o.path === "ok") {
+      res.http = "200";
+      st.push(["pass", `<code>GET ${s.path}</code> → 200. Разговор состоялся. → <b>exit 0</b>`]);
+    } else {
+      res.http = String(s.nope);
+      if (o.f) { res.exit = 22; st.push(["fail", `<code>GET /nope</code> → ${s.nope}. С флагом <code>-f</code> ошибка HTTP — провал. → <b>exit 22</b>`]); }
+      else st.push(["pass", `<code>GET /nope</code> → ${s.nope}. Без <code>-f</code> это успешный разговор. → <b>exit 0</b>, хотя ответ — ошибка`]);
+    }
+  }
+  res.stages = st;
+  res.server = server;
+  return res;
+}
+
+function caption(o, r) {
+  if (r.exit === 6 && o.src === "host")
+    return ["bad", "На хосте имена сервисов не работают. Пиши <code>localhost:&lt;опубликованный порт&gt;</code>."];
+  if (r.exit === 6 && o.src === "guest")
+    return ["bad", "Другой проект — другая сеть и другой справочник. Подключи сеть <code>debd_default</code> " +
+      "как <code>external</code> с полем <code>name:</code>. Выбери источник «сеть debd_default подключена»."];
+  if (r.exit === 6) return ["bad", "Имя пропало из справочника, потому что контейнер остановлен. Проверь <code>make ps</code>."];
+  if (r.failAt === "self")
+    return ["bad", "Частая ошибка: в контейнере <code>localhost</code> — это сам контейнер. Пиши имя сервиса: " +
+      `<code>${PUBLISHED[o.port] || "silo"}:${SERVICES[PUBLISHED[o.port] || "silo"].port}</code>.`];
+  if (r.exit === 7) return ["bad", "Адрес правильный, порт неверный или не опубликован. Сверь порт с <code>ports</code> " +
+      "(хост) или с портом сервиса в контейнере."];
+  if (r.exit === 22) return ["bad", "Сеть в порядке: сервер ответил. Ошибка в пути URL. Флаг <code>-f</code> сделал её видимой для скрипта."];
+  if (r.http !== "200") return ["bad", "Ловушка: код выхода 0, но ответ — ошибка. В проверках и скриптах пиши <code>-f</code>."];
+  return ["good", o.src === "host"
+    ? "Хост попадает в контейнер только через опубликованный порт: <code>127.0.0.1:хост:контейнер</code>."
+    : "Соседи в одной сети находят друг друга по имени сервиса и порту <b>контейнера</b>."];
+}
+
+/* Схема */
+const svg = $("net");
+let gPath, gTop;   // слой пути пакета (под узлами) и слой отметок (над узлами)
+const P = {   // координаты узлов
+  curl: [110, 120], proxy: [110, 270],
+  silo: [340, 120], lakekeeper: [580, 120], postgres: [340, 270], workspace: [580, 270],
+  guest: [845, 150], guestx: [845, 270],
+};
+function box(x, y, w, h, title, stroke, dashed) {
+  el("rect", { x, y, width: w, height: h, rx: 14, fill: "none", stroke, "stroke-width": 1.5,
+    "stroke-dasharray": dashed ? "6 5" : "none" }, svg);
+  el("text", { x: x + 12, y: y + 20, "font-size": 13, class: "muted" }, svg).textContent = title;
+}
+function node(key, label, sub, active, dim) {
+  const [x, y] = P[key];
+  el("rect", { x: x - 70, y: y - 26, width: 140, height: 52, rx: 10,
+    style: `fill:var(--panel);stroke:${active ? "var(--accent)" : "var(--line)"};stroke-width:${active ? 2.5 : 1.5};opacity:${dim ? 0.35 : 1}` }, svg);
+  el("text", { x, y: y - 3, "text-anchor": "middle", "font-size": 14, "font-weight": 600,
+    style: `opacity:${dim ? 0.35 : 1}` }, svg).textContent = label;
+  el("text", { x, y: y + 15, "text-anchor": "middle", "font-size": 11, class: "muted",
+    style: `opacity:${dim ? 0.35 : 1}` }, svg).textContent = sub;
+}
+function cross(x, y, text, dy = 30) {
+  el("path", { d: `M${x - 9} ${y - 9} L${x + 9} ${y + 9} M${x + 9} ${y - 9} L${x - 9} ${y + 9}`,
+    style: "stroke:var(--warn);stroke-width:4;fill:none" }, gTop);
+  const t = el("text", { x, y: y + dy, "text-anchor": "middle", "font-size": 12, style: "fill:var(--warn)" }, gTop);
+  t.textContent = text;
+}
+
+function draw(o, r) {
+  svg.replaceChildren();
+  box(20, 40, 180, 310, "Хост (ноутбук)", "var(--muted)");
+  box(225, 40, 470, 310, "сеть debd_default · DNS 127.0.0.11", "var(--accent)");
+  box(720, 40, 225, 160, "сеть guest_default", "var(--muted)", true);
+  if (o.src === "guestx")
+    el("line", { x1: 695, y1: 270, x2: 775, y2: 270, style: "stroke:var(--accent);stroke-width:2;stroke-dasharray:4 4" }, svg);
+  const src = o.src === "host" ? "curl" : o.src;
+  gPath = el("g", {}, svg);
+  node("curl", "curl", "терминал, браузер", src === "curl");
+  node("proxy", "docker-proxy", "127.0.0.1:9000, :8181", r.route.includes("proxy"), o.stopped && o.port === "8181");
+  node("silo", "silo", ":9000", r.server === "silo");
+  node("lakekeeper", "lakekeeper", o.stopped ? "остановлен" : ":8181", r.server === "lakekeeper", o.stopped);
+  node("postgres", "postgres", ":5432", false);
+  node("workspace", "workspace", "make shell", src === "workspace");
+  node("guest", "guest", "только своя сеть", src === "guest");
+  node("guestx", "guest", "+ external debd_default", src === "guestx");
+  gTop = el("g", {}, svg);
+
+  // Путь пакета
+  const route = r.route.map((k) => (k === o.src && k !== "curl" ? src : k)).map((k) => P[k]);
+  if (r.failAt === "self") {
+    const [x, y] = P[src];
+    el("path", { d: `M${x + 20} ${y - 26} C ${x + 20} ${y - 75}, ${x - 40} ${y - 75}, ${x - 30} ${y - 26}`,
+      class: "packet bad" }, gPath);
+    cross(x, y - 62, "порт пуст → 7", -16);
+  } else if (r.failAt && r.failAt.startsWith("dns")) {
+    const [x, y] = P[src];
+    const dns = r.failAt === "dns-host" ? [110, 200] : r.failAt === "dns-guest" ? [845, 75] : [460, 340];
+    el("path", { d: `M${x} ${y} L${dns[0]} ${dns[1]}`, class: "packet bad" }, gPath);
+    cross(dns[0], dns[1] - 8, r.failAt === "dns-host" ? "DNS хоста: не знаю" : "справочник: не знаю");
+  } else if (r.failAt === "host") {
+    el("path", { d: `M110 146 L110 244`, class: "packet bad" }, gPath);
+    cross(150, 200, `:${o.port} пуст → 7`);
+  } else if (route.length > 1) {
+    let d = `M${route[0][0]} ${route[0][1]}`;
+    for (const [x, y] of route.slice(1)) d += ` L${x} ${y}`;
+    el("path", { d, class: "packet" + (r.failAt ? " bad" : "") }, gPath);
+    if (r.failAt) { const [x, y] = P[r.failAt]; cross(x + 92, y, `:${o.port} пуст → 7`); }
+  }
+}
+
+function update() {
+  const o = { src: $("src").value, name: $("name").value, port: $("port").value, path: $("path").value,
+    f: $("f").checked, stopped: $("stopped").checked };
+  const r = trace(o);
+  const svc = PUBLISHED[o.port] || (SERVICES[o.name] ? o.name : "silo");
+  const path = o.path === "ok" ? SERVICES[o.name]?.path ?? SERVICES[svc].path : "/nope";
+  const where = o.src === "host" ? "$" : o.src === "workspace" ? "dev@workspace:~$" : "guest:/#";
+  $("cmd").textContent = `${where} curl -s${o.f ? "f" : ""} -o /dev/null -w '%{http_code}\\n' ${o.name}:${o.port}${path}; echo "exit=$?"\n` +
+    `${r.http}\nexit=${r.exit}`;
+  ["s1", "s2", "s3"].forEach((id, i) => {
+    $(id).className = "stage " + r.stages[i][0];
+    $(id).querySelector("p").innerHTML = r.stages[i][1];
+  });
+  $("exit").textContent = r.exit; $("exit").className = r.exit ? "warn" : r.http === "200" ? "ok" : "warn";
+  $("http").textContent = r.http;
+  const [cls, html] = caption(o, r);
+  $("caption").className = "caption " + cls; $("caption").innerHTML = html;
+  draw(o, r);
+}
+
+function preset(name) {
+  const p = PRESETS[name];
+  for (const k of ["src", "name", "port", "path"]) $(k).value = p[k];
+  $("f").checked = p.f; $("stopped").checked = p.stopped;
+  document.querySelectorAll("#presets button").forEach((b) => b.classList.toggle("on", b.dataset.p === name));
+  update();
+}
+document.querySelectorAll("#presets button").forEach((b) => b.addEventListener("click", () => preset(b.dataset.p)));
+for (const id of ["src", "name", "port", "path", "f", "stopped"])
+  $(id).addEventListener("change", () => {
+    document.querySelectorAll("#presets button").forEach((b) => b.classList.remove("on"));
+    update();
+  });
+preset("ok-host");
+</script>
+</body>
+</html>
