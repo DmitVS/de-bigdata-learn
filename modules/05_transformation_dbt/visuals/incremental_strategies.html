@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Стратегии инкремента dbt</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+  .runs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 12px; }
+  .run { background: var(--bg); border-radius: 10px; padding: 8px 10px; font-size: .85rem; }
+  .run h3 { margin: 0 0 4px; font-size: .9rem; }
+  .run .sql { font: .78rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--muted); margin-bottom: 6px; }
+  .row { display: flex; justify-content: space-between; gap: 6px; padding: 1px 6px; border-radius: 4px;
+         font-variant-numeric: tabular-nums; }
+  .row.new { background: color-mix(in srgb, var(--ok) 22%, transparent); }
+  .row.dup { background: color-mix(in srgb, var(--k3) 30%, transparent); }
+  .row.stale { background: color-mix(in srgb, var(--run) 35%, transparent); }
+  .row.del { text-decoration: line-through; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Инкремент в dbt: append, delete+insert, merge</h1>
+  <p class="lead">Модуль 05, урок <a href="../theory/02_materializations_incremental.md">02 «Материализации и
+    инкремент»</a>. Модель <code>fct_city_weather_daily</code> из демо-проекта, город 0, колонка
+    <code>precipitation</code> (округлено). Значения — из нашей таблицы. Поздняя правка — учебный
+    сценарий: источник прислал исправленные осадки за прошлый день.</p>
+
+  <section>
+    <h2>1. Настрой модель</h2>
+    <div class="controls">
+      <label><code>incremental_strategy</code>:
+        <select id="strat"><option value="delete+insert">delete+insert</option><option value="merge">merge</option><option value="append">append</option></select></label>
+      <label><input type="checkbox" id="key" checked> <code>unique_key=['city_id', 'weather_date']</code></label>
+      <label>Окно <code>lookback_days</code>: <input type="range" id="lb" min="0" max="3" value="2"> <b id="lb-v"></b></label>
+    </div>
+    <div class="controls">
+      <label><input type="checkbox" id="late" checked> Поздняя правка: на запуске 06-26 за 06-24 пришло 14,5 вместо 12,0</label>
+      <label><input type="checkbox" id="retry"> Запуск 06-25 повторили после сбоя</label>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:color-mix(in srgb, var(--ok) 40%, transparent)"></i>вставлено этим запуском</span>
+      <span><i class="sw" style="background:color-mix(in srgb, var(--k3) 50%, transparent)"></i>дубль ключа</span>
+      <span><i class="sw" style="background:color-mix(in srgb, var(--run) 55%, transparent)"></i>устаревшее значение</span>
+    </div>
+    <div class="runs" id="runs"></div>
+    <div class="stats">
+      <div class="stat"><b id="s-rows">—</b><span>строк в таблице (должно быть 8)</span></div>
+      <div class="stat"><b id="s-dup">—</b><span>дублей ключа</span></div>
+      <div class="stat"><b id="s-stale">—</b><span>устаревших значений</span></div>
+      <div class="stat"><b id="s-read">—</b><span>строк прочитано за запуски</span></div>
+    </div>
+    <div class="caption" id="cap"></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+// precipitation города 0 из fct_city_weather_daily, округлено до 0,1
+const TRUE = { "06-20": 10.0, "06-21": 6.4, "06-22": 8.4, "06-23": 10.6, "06-24": 12.0, "06-25": 12.0, "06-26": 8.6, "06-27": 7.0 };
+const DAYS = Object.keys(TRUE);
+const LATE = 14.5;
+
+function source(upTo, o, runDay) {
+  // Что видит источник на момент запуска: дни до upTo включительно
+  const s = {};
+  for (const d of DAYS) if (d <= upTo) s[d] = TRUE[d];
+  if (o.late && runDay >= "06-26") s["06-24"] = LATE;
+  return s;
+}
+
+function simulate(o) {
+  // Первый запуск (--full-refresh) — таблица по 06-23
+  let table = Object.entries(source("06-23", o, "06-23")).map(([d, v]) => ({ d, v, by: "full" }));
+  const runs = [{ day: "06-23", sql: "create table … as select (первый запуск)", after: table.map((r) => ({ ...r, mark: "new" })) }];
+  const plan = ["06-24", "06-25", ...(o.retry ? ["06-25"] : []), "06-26", "06-27"];
+  let read = 0;
+  plan.forEach((day, i) => {
+    const src = source(day, o, day);
+    const maxD = table.reduce((m, r) => (r.d > m ? r.d : m), "00-00");
+    // where weather_date > max(weather_date) - lookback
+    const from = DAYS[Math.max(0, DAYS.indexOf(maxD) - o.lb)];
+    const win = Object.entries(src).filter(([d]) => (o.lb === 0 ? d > maxD : d > from)).map(([d, v]) => ({ d, v }));
+    read += win.length;
+    const keyed = o.key && o.strat !== "append";
+    let after;
+    if (!keyed) {
+      after = [...table.map((r) => ({ ...r, mark: "" })), ...win.map((r) => ({ ...r, mark: "new" }))];
+    } else if (o.strat === "delete+insert") {
+      const keys = new Set(win.map((r) => r.d));
+      after = [...table.map((r) => ({ ...r, mark: keys.has(r.d) ? "del" : "" })), ...win.map((r) => ({ ...r, mark: "new" }))];
+    } else {   // merge: совпал ключ — UPDATE, нет — INSERT
+      const byKey = new Map(win.map((r) => [r.d, r]));
+      after = table.map((r) => byKey.has(r.d) ? { d: r.d, v: byKey.get(r.d).v, mark: "new" } : { ...r, mark: "" });
+      for (const r of win) if (!table.some((t) => t.d === r.d)) after.push({ ...r, mark: "new" });
+    }
+    after.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : 0));
+    const sql = keyed
+      ? (o.strat === "merge" ? `merge … where weather_date > ${o.lb ? `${maxD} − ${o.lb}` : maxD}` : `delete … ; insert … where weather_date > ${o.lb ? `${maxD} − ${o.lb}` : maxD}`)
+      : `insert … where weather_date > ${o.lb ? `${maxD} − ${o.lb}` : maxD}`;
+    runs.push({ day: day + (plan.indexOf(day) !== i ? " (повтор)" : ""), sql, after });
+    table = after.filter((r) => r.mark !== "del").map(({ d, v }) => ({ d, v }));
+  });
+  // Сверка с полной пересборкой
+  const finalTruth = source("06-27", o, "06-27");
+  const counts = {};
+  table.forEach((r) => { counts[r.d] = (counts[r.d] || 0) + 1; });
+  const dup = Object.values(counts).reduce((a, c) => a + c - 1, 0);
+  const stale = DAYS.filter((d) => table.some((r) => r.d === d && r.v !== finalTruth[d])).length;
+  return { runs, table, dup, stale, read, finalTruth };
+}
+
+function render() {
+  const o = { strat: $("strat").value, key: $("key").checked, lb: +$("lb").value, late: $("late").checked, retry: $("retry").checked };
+  $("lb-v").textContent = o.lb;
+  const r = simulate(o);
+  $("runs").innerHTML = r.runs.map((run) => {
+    const counts = {};
+    run.after.filter((x) => x.mark !== "del").forEach((x) => { counts[x.d] = (counts[x.d] || 0) + 1; });
+    const rows = run.after.map((x) => {
+      let cls = x.mark;
+      if (x.mark !== "del" && counts[x.d] > 1) cls = "dup";
+      else if (x.mark !== "del" && x.d === "06-24" && x.v !== r.finalTruth["06-24"] && run.day >= "06-26") cls = "stale";
+      return `<div class="row ${cls}"><span>${x.d}</span><span>${x.v.toFixed(1).replace(".", ",")}</span></div>`;
+    }).join("");
+    return `<div class="run"><h3>Запуск ${run.day}</h3><div class="sql">${run.sql}</div>${rows}</div>`;
+  }).join("");
+  $("s-rows").textContent = r.table.length; $("s-rows").className = r.table.length === 8 ? "ok" : "warn";
+  $("s-dup").textContent = r.dup; $("s-dup").className = r.dup ? "warn" : "ok";
+  $("s-stale").textContent = r.stale; $("s-stale").className = r.stale ? "warn" : "ok";
+  $("s-read").textContent = r.read;
+  const parts = [];
+  const keyed = o.key && o.strat !== "append";
+  if (!keyed && r.dup) parts.push(o.strat === "append"
+    ? "append вставляет все строки окна. Каждая перечитанная строка становится дублем."
+    : "Без <code>unique_key</code> стратегия не знает, какие строки заменить, и ведёт себя как append.");
+  if (r.stale && o.lb < 2) parts.push("Правка за 06-24 пришла на запуске 06-26. Окно меньше 2 дней её не захватило: в таблице осталось старое значение. Увеличь <code>lookback_days</code>.");
+  else if (r.stale) parts.push("Окно захватило правку, но старая строка осталась рядом с новой.");
+  if (!parts.length) parts.push(`Таблица совпадает с полной пересборкой. Цена — ${r.read} строк прочитано вместо 4 новых: окно перечитывает прошлые дни.` +
+    (o.retry ? " Повтор запуска 06-25 ничего не испортил: запуск идемпотентен." : ""));
+  $("cap").className = "caption " + (r.dup || r.stale ? "bad" : "good");
+  $("cap").innerHTML = parts.join(" ");
+}
+for (const id of ["strat", "key", "lb", "late", "retry"]) $(id).addEventListener("input", render);
+render();
+</script>
+</body>
+</html>

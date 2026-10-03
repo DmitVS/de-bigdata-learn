@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Курсор и окно перечитывания</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+  .runs { font: .85rem/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg);
+          border-radius: 8px; padding: 8px 12px; margin-top: 12px; white-space: pre-wrap; overflow-x: auto; }
+  .runs .warn { color: var(--warn); } .runs .ok { color: var(--ok); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Инкремент по курсору: поздние строки и окно перечитывания</h1>
+  <p class="lead">Модуль 04, урок <a href="../theory/01_ingestion_patterns.md">01 «Паттерны загрузки»</a>, шаг 3.
+    Транзакции меняют таблицу <code>stores</code> учётной базы. <code>updated_at = now()</code> — время
+    <b>начала</b> транзакции, а видна строка становится только после COMMIT. Загрузчик запускается
+    по расписанию и читает строки новее отметки.</p>
+
+  <section>
+    <h2>1. Настрой загрузчик</h2>
+    <div class="controls">
+      <label>Запуск каждые: <input type="range" id="every" min="5" max="20" value="10"> <b id="every-v"></b> с</label>
+      <label>Окно перечитывания: <input type="range" id="lb" min="0" max="20" value="0"> <b id="lb-v"></b> с</label>
+    </div>
+    <div class="controls">
+      <label>Сравнение: <select id="cmp"><option value="gt">updated_at &gt; отметки</option><option value="ge">updated_at &gt;= отметки</option></select></label>
+      <label>Запись: <select id="write"><option value="merge">merge по store_id</option><option value="append">append</option></select></label>
+    </div>
+    <div class="controls">
+      <label><input type="checkbox" id="recat"> recategorize без нового updated_at</label>
+      <label><input type="checkbox" id="delist"> delist: DELETE строки</label>
+    </div>
+    <div class="controls" id="presets">
+      <b>Сценарии:</b>
+      <button data-p="naive">Наивный курсор</button>
+      <button data-p="fixed">Окно 15 с + merge</button>
+      <button data-p="append">Окно + append</button>
+      <button data-p="ge">&gt;= на границе</button>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--ok)"></i>загружено один раз</span>
+      <span><i class="sw" style="background:var(--k3)"></i>дубль в таблице</span>
+      <span><i class="sw" style="background:var(--warn)"></i>потеряно</span>
+      <span><i class="sw" style="background:var(--soft)"></i>что прочитал запуск</span>
+    </div>
+    <div class="scroll"><svg id="tl" viewBox="0 0 960 420" role="img" aria-label="Транзакции и запуски загрузчика"></svg></div>
+    <div class="stats">
+      <div class="stat"><b id="s-lost">—</b><span>изменений потеряно</span></div>
+      <div class="stat"><b id="s-dup">—</b><span>лишних строк (дубли)</span></div>
+      <div class="stat"><b id="s-reread">—</b><span>строк прочитано повторно</span></div>
+    </div>
+    <div class="caption" id="cap"></div>
+    <div class="runs" id="runs"></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+/* Изменения: store_id, начало транзакции (= updated_at), COMMIT. Время в секундах. */
+const BASE = [
+  { id: "A", store: 1, start: 4, commit: 12, note: "долгая транзакция, 8 с" },
+  { id: "B", store: 2, start: 6, commit: 6.3 },
+  { id: "C", store: 5, start: 12, commit: 12.4 },
+  { id: "D", store: 3, start: 22, commit: 34, note: "долгая транзакция, 12 с" },
+  { id: "E", store: 7, start: 25, commit: 25.3 },
+  { id: "F", store: 4, start: 33, commit: 33.2 },
+  { id: "G", store: 6, start: 46, commit: 46.2 },
+  { id: "H", store: 8, start: 46, commit: 52, note: "updated_at как у G" },
+  { id: "I", store: 9, start: 55, commit: 55.3 },
+];
+const END = 70;
+const PRESETS = {
+  naive: { every: 10, lb: 0, cmp: "gt", write: "merge", recat: false, delist: false },
+  fixed: { every: 10, lb: 15, cmp: "gt", write: "merge", recat: false, delist: false },
+  append: { every: 10, lb: 15, cmp: "gt", write: "append", recat: false, delist: false },
+  ge: { every: 10, lb: 0, cmp: "ge", write: "merge", recat: false, delist: false },
+};
+
+function opts() {
+  return { every: +$("every").value, lb: +$("lb").value, cmp: $("cmp").value, write: $("write").value,
+    recat: $("recat").checked, delist: $("delist").checked };
+}
+
+function changes(o) {
+  const list = BASE.map((c) => ({ ...c, kind: "update" }));
+  if (o.recat) list.push({ id: "R", store: 11, start: 38, commit: 38.2, kind: "recat", note: "updated_at не меняется (остался 1 день назад)" });
+  if (o.delist) list.push({ id: "X", store: 12, start: 26, commit: 26.2, kind: "delete", note: "строки больше нет" });
+  return list;
+}
+
+/* Модель загрузчика. Отметка сдвигается после записи на max(updated_at) прочитанного. */
+function simulate(o) {
+  const ch = changes(o);
+  let mark = -Infinity;
+  const runs = [], loaded = new Map(ch.map((c) => [c.id, 0]));
+  for (let t = o.every; t <= END; t += o.every) {
+    const from = mark - o.lb;
+    const visible = ch.filter((c) => c.commit <= t && c.kind === "update");
+    const read = visible.filter((c) => (o.cmp === "ge" ? c.start >= from : c.start > from));
+    read.forEach((c) => loaded.set(c.id, loaded.get(c.id) + 1));
+    const newMark = read.length ? Math.max(mark, ...read.map((c) => c.start)) : mark;
+    runs.push({ t, from, mark, newMark, read: read.map((c) => c.id) });
+    mark = newMark;
+  }
+  let lost = 0, dup = 0, reread = 0;
+  const status = new Map();
+  for (const c of ch) {
+    const n = loaded.get(c.id);
+    reread += Math.max(0, n - 1);
+    if (n === 0) { lost++; status.set(c.id, "lost"); }
+    else if (n > 1 && o.write === "append") { dup += n - 1; status.set(c.id, "dup"); }
+    else status.set(c.id, "ok");
+  }
+  return { ch, runs, lost, dup, reread, status, loaded };
+}
+
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+const s1 = (x) => (Number.isInteger(x) ? x : x.toFixed(1).replace(".", ","));
+
+function render() {
+  const o = opts();
+  $("every-v").textContent = o.every;
+  $("lb-v").textContent = o.lb;
+  const r = simulate(o);
+  const svg = $("tl");
+  svg.replaceChildren();
+  const X0 = 150, W = 780, x = (t) => X0 + (Math.max(-2, t) / END) * W;
+  const rowH = 30, Y0 = 20;
+  svg.setAttribute("viewBox", `0 0 960 ${Y0 + r.ch.length * rowH + 50}`);
+  const bottom = Y0 + r.ch.length * rowH;
+  // Запуски загрузчика и окна чтения
+  r.runs.forEach((run) => {
+    const a = x(Math.max(0, run.from === -Infinity ? 0 : run.from)), b = x(run.t);
+    el("rect", { x: a, y: Y0 - 6, width: Math.max(0, b - a), height: bottom - Y0 + 6, style: "fill:var(--soft);opacity:.55" }, svg);
+    el("line", { x1: b, x2: b, y1: Y0 - 10, y2: bottom, style: "stroke:var(--accent);stroke-width:1.5" }, svg);
+    el("text", { x: b, y: bottom + 16, "text-anchor": "middle", "font-size": 11, style: "fill:var(--accent)" }, svg).textContent = `${run.t} с`;
+    if (run.newMark > -Infinity)
+      el("line", { x1: x(run.newMark), x2: x(run.newMark), y1: bottom + 22, y2: bottom + 30, style: "stroke:var(--ink);stroke-width:2" }, svg);
+  });
+  el("text", { x: X0 - 10, y: bottom + 16, "text-anchor": "end", "font-size": 12, style: "fill:var(--accent)" }, svg).textContent = "запуски";
+  el("text", { x: X0 - 10, y: bottom + 32, "text-anchor": "end", "font-size": 12 }, svg).textContent = "отметка после";
+  // Изменения
+  const color = { ok: "var(--ok)", dup: "var(--k3)", lost: "var(--warn)" };
+  r.ch.forEach((c, i) => {
+    const y = Y0 + i * rowH;
+    const label = c.kind === "delete" ? `${c.id}: DELETE store ${c.store}` : c.kind === "recat" ? `${c.id}: recat. store ${c.store}`
+      : `${c.id}: store ${c.store}`;
+    el("text", { x: X0 - 10, y: y + 15, "text-anchor": "end", "font-size": 12 }, svg).textContent = label;
+    const st = r.status.get(c.id);
+    el("rect", { x: x(c.start), y: y + 4, width: Math.max(4, x(c.commit) - x(c.start)), height: 16, rx: 4,
+      style: `fill:${color[st]};opacity:${c.commit - c.start > 1 ? 0.55 : 1}` }, svg);
+    el("circle", { cx: x(c.commit), cy: y + 12, r: 4, style: `fill:${color[st]}` }, svg);
+    const n = r.loaded.get(c.id);
+    el("text", { x: x(c.commit) + 8, y: y + 16, "font-size": 11, class: "muted" }, svg).textContent =
+      (c.note ? c.note + " · " : "") + (n ? `прочитано ${n}×` : "не прочитано");
+  });
+  // Сводка
+  $("s-lost").textContent = r.lost; $("s-lost").className = r.lost ? "warn" : "ok";
+  $("s-dup").textContent = r.dup; $("s-dup").className = r.dup ? "warn" : "ok";
+  $("s-reread").textContent = r.reread;
+  $("runs").innerHTML = r.runs.map((run) => {
+    const cond = run.from === -Infinity ? "все строки (отметки нет)"
+      : `updated_at ${o.cmp === "ge" ? ">=" : ">"} ${o.lb ? `${s1(run.mark)} − ${o.lb} = ` : ""}${s1(run.from)}`;
+    return `${String(run.t).padStart(2)} с: ${cond} → [${run.read.join(", ") || "—"}]` +
+      `, отметка → ${run.newMark === -Infinity ? "нет" : s1(run.newMark)}`;
+  }).join("\n");
+  $("cap").className = "caption " + (r.lost || r.dup ? "bad" : "good");
+  $("cap").innerHTML = caption(o, r);
+}
+
+function caption(o, r) {
+  const lost = r.ch.filter((c) => r.status.get(c.id) === "lost").map((c) => c.id);
+  const parts = [];
+  if (lost.includes("A") || lost.includes("D"))
+    parts.push("Долгая транзакция стала видна, когда отметка уже ушла дальше её <code>updated_at</code>. " +
+      "Задай окно перечитывания больше самой долгой транзакции (здесь A — 8 с, D — 12 с).");
+  if (lost.includes("H"))
+    parts.push("H имеет тот же <code>updated_at</code>, что и G, но зафиксирована позже. Строгое <code>&gt;</code> её теряет. " +
+      "Выбери <code>&gt;=</code> или окно.");
+  if (lost.includes("R")) parts.push("recategorize не меняет <code>updated_at</code>: курсор не видит изменение никогда. Окно не помогает — нужен триггер.");
+  if (lost.includes("X")) parts.push("Удалённой строки нет в выборке: курсор не видит удаления. Нужны мягкое удаление или CDC.");
+  if (r.dup) parts.push("Окно читает строки повторно. С append каждое повторное чтение — дубль в таблице. Пиши через merge по ключу.");
+  if (!parts.length)
+    return `Всё загружено без потерь и дублей. Цена — ${r.reread} строк прочитано повторно: окно перечитывает «хвост» каждый запуск.`;
+  return parts.join(" ");
+}
+
+document.querySelectorAll("#presets button").forEach((b) => b.addEventListener("click", () => {
+  const p = PRESETS[b.dataset.p];
+  for (const k of ["every", "lb", "cmp", "write"]) $(k).value = p[k];
+  $("recat").checked = p.recat; $("delist").checked = p.delist;
+  document.querySelectorAll("#presets button").forEach((x) => x.classList.toggle("on", x === b));
+  render();
+}));
+for (const id of ["every", "lb", "cmp", "write", "recat", "delist"]) $(id).addEventListener("input", () => {
+  document.querySelectorAll("#presets button").forEach((x) => x.classList.remove("on"));
+  render();
+});
+document.querySelector("[data-p=naive]").click();
+</script>
+</body>
+</html>

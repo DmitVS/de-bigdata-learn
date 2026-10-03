@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Загрузка из API: повторы</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1d1f; --muted: #66666d; --line: #d9d9de;
+    --accent: #2f6fde; --warn: #d1462f; --ok: #2e9b5f; --run: #e0912f; --soft: #e8eefb;
+    --k0: #2f6fde; --k1: #e0912f; --k2: #2e9b5f; --k3: #9b4fd1; --k4: #d1462f; --k5: #1f9fb3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141416; --panel: #1e1e22; --ink: #ececf0; --muted: #a0a0aa; --line: #34343a;
+      --accent: #6b9cff; --warn: #ff7a63; --ok: #52c98a; --run: #f2ad55; --soft: #23304a;
+      --k0: #6b9cff; --k1: #f2ad55; --k2: #52c98a; --k3: #c084fc; --k4: #ff7a63; --k5: #4fd1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 0 0 8px; }
+  h3 { font-size: 1.05rem; margin: 12px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  a { color: var(--accent); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 24px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.on { border-color: var(--accent); background: var(--soft); }
+  button:disabled { opacity: .45; cursor: default; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); }
+  select { max-width: 100%; }
+  input[type=range] { width: 140px; max-width: 100%; }
+  .controls > * { min-width: 0; max-width: 100%; }
+  .controls label { flex-wrap: wrap; }
+  code { font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+         background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .caption { min-height: 3em; padding: 10px 12px; border-left: 3px solid var(--accent);
+             background: var(--bg); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  .caption.bad { border-left-color: var(--warn); }
+  .caption.good { border-left-color: var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+           margin-top: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { fill: var(--ink); font-family: inherit; }
+  .muted { fill: var(--muted); color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .warn { color: var(--warn); } .ok { color: var(--ok); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .9rem; color: var(--muted); }
+  .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px;
+        vertical-align: middle; }
+  .scroll { overflow-x: auto; }
+  .scroll > svg { min-width: 720px; }
+  .log { font: .85rem/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg);
+         border-radius: 8px; padding: 8px 12px; margin-top: 12px; max-height: 240px; overflow: auto; white-space: pre; }
+  .log .warn { color: var(--warn); } .log .ok { color: var(--ok); } .log .m { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Загрузка из API: пагинация и повторы</h1>
+  <p class="lead">Модуль 04, урок <a href="../theory/04_api_ingestion.md">04 «Загрузка из API»</a>. Модель
+    повторяет наш эмулятор <code>retail-api</code>: за 2024-04-01 — 897 магазинов, 9 страниц по 100,
+    случайный 503 в 5% запросов, лимит 10 запросов в секунду с <code>Retry-After: 1</code>.</p>
+
+  <section>
+    <h2>1. Один загрузчик проходит все страницы</h2>
+    <div class="controls">
+      <label>Доля 503: <input type="range" id="fail" min="0" max="50" value="5"> <b id="fail-v"></b> %</label>
+      <label>Попыток не больше: <input type="range" id="att" min="1" max="8" value="6"> <b id="att-v"></b></label>
+    </div>
+    <div class="controls">
+      <label>При ошибке:
+        <select id="onerr">
+          <option value="same">повторить тот же запрос, тот же курсор</option>
+          <option value="next">взять next_cursor из ответа с ошибкой</option>
+          <option value="restart">начать дату заново, append</option>
+        </select></label>
+      <label>Пауза: <select id="pause">
+        <option value="exp">0,2 × 2^(попытка−1)</option><option value="zero">без паузы</option></select></label>
+      <button id="rerun" class="primary">↻ Новый прогон</button>
+    </div>
+    <div class="scroll"><svg id="seq" viewBox="0 0 960 120" role="img" aria-label="Запросы загрузчика"></svg></div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--ok)"></i>200</span>
+      <span><i class="sw" style="background:var(--warn)"></i>503</span>
+      <span><i class="sw" style="background:var(--line)"></i>пауза перед повтором</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="s-stores">—</b><span>магазинов записано (из 897)</span></div>
+      <div class="stat"><b id="s-dup">—</b><span>дублей</span></div>
+      <div class="stat"><b id="s-retry">—</b><span>повторов</span></div>
+      <div class="stat"><b id="s-time">—</b><span>время загрузки</span></div>
+    </div>
+    <div class="caption" id="cap1"></div>
+    <div class="log" id="log1"></div>
+  </section>
+
+  <section>
+    <h2>2. Много клиентов упёрлись в лимит: зачем джиттер</h2>
+    <p>N клиентов одновременно шлют по одному запросу. Сервер пропускает 10 запросов в секунду,
+      остальным отвечает 429 с <code>Retry-After: 1</code>. Каждая точка — запрос; строка — клиент.</p>
+    <div class="controls">
+      <label>Клиентов N: <input type="range" id="n" min="10" max="60" value="40"> <b id="n-v"></b></label>
+      <label><input type="checkbox" id="jitter"> Джиттер: + случайно от 0 до половины паузы</label>
+    </div>
+    <div class="scroll"><svg id="herd" viewBox="0 0 960 260" role="img" aria-label="Повторы клиентов"></svg></div>
+    <div class="stats">
+      <div class="stat"><b id="h-429">—</b><span>ответов 429</span></div>
+      <div class="stat"><b id="h-time">—</b><span>когда закончил последний</span></div>
+    </div>
+    <div class="caption" id="cap2"></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+const sec = (t) => t.toFixed(2).replace(".", ",") + " с";
+function rng(seed) { return () => ((seed = (seed * 16807) % 2147483647) / 2147483647); }
+
+const PAGES = [100, 100, 100, 100, 100, 100, 100, 100, 97];   // 897 магазинов
+const REQ = 0.05;   // длительность запроса, с
+let seed1 = 11, seed2 = 5;
+
+/* Часть 1: последовательная загрузка одной даты */
+function run1(o) {
+  const r = rng(seed1);
+  const reqs = [], log = [];
+  let t = 0, page = 0, attempt = 1, retries = 0, written = 0, dup = 0, status = "ok";
+  const loadedPages = new Set();
+  let restarts = 0;
+  while (page < PAGES.length) {
+    const fail = r() < o.fail / 100;
+    reqs.push({ t, code: fail ? 503 : 200, page });
+    const cur = page === 0 ? "date=2024-04-01" : `cursor=Q${page}`;
+    if (!fail) {
+      log.push([`${sec(t).padStart(7)}  GET ?${cur}&limit=100 → 200, ${PAGES[page]} магазинов, next_cursor=${page + 1 < PAGES.length ? "Q" + (page + 1) : "null"}`, "ok"]);
+      if (loadedPages.has(page)) dup += PAGES[page]; else { loadedPages.add(page); written += PAGES[page]; }
+      t += REQ; page++; attempt = 1;
+      continue;
+    }
+    log.push([`${sec(t).padStart(7)}  GET ?${cur}&limit=100 → 503`, "warn"]);
+    t += REQ;
+    if (o.onerr === "next") {
+      log.push(["         в ответе с ошибкой нет next_cursor → цикл решил, что страницы кончились", "warn"]);
+      status = "stopped"; break;
+    }
+    if (o.onerr === "restart") {
+      log.push(["         начинаю дату заново с первой страницы, запись — append", "warn"]);
+      page = 0; restarts++; retries++;
+      if (restarts > 20) { status = "failed"; break; }
+      continue;
+    }
+    if (attempt >= o.att) { log.push([`         попытка ${attempt} из ${o.att} — загрузка падает с ошибкой`, "warn"]); status = "failed"; break; }
+    const delay = o.pause === "exp" ? 0.2 * 2 ** (attempt - 1) : 0;
+    reqs.push({ t, wait: delay, page });
+    log.push([`         пауза ${sec(delay)}, повтор того же запроса (попытка ${attempt + 1})`, "m"]);
+    t += delay; attempt++; retries++;
+  }
+  return { reqs, log, t, retries, written, dup, status };
+}
+
+function render1() {
+  const o = { fail: +$("fail").value, att: +$("att").value, onerr: $("onerr").value, pause: $("pause").value };
+  $("fail-v").textContent = o.fail; $("att-v").textContent = o.att;
+  const r = run1(o);
+  const svg = $("seq");
+  svg.replaceChildren();
+  const T = Math.max(1, r.t * 1.05), x = (t) => 20 + (t / T) * 920;
+  el("line", { x1: 20, x2: 940, y1: 70, y2: 70, style: "stroke:var(--line)" }, svg);
+  for (const q of r.reqs) {
+    if (q.wait !== undefined) {
+      el("rect", { x: x(q.t), y: 62, width: Math.max(1, x(q.t + q.wait) - x(q.t)), height: 16, rx: 3, style: "fill:var(--line)" }, svg);
+      continue;
+    }
+    el("rect", { x: x(q.t), y: 50, width: Math.max(3, x(q.t + REQ) - x(q.t) - 1), height: 40, rx: 3,
+      style: `fill:${q.code === 200 ? "var(--ok)" : "var(--warn)"}` }, svg);
+    el("text", { x: x(q.t + REQ / 2), y: 42, "text-anchor": "middle", "font-size": 11, class: "muted" }, svg).textContent = q.page + 1;
+  }
+  el("text", { x: 20, y: 110, "font-size": 11, class: "muted" }, svg).textContent = "0 с";
+  el("text", { x: 940, y: 110, "text-anchor": "end", "font-size": 11, class: "muted" }, svg).textContent = sec(r.t);
+  el("text", { x: 20, y: 20, "font-size": 12, class: "muted" }, svg).textContent = "номер страницы над запросом";
+  $("s-stores").textContent = r.status === "failed" && o.onerr === "same" ? "0" : r.written;
+  $("s-dup").textContent = r.dup;
+  $("s-retry").textContent = r.retries;
+  $("s-time").textContent = sec(r.t);
+  $("log1").innerHTML = r.log.map(([s, c]) => `<span class="${c}">${s.replace(/</g, "&lt;")}</span>`).join("\n");
+  let cap, cls = "good";
+  if (r.status === "stopped") { cls = "bad"; cap = `Загрузчик принял ошибку за конец страниц и записал ${r.written} из 897 магазинов. Код выхода 0 — потеря тихая. Повторяй тот же запрос с тем же курсором.`; }
+  else if (r.dup) { cls = "bad"; cap = `Перезапуск даты с append записал страницы повторно: ${r.dup} лишних строк. Повторяй только неудавшийся запрос, а запись делай через merge.`; }
+  else if (r.status === "failed") { cls = "bad"; cap = `Попытки кончились, загрузка упала. Это честный исход: ошибку видно в мониторинге, а повторный запуск безопасен.`; }
+  else if (r.retries) cap = `Записано 897 магазинов, повторов ${r.retries}. Повтор того же запроса даёт ту же страницу, поэтому итог не меняется.`;
+  else cap = "Ни одного сбоя в этом прогоне. Нажми «Новый прогон» или подними долю 503.";
+  if (o.pause === "zero" && r.retries && o.onerr === "same") cap += " Без паузы повторы идут сразу: перегруженному серверу это не даёт передышки.";
+  $("cap1").className = "caption " + cls; $("cap1").innerHTML = cap;
+}
+
+/* Часть 2: N клиентов и маркерное ведро 10 запросов в секунду (как в server.py) */
+function run2(n, jitter) {
+  const r = rng(seed2);
+  let tokens = 10, updated = 0;
+  const events = [];
+  const queue = Array.from({ length: n }, (_, c) => ({ t: r() * 0.02, c }));
+  let n429 = 0, last = 0;
+  while (queue.length) {
+    queue.sort((a, b) => a.t - b.t);
+    const q = queue.shift();
+    tokens = Math.min(10, tokens + (q.t - updated) * 10); updated = q.t;
+    if (tokens >= 1) { tokens -= 1; events.push({ ...q, ok: true }); last = Math.max(last, q.t); }
+    else {
+      n429++; events.push({ ...q, ok: false });
+      let delay = 1;   // Retry-After: 1
+      if (jitter) delay += r() * delay / 2;
+      queue.push({ t: q.t + delay, c: q.c });
+    }
+  }
+  return { events, n429, last };
+}
+
+function render2() {
+  const n = +$("n").value, jitter = $("jitter").checked;
+  $("n-v").textContent = n;
+  const r = run2(n, jitter);
+  const svg = $("herd");
+  svg.replaceChildren();
+  const T = Math.max(2, r.last + 0.3), x = (t) => 40 + (t / T) * 890, y = (c) => 15 + (c / Math.max(1, n - 1)) * 210;
+  for (let s = 0; s <= T; s += 0.5) {
+    el("line", { x1: x(s), x2: x(s), y1: 8, y2: 232, style: "stroke:var(--line)" }, svg);
+    el("text", { x: x(s), y: 250, "text-anchor": "middle", "font-size": 11, class: "muted" }, svg).textContent = s.toString().replace(".", ",") + " с";
+  }
+  for (const e of r.events)
+    el("circle", { cx: x(e.t), cy: y(e.c), r: 3.2, style: `fill:${e.ok ? "var(--ok)" : "var(--warn)"}` }, svg);
+  $("h-429").textContent = r.n429;
+  $("h-time").textContent = sec(r.last);
+  $("cap2").className = "caption " + (jitter ? "good" : "bad");
+  $("cap2").innerHTML = jitter
+    ? `Повторы размазаны по полсекунды. Ведро успевает наполниться между ними, поэтому ответов 429 меньше: ${r.n429}. ` +
+      "Последний клиент может закончить чуть позже: пропускную способность задаёт лимит сервера, 10 запросов в секунду. " +
+      "Джиттер снижает лишнюю нагрузку — запросы, которые сервер всё равно отклонит."
+    : `Все отказанные клиенты ждут ровно 1 с и приходят хором. Ведро снова пустеет за миг, и волна 429 повторяется: ${r.n429} отказов. Включи джиттер.`;
+}
+
+for (const id of ["fail", "att", "onerr", "pause"]) $(id).addEventListener("input", render1);
+$("rerun").addEventListener("click", () => { seed1 = (seed1 * 48271) % 2147483647; render1(); });
+for (const id of ["n", "jitter"]) $(id).addEventListener("input", render2);
+render1(); render2();
+</script>
+</body>
+</html>

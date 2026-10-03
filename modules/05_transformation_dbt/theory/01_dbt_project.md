@@ -199,10 +199,10 @@ flowchart LR
 > к Lakekeeper. dbt видит Iceberg-таблицы как обычные: `lh.<namespace>.<таблица>`.
 
 > [!warning] Ловушка: файл DuckDB занят
-> Пока открыт `make sql` или `duckdb` на том же файле, `dbt run` упадёт с ошибкой
-> `Could not set lock on file … Conflicting lock is held`. DuckDB — встраиваемая база: один
-> процесс-писатель на файл. Закрой другой клиент или открывай файл только на чтение
-> (`duckdb -readonly`).
+> Закрой другой клиент перед `dbt run` или открывай файл только на чтение (`duckdb -readonly`).
+> DuckDB — встраиваемая база: один процесс-писатель на файл. Пока открыт `make sql` или `duckdb`
+> на том же файле, `dbt run` упадёт с ошибкой
+> `Could not set lock on file … Conflicting lock is held`.
 
 ---
 
@@ -303,10 +303,10 @@ flowchart LR
 и все потребители получают её через `ref`. Это главная выгода слоёв.
 
 > [!warning] Ловушка: представление поверх attach
-> Staging-представление `stg_…` из bronze хранит в DuckDB-файле текст запроса с `lh.bronze.…`.
-> Любой клиент, открывший файл **без** ATTACH каталога (например, `duckdb` без `--target lake`
-> или BI-инструмент), получит ошибку `Catalog "lh" does not exist`. Поэтому то, что читают извне,
-> материализуют таблицами (marts), а представления staging — для внутренних нужд dbt.
+> Материализуй таблицами (marts) всё, что читают извне. Представления staging оставь для
+> внутренних нужд dbt. Staging-представление `stg_…` хранит в DuckDB-файле текст запроса с
+> `lh.bronze.…`. Клиент, открывший файл **без** ATTACH каталога, получит ошибку
+> `Catalog "lh" does not exist`. Пример — `duckdb` без `--target lake` или BI-инструмент.
 
 ---
 

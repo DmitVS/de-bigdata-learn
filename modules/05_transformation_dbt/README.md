@@ -102,7 +102,7 @@ flowchart LR
 | 🗺️ Карты | [maps/](maps/) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — раздел «Трансформации (dbt, SQLMesh)» |
 | 🧪 Учебные проекты | [demo/](demo/), [demo_sqlmesh/](demo_sqlmesh/) |
-| 🎬 Визуализации | [SCD2 и snapshot: версия на дату](../02_sql_and_modeling/visuals/scd2_timeline.html) |
+| 🎬 Визуализации | [Стратегии инкремента](visuals/incremental_strategies.html) · [SCD2 и snapshot: версия на дату](../02_sql_and_modeling/visuals/scd2_timeline.html) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)
