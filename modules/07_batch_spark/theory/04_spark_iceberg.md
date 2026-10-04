@@ -24,6 +24,9 @@ tags: [spark, iceberg, merge, compaction, lakekeeper, snapshots]
 > - [ ] написать `MERGE INTO` и предсказать, какие файлы он перепишет;
 > - [ ] найти мелкие файлы по метаданным и уплотнить их; почистить старые снапшоты.
 
+> [!tip] Визуализация темы
+> Видео с озвучкой (2:52): [iceberg_internals.mp4](../../03_storage_and_lakehouse/visuals/iceberg_internals.mp4) — дерево метаданных, запись и атомарный коммит, удаление copy-on-write, time travel и откат, конфликт двух писателей.
+
 **Нужно для:** лаб [07.1](../labs/07.1_spark_cluster_and_iceberg/README.md),
 [07.5](../labs/07.5_spark_mini_project/README.md).
 **Карта урока:** [spark-iceberg.canvas](../maps/spark-iceberg.canvas).

@@ -25,6 +25,9 @@ tags: [cdc, debezium, kafka-connect, postgres, wal, logical-replication]
 > - [ ] назвать главный эксплуатационный риск слота репликации и как его увидеть;
 > - [ ] объяснить двойственность потока и таблицы и путь к SCD2 из CDC.
 
+> [!tip] Визуализация темы
+> Видео с озвучкой (3:08): [cursor_vs_log.mp4](../../04_ingestion/visuals/cursor_vs_log.mp4) — три дыры курсора `updated_at` (без штампа, удаление, долгая транзакция), окно перечитывания, журнал WAL и события Debezium.
+
 **Нужно для:** лаб [08.3](../labs/08.3_debezium_cdc/README.md),
 [08.5](../labs/08.5_streaming_mini_project/README.md).
 **Карта урока:** [cdc-debezium.canvas](../maps/cdc-debezium.canvas).

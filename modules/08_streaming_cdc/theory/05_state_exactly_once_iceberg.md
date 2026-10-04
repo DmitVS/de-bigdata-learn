@@ -24,6 +24,9 @@ tags: [flink, state, checkpoints, exactly-once, iceberg, streaming-lakehouse]
 > - [ ] запустить потоковую запись в Iceberg и увидеть коммиты на чекпоинтах;
 > - [ ] назвать проблему мелких файлов от стриминга и как её решают.
 
+> [!tip] Визуализация темы
+> Видео с озвучкой (3:18): [watermark_checkpoint.mp4](../visuals/watermark_checkpoint.mp4) — время события и окна, watermark, опоздавшие (257 и 260 из 290), барьеры чекпоинта и двухфазный коммит Iceberg.
+
 **Нужно для:** лаб [08.4](../labs/08.4_flink_sql_windows/README.md) (задача 3),
 [08.5](../labs/08.5_streaming_mini_project/README.md).
 **Карта урока:** [state-exactly-once.canvas](../maps/state-exactly-once.canvas).

@@ -92,7 +92,7 @@ flowchart LR
 | 🧠 Карточки для повторения | [flashcards.md](flashcards.md) |
 | 🗺️ Карты | [maps/](maps/) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — раздел «Форматы и lakehouse (углублённо)» |
-| 🎬 Визуализации | [Отсечение групп строк и партиций](visuals/parquet_pruning.html) |
+| 🎬 Визуализации | [Отсечение групп строк и партиций](visuals/parquet_pruning.html) · [Таблица Iceberg изнутри: видео](visuals/iceberg_internals.mp4) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)

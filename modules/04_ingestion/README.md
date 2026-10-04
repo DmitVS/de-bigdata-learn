@@ -108,7 +108,7 @@ flowchart LR
 | 🧠 Карточки для повторения | [flashcards.md](flashcards.md) |
 | 🗺️ Карты | [maps/](maps/) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — раздел «Загрузка данных (ingestion)» |
-| 🎬 Визуализации | [Курсор и окно перечитывания](visuals/cursor_lookback.html) · [API: пагинация и повторы](visuals/api_retries.html) |
+| 🎬 Визуализации | [Курсор и окно перечитывания](visuals/cursor_lookback.html) · [API: пагинация и повторы](visuals/api_retries.html) · [Курсор против журнала: видео](visuals/cursor_vs_log.mp4) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)

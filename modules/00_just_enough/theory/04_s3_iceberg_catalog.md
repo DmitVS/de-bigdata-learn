@@ -22,6 +22,9 @@ tags: [s3, iceberg, lakehouse]
 > - [ ] предсказать, что сломается при ошибке в переменных клиента или в настройках каталога
 >   (задачи 3.2 и 3.4).
 
+> [!tip] Визуализация темы
+> Видео с озвучкой (2:52): [iceberg_internals.mp4](../../03_storage_and_lakehouse/visuals/iceberg_internals.mp4) — дерево метаданных, запись и атомарный коммит, удаление copy-on-write, time travel и откат, конфликт двух писателей.
+
 **Нужно для:** лаба [00.1](../labs/00.1_compose_anatomy/README.md), задачи 3.2 и 3.4.
 Подробно эти темы разбираются в модуле 03, здесь — всё, что нужно, чтобы понимать слой core.
 **Карта урока:** [storage-and-catalog.canvas](../maps/storage-and-catalog.canvas).

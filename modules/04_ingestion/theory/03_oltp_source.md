@@ -24,6 +24,9 @@ tags: [postgres, oltp, transactions, mvcc, sql_database, triggers]
 > - [ ] выгрузить таблицы из Postgres через dlt `sql_database` полностью и инкрементально;
 > - [ ] сверить источник и копию по ключам одним запросом DuckDB (лабы 04.2, 04.3).
 
+> [!tip] Визуализация темы
+> Видео с озвучкой (3:08): [cursor_vs_log.mp4](../visuals/cursor_vs_log.mp4) — три дыры курсора `updated_at` (без штампа, удаление, долгая транзакция), окно перечитывания, журнал WAL и события Debezium.
+
 **Нужно для:** лаб [04.2](../labs/04.2_retail_oltp/README.md) и
 [04.3](../labs/04.3_postgres_to_lakehouse/README.md).
 **Карта урока:** [oltp-source.canvas](../maps/oltp-source.canvas).

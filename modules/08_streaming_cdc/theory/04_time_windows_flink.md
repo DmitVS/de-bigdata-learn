@@ -24,8 +24,8 @@ tags: [flink, event-time, windows, watermarks, late-data]
 > - [ ] описать источник Kafka во Flink SQL и запустить запрос из скрипта.
 
 > [!tip] Визуализация темы
-> Интерактивная страница [watermark_windows.html](../visuals/watermark_windows.html). Поток показаний с опоздавшими:
-> терпимость watermark, закрытие окон и отброшенные события, как в Flink.
+> - Интерактивная страница [watermark_windows.html](../visuals/watermark_windows.html). Поток показаний с опоздавшими: терпимость watermark, закрытие окон и отброшенные события, как в Flink.
+> - Видео с озвучкой (3:18): [watermark_checkpoint.mp4](../visuals/watermark_checkpoint.mp4) — время события и окна, watermark, опоздавшие (257 и 260 из 290), барьеры чекпоинта и двухфазный коммит Iceberg.
 
 **Нужно для:** лаба [08.4](../labs/08.4_flink_sql_windows/README.md).
 **Карта урока:** [time-windows-flink.canvas](../maps/time-windows-flink.canvas).

@@ -24,6 +24,9 @@ tags: [iceberg, pyiceberg, snapshots, lakehouse]
 > - [ ] объяснить, зачем нужны compaction и expire snapshots, и что остаётся в S3;
 > - [ ] сравнить Iceberg с Delta и Hudi и объяснить роль REST-каталога (лабы 03.3, 03.5).
 
+> [!tip] Визуализация темы
+> Видео с озвучкой (2:52): [iceberg_internals.mp4](../visuals/iceberg_internals.mp4) — дерево метаданных, запись и атомарный коммит, удаление copy-on-write, time travel и откат, конфликт двух писателей.
+
 **Нужно для:** лабы [03.3](../labs/03.3_iceberg_operations/README.md) и
 [03.5](../labs/03.5_bronze_layer/README.md).
 **Карта урока:** [iceberg-operations.canvas](../maps/iceberg-operations.canvas).

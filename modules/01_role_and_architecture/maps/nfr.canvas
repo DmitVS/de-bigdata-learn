@@ -1,175 +1,25 @@
 {
-	"nodes": [
-		{
-			"id": "title",
-			"type": "text",
-			"x": 0,
-			"y": -300,
-			"width": 1600,
-			"height": 140,
-			"text": "# Нефункциональные требования\nУрок: [05 · NFR](../theory/05_nonfunctional_requirements.md) · Не «быстро и надёжно», а числа. [NFR](../../../glossary/nfr.md)",
-			"color": "6"
-		},
-		{
-			"id": "g1",
-			"type": "group",
-			"x": 0,
-			"y": -130,
-			"width": 1600,
-			"height": 230,
-			"label": "Ход мысли"
-		},
-		{
-			"id": "s0",
-			"type": "text",
-			"x": 20,
-			"y": -90,
-			"width": 296,
-			"height": 160,
-			"text": "**Надёжность**\nсбой ≠ отказ"
-		},
-		{
-			"id": "s1",
-			"type": "text",
-			"x": 336,
-			"y": -90,
-			"width": 296,
-			"height": 160,
-			"text": "**Нагрузка**\nпараметры числами"
-		},
-		{
-			"id": "s2",
-			"type": "text",
-			"x": 652,
-			"y": -90,
-			"width": 296,
-			"height": 160,
-			"text": "**Задержка**\np50 / p95 / p99"
-		},
-		{
-			"id": "s3",
-			"type": "text",
-			"x": 968,
-			"y": -90,
-			"width": 296,
-			"height": 160,
-			"text": "**Сопровождаемость**\nэксплуатация, простота, развитие"
-		},
-		{
-			"id": "s4",
-			"type": "text",
-			"x": 1284,
-			"y": -90,
-			"width": 296,
-			"height": 160,
-			"text": "**Данные**\nсвежесть, полнота, корректность"
-		},
-		{
-			"id": "gl",
-			"type": "group",
-			"x": 0,
-			"y": 140,
-			"width": 780,
-			"height": 460,
-			"label": "Надёжность и нагрузка"
-		},
-		{
-			"id": "gl0",
-			"type": "text",
-			"x": 20,
-			"y": 180,
-			"width": 740,
-			"height": 120,
-			"text": "Сбои: железо · код · люди (чаще всего) · плохие данные\n[надёжность](../../../glossary/reliability.md)"
-		},
-		{
-			"id": "gl1",
-			"type": "text",
-			"x": 20,
-			"y": 320,
-			"width": 740,
-			"height": 120,
-			"text": "FreshRetail: 50 000 строк/сутки, ×24 почасово, 97 дней, ~115 МБ\n[масштабируемость](../../../glossary/scalability.md)"
-		},
-		{
-			"id": "gl2",
-			"type": "text",
-			"x": 20,
-			"y": 460,
-			"width": 740,
-			"height": 120,
-			"text": "Scale up раньше scale out: DuckDB тянет сотни млн строк"
-		},
-		{
-			"id": "gr",
-			"type": "group",
-			"x": 820,
-			"y": 140,
-			"width": 780,
-			"height": 460,
-			"label": "Перцентили и SLO",
-			"color": "1"
-		},
-		{
-			"id": "gr0",
-			"type": "text",
-			"x": 840,
-			"y": 180,
-			"width": 740,
-			"height": 120,
-			"text": "Замер ×100: p50 70,7 · p95 79,2 · p99 85,1 · первый 97,2 мс\n[перцентиль](../../../glossary/percentile.md)"
-		},
-		{
-			"id": "gr1",
-			"type": "text",
-			"x": 840,
-			"y": 320,
-			"width": 740,
-			"height": 120,
-			"text": "Хвост страницы из N запросов: 1 − 0,99ᴺ\nmethod=\"inclusive\", иначе p99 > max"
-		},
-		{
-			"id": "gr2",
-			"type": "text",
-			"x": 840,
-			"y": 460,
-			"width": 740,
-			"height": 120,
-			"text": "SLI → SLO «≤ 06:00 в 95% дней за месяц» → SLA\n[свежесть](../../../glossary/data-freshness.md)"
-		}
+	"nodes":[
+		{"id":"title","type":"text","x":0,"y":-300,"width":1600,"height":140,"text":"# Нефункциональные требования\nУрок: [05 · NFR](../theory/05_nonfunctional_requirements.md) · Не «быстро и надёжно», а числа. [NFR](../../../glossary/nfr.md)","color":"6"},
+		{"id":"g1","type":"group","x":0,"y":-130,"width":1600,"height":230,"label":"Ход мысли"},
+		{"id":"s0","type":"text","x":20,"y":-90,"width":296,"height":160,"text":"**Надёжность**\nсбой ≠ отказ"},
+		{"id":"s1","type":"text","x":336,"y":-90,"width":296,"height":160,"text":"**Нагрузка**\nпараметры числами"},
+		{"id":"s2","type":"text","x":652,"y":-90,"width":296,"height":160,"text":"**Задержка**\np50 / p95 / p99"},
+		{"id":"s3","type":"text","x":968,"y":-90,"width":296,"height":160,"text":"**Сопровождаемость**\nэксплуатация, простота, развитие"},
+		{"id":"s4","type":"text","x":1284,"y":-90,"width":296,"height":160,"text":"**Данные**\nсвежесть, полнота, корректность"},
+		{"id":"gl","type":"group","x":0,"y":140,"width":780,"height":460,"label":"Надёжность и нагрузка"},
+		{"id":"gl0","type":"text","x":20,"y":180,"width":740,"height":120,"text":"Сбои: железо · код · люди (чаще всего) · плохие данные\n[надёжность](../../../glossary/reliability.md)"},
+		{"id":"gl1","type":"text","x":20,"y":320,"width":740,"height":120,"text":"FreshRetail: 50 000 строк/сутки, ×24 почасово, 97 дней, ~115 МБ\n[масштабируемость](../../../glossary/scalability.md)"},
+		{"id":"gl2","type":"text","x":20,"y":460,"width":740,"height":120,"text":"Scale up раньше scale out: DuckDB тянет сотни млн строк"},
+		{"id":"gr","type":"group","x":820,"y":140,"width":780,"height":460,"label":"Перцентили и SLO","color":"1"},
+		{"id":"gr0","type":"text","x":840,"y":180,"width":740,"height":120,"text":"Замер ×100: p50 70,7 · p95 79,2 · p99 85,1 · первый 97,2 мс\n[перцентиль](../../../glossary/percentile.md)"},
+		{"id":"gr1","type":"text","x":840,"y":320,"width":740,"height":120,"text":"Хвост страницы из N запросов: 1 − 0,99ᴺ\nmethod=\"inclusive\", иначе p99 > max"},
+		{"id":"gr2","type":"text","x":840,"y":460,"width":740,"height":120,"text":"SLI → SLO «≤ 06:00 в 95% дней за месяц» → SLA\n[свежесть](../../../glossary/data-freshness.md)"}
 	],
-	"edges": [
-		{
-			"id": "e1",
-			"fromNode": "s0",
-			"fromSide": "right",
-			"toNode": "s1",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e2",
-			"fromNode": "s1",
-			"fromSide": "right",
-			"toNode": "s2",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e3",
-			"fromNode": "s2",
-			"fromSide": "right",
-			"toNode": "s3",
-			"toSide": "left",
-			"toEnd": "arrow"
-		},
-		{
-			"id": "e4",
-			"fromNode": "s3",
-			"fromSide": "right",
-			"toNode": "s4",
-			"toSide": "left",
-			"toEnd": "arrow"
-		}
+	"edges":[
+		{"id":"e1","fromNode":"s0","fromSide":"right","toNode":"s1","toSide":"left","toEnd":"arrow"},
+		{"id":"e2","fromNode":"s1","fromSide":"right","toNode":"s2","toSide":"left","toEnd":"arrow"},
+		{"id":"e3","fromNode":"s2","fromSide":"right","toNode":"s3","toSide":"left","toEnd":"arrow"},
+		{"id":"e4","fromNode":"s3","fromSide":"right","toNode":"s4","toSide":"left","toEnd":"arrow"}
 	]
 }

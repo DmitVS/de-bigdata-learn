@@ -14,6 +14,8 @@ repos:
       - id: check-json
       - id: check-added-large-files
         args: [--maxkb=1024]
+        # Видео-объяснения курса хранятся в репозитории (memory/decisions/visual-explanations.md)
+        exclude: \.mp4$
       - id: detect-private-key
       - id: end-of-file-fixer
         # Obsidian сохраняет карты и настройки без перевода строки в конце — не спорим с ним

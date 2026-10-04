@@ -23,8 +23,8 @@ tags: [docker, сеть]
 > - [ ] подключить отдельный compose-проект к нашей сети (задача 3.3).
 
 > [!tip] Визуализация темы
-> Интерактивная страница: [visuals/networking.html](../visuals/networking.html). «Откуда → куда»: выбери источник и адрес curl. Страница покажет путь пакета, этап
-> сбоя и код выхода.
+> - Интерактивная страница: [visuals/networking.html](../visuals/networking.html). «Откуда → куда»: выбери источник и адрес curl. Страница покажет путь пакета, этап сбоя и код выхода.
+> - Видео с озвучкой (2:58): [docker_network.mp4](../visuals/docker_network.mp4) — сеть Docker как офис: мост и кабели, DNS `127.0.0.11`, «чужой localhost», публикация порта и почему `ufw` не защищает.
 
 **Нужно для:** лаба [00.1](../labs/00.1_compose_anatomy/README.md),
 задачи 3.1, 3.3, 3.5. **Карта урока:** [networking.canvas](../maps/networking.canvas).
