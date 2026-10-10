@@ -98,7 +98,7 @@ flowchart LR
 | 🗺️ Карты | [maps/](maps/) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — раздел «Стриминг и CDC» |
 | 🧪 Учебный проект | [demo/](demo/) |
-| 🎬 Визуализации | [Партиции и доставка Kafka](visuals/kafka_log_delivery.html) · [Окна и watermark](visuals/watermark_windows.html) · [Watermark и чекпоинт: видео](visuals/watermark_checkpoint.mp4) · [Курсор против журнала: видео](../04_ingestion/visuals/cursor_vs_log.mp4) |
+| 🎬 Визуализации | [Партиции и доставка Kafka](visuals/kafka_log_delivery.html) · [Окна и watermark](visuals/watermark_windows.html) · [Watermark и чекпоинт: видео](visuals/watermark_checkpoint.mp4) · [Курсор против журнала: видео](../04_ingestion/visuals/cursor_vs_log.mp4) · [Лог и Kafka: видео](visuals/kafka_log.mp4) · [CDC и Debezium: видео](visuals/cdc_debezium.mp4) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)

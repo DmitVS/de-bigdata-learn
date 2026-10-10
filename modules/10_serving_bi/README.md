@@ -105,7 +105,7 @@ flowchart LR
 | 🗺️ Карты | [maps/](maps/) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — раздел «Отдача и BI» |
 | 🧪 Учебный проект | [demo/](demo/) |
-| 🎬 Визуализации | [MergeTree: части, слияния и гранулы](visuals/mergetree_index.html) |
+| 🎬 Визуализации | [MergeTree: части, слияния и гранулы](visuals/mergetree_index.html) · [MergeTree: видео](visuals/clickhouse_mergetree.mp4) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)

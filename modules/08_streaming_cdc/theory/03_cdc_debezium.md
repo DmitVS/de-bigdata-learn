@@ -26,7 +26,8 @@ tags: [cdc, debezium, kafka-connect, postgres, wal, logical-replication]
 > - [ ] объяснить двойственность потока и таблицы и путь к SCD2 из CDC.
 
 > [!tip] Визуализация темы
-> Видео с озвучкой (3:08): [cursor_vs_log.mp4](../../04_ingestion/visuals/cursor_vs_log.mp4) — три дыры курсора `updated_at` (без штампа, удаление, долгая транзакция), окно перечитывания, журнал WAL и события Debezium.
+> - Видео с озвучкой (3:08): [cursor_vs_log.mp4](../../04_ingestion/visuals/cursor_vs_log.mp4) — три дыры курсора `updated_at` (без штампа, удаление, долгая транзакция), окно перечитывания, журнал WAL и события Debezium.
+> - Видео с озвучкой (3:23): [cdc_debezium.mp4](../visuals/cdc_debezium.mp4) — снапшот → журнал, события песочницы (города 3, 4, 17), риск слота, двойственность потока и таблицы, офсеты Connect.
 
 **Нужно для:** лаб [08.3](../labs/08.3_debezium_cdc/README.md),
 [08.5](../labs/08.5_streaming_mini_project/README.md).

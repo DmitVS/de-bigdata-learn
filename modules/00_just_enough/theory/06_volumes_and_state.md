@@ -26,8 +26,9 @@ tags: [docker, тома, состояние]
 >   (задача 4).
 
 > [!tip] Визуализация темы
-> Интерактивная страница: [visuals/volumes_state.html](../visuals/volumes_state.html). Выполняй `make down`, `make clean`, `docker volume prune` в любом порядке и смотри,
-> какие данные остались.
+> - Интерактивная страница: [visuals/volumes_state.html](../visuals/volumes_state.html). Выполняй `make down`, `make clean`, `docker volume prune` в любом порядке и смотри,
+>   какие данные остались.
+> - Видео с озвучкой (3:51): [volumes_state.mp4](../visuals/volumes_state.mp4) — четыре места записи, что переживает каждая команда, накрытие папки монтированием, анонимные тома-сироты, два вида инициализации.
 
 **Нужно для:** лаба [00.1](../labs/00.1_compose_anatomy/README.md), задача 4.
 **Карта урока:** [volumes-and-state.canvas](../maps/volumes-and-state.canvas).

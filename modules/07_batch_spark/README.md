@@ -98,7 +98,7 @@ flowchart LR
 | 🗺️ Карты | [maps/](maps/) |
 | 📚 Термины | [glossary/](../../glossary/README.md) — раздел «Батч-обработка (Spark)» |
 | 🧪 Учебный проект | [demo/](demo/) |
-| 🎬 Визуализации | [выполнение, shuffle и перекос: страница](visuals/shuffle_skew.html) · [видео](visuals/shuffle_skew.mp4) · [Iceberg изнутри: видео](../03_storage_and_lakehouse/visuals/iceberg_internals.mp4) |
+| 🎬 Визуализации | [выполнение, shuffle и перекос: страница](visuals/shuffle_skew.html) · [видео](visuals/shuffle_skew.mp4) · [Iceberg изнутри: видео](../03_storage_and_lakehouse/visuals/iceberg_internals.mp4) · [Модель выполнения: видео](visuals/execution_model.mp4) |
 | 📓 Заметки | [notes.md](notes.md) |
 
 ## Мини-проект (вклад в capstone)

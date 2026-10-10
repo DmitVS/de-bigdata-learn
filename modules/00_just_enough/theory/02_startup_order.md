@@ -21,8 +21,9 @@ tags: [docker, compose]
 > - [ ] понять по `docker events` и `.State.Health`, где застрял запуск (задача 2).
 
 > [!tip] Визуализация темы
-> Интерактивная страница: [visuals/startup_order.html](../visuals/startup_order.html). Шкала времени `make up`: поменяй условие `depends_on` и посмотри, где появляется гонка,
-> ожидание или ошибка `up`.
+> - Интерактивная страница: [visuals/startup_order.html](../visuals/startup_order.html). Шкала времени `make up`: поменяй условие `depends_on` и посмотри, где появляется гонка,
+>   ожидание или ошибка `up`.
+> - Видео с озвучкой (3:49): [startup_order.mp4](../visuals/startup_order.mp4) — «запущен ≠ готов», healthcheck и ловушка с сокетом, `depends_on`, живая шкала `make up`, гонка и `up --wait`.
 
 **Нужно для:** лаба [00.1](../labs/00.1_compose_anatomy/README.md), задача 2.
 **Карта урока:** [startup-order.canvas](../maps/startup-order.canvas).

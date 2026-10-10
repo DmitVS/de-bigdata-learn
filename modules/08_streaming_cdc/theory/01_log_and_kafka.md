@@ -25,8 +25,9 @@ tags: [kafka, redpanda, log, partitions, offsets, consumer-groups]
 > - [ ] выбрать retention или compaction для топика.
 
 > [!tip] Визуализация темы
-> Интерактивная страница [kafka_log_delivery.html](../visuals/kafka_log_delivery.html). Часть 1: ключ `city_id` → партиция →
-> потребитель группы, lag и простаивающие потребители.
+> - Интерактивная страница [kafka_log_delivery.html](../visuals/kafka_log_delivery.html). Часть 1: ключ `city_id` → партиция →
+>   потребитель группы, lag и простаивающие потребители.
+> - Видео с озвучкой (3:02): [kafka_log.mp4](../visuals/kafka_log.mp4) — очередь против лога, ключ → партиция, группы и ребалансировка, lag и момент коммита, retention против compaction.
 
 **Нужно для:** лаба [08.1](../labs/08.1_redpanda_basics/README.md).
 **Карта урока:** [log-and-kafka.canvas](../maps/log-and-kafka.canvas).

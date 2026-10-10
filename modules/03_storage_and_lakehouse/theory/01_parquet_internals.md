@@ -25,8 +25,9 @@ tags: [parquet, хранение, pyarrow]
 > - [ ] объяснить, почему наш `train.parquet` после перезаписи стал почти вдвое меньше (лаба 03.1).
 
 > [!tip] Визуализация темы
-> Интерактивная страница [parquet_pruning.html](../visuals/parquet_pruning.html). 4 500 групп строк с настоящими
-> min/max: задай фильтр и раскладку и посмотри, какие группы движок пропустит.
+> - Интерактивная страница [parquet_pruning.html](../visuals/parquet_pruning.html). 4 500 групп строк с настоящими
+>   min/max: задай фильтр и раскладку и посмотри, какие группы движок пропустит.
+> - Видео с озвучкой (3:23): [parquet_internals.mp4](../visuals/parquet_internals.mp4) — группы строк, куски колонок и подвал, кодирование, пропуск групп (39 из 4 500), почему файл похудел на 42 %.
 
 **Нужно для:** лаба [03.1](../labs/03.1_parquet_metadata/README.md), все задачи.
 **Карта урока:** [parquet-internals.canvas](../maps/parquet-internals.canvas).

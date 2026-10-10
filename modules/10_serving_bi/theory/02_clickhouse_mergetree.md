@@ -26,8 +26,9 @@ tags: [clickhouse, mergetree, lsm, sparse-index, order-by]
 >   `system.query_log`.
 
 > [!tip] Визуализация темы
-> Интерактивная страница [mergetree_index.html](../visuals/mergetree_index.html): вставки создают
-> части, слияния их объединяют, а фильтр выбирает гранулы по разреженному индексу.
+> - Интерактивная страница [mergetree_index.html](../visuals/mergetree_index.html): вставки создают
+>   части, слияния их объединяют, а фильтр выбирает гранулы по разреженному индексу.
+> - Видео с озвучкой (3:19): [clickhouse_mergetree.mp4](../visuals/clickhouse_mergetree.mp4) — сжатие отсортированных колонок, части и слияния, разреженный индекс (28 гранул из 14 211), префикс ключа, выбор `ORDER BY`.
 
 **Нужно для:** лаба [10.1](../labs/10.1_clickhouse_marts/README.md), задачи 1–2.
 **Карта урока:** [clickhouse-mergetree.canvas](../maps/clickhouse-mergetree.canvas).

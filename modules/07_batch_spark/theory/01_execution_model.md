@@ -26,8 +26,9 @@ tags: [spark, driver, executor, spark-connect, lazy-evaluation, spark-ui]
 > - [ ] прочитать физический план `explain()` в первом приближении.
 
 > [!tip] Визуализация темы
-> Интерактивная страница [shuffle_skew.html](../visuals/shuffle_skew.html), часть 0: выполняй строки
-> по одной и смотри, как трансформации строят план, а действие запускает job, стадии и задачи.
+> - Интерактивная страница [shuffle_skew.html](../visuals/shuffle_skew.html), часть 0: выполняй строки
+>   по одной и смотри, как трансформации строят план, а действие запускает job, стадии и задачи.
+> - Видео с озвучкой (3:11): [execution_model.mp4](../visuals/execution_model.mp4) — driver и executors, Spark Connect, ленивые вычисления, job → stage → task, число задач при чтении, физический план.
 
 **Нужно для:** лаб [07.1](../labs/07.1_spark_cluster_and_iceberg/README.md),
 [07.3](../labs/07.3_spark_ui_shuffle_skew/README.md).

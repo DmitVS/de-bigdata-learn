@@ -26,8 +26,9 @@ tags: [dbt, materialization, incremental, microbatch, iceberg]
 > - [ ] опубликовать модель в Iceberg и объяснить, почему не строить её там напрямую (лабы 05.2, 05.5).
 
 > [!tip] Визуализация темы
-> Интерактивная страница [incremental_strategies.html](../visuals/incremental_strategies.html). Запуски инкрементальной модели день за
-> днём: стратегия, ключ и окно — где появляются дубли и устаревшие значения.
+> - Интерактивная страница [incremental_strategies.html](../visuals/incremental_strategies.html). Запуски инкрементальной модели день за
+>   днём: стратегия, ключ и окно — где появляются дубли и устаревшие значения.
+> - Видео с озвучкой (3:14): [incremental_strategies.mp4](../visuals/incremental_strategies.mp4) — четыре материализации, подмена `table`, окно перечитывания, `append` / `delete+insert` / `merge` на одном батче, ловушка microbatch.
 
 **Нужно для:** лаб [05.2](../labs/05.2_star_schema_marts/README.md) и
 [05.5](../labs/05.5_incremental_and_snapshots/README.md).

@@ -26,8 +26,9 @@ tags: [sql, окна, qualify]
 > - [ ] найти серии подряд идущих событий («острова») (лаба 02.1, задачи 6–15).
 
 > [!tip] Визуализация темы
-> Интерактивная страница [window_frames.html](../visuals/window_frames.html). Собери `PARTITION BY`, `ORDER BY` и рамку,
-> щёлкни строку и посмотри её окно. Данные — товар 38 в магазинах 0 и 1.
+> - Интерактивная страница [window_frames.html](../visuals/window_frames.html). Собери `PARTITION BY`, `ORDER BY` и рамку,
+>   щёлкни строку и посмотри её окно. Данные — товар 38 в магазинах 0 и 1.
+> - Видео с озвучкой (3:41): [window_functions.mp4](../visuals/window_functions.mp4) — `GROUP BY` против окна, рамка на данных «магазин 0 × товар 38», ранжирование, ловушка `RANGE`, `QUALIFY`, острова.
 
 **Нужно для:** лаба [02.1](../labs/02.1_window_functions/README.md), задачи 6–15.
 **Карта урока:** [window-functions.canvas](../maps/window-functions.canvas).
