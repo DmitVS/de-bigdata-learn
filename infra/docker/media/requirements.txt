@@ -3,3 +3,5 @@
 manim==0.21.0
 manim-voiceover==0.4.0
 piper-tts==1.8.0
+# Источники визуализаций (решение от 2026-10-10): PDF/PPTX/DOCX/EPUB → Markdown, только локально.
+firecrawl-anydoc==0.2.4

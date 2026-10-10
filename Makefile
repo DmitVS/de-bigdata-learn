@@ -10,7 +10,7 @@ UV_RUN   := docker run --rm -u $$(id -u):$$(id -g) -v $(CURDIR):/w -w /w \
             -e UV_CACHE_DIR=/tmp/uv-cache $(UV_IMAGE) uv
 
 .DEFAULT_GOAL := help
-.PHONY: help init lock uv build up down restart ps logs shell sql check data lint fmt test obsidian clean dagster dagster-shell rpk flink-sql ch trino report om-token om-ingest spark-lineage tf precommit hooks ci video ste
+.PHONY: help init lock uv build up down restart ps logs shell sql check data lint fmt test obsidian clean dagster dagster-shell rpk flink-sql ch trino report om-token om-ingest spark-lineage tf precommit hooks ci video doc2md ste
 
 help: ## Список команд
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n",$$1,$$2}'
@@ -94,6 +94,9 @@ Q ?= h
 VOICE ?= elevenlabs
 video: ## Видео Manim + озвучка: make video SCENE=modules/…/x_video.py [Q=l|m|h] [VOICE=piper] → x.mp4
 	$(COMPOSE) --profile media run --rm -e VOICE=$(VOICE) media "scripts/media/render.sh $(SCENE) $(Q)"
+
+doc2md: ## Источник визуализации → Markdown (anydoc, без OCR): make doc2md FILE=…pdf|pptx|docx|epub|папка [OUT=…]
+	$(COMPOSE) --profile media run --rm media "python scripts/media/doc2md.py $(FILE) $(OUT)"
 
 W ?= 1100
 page-check: ## Проверка HTML-страницы в Chrome: make page-check PAGE=modules/…/visuals/x.html [W=390] [THEME=dark]

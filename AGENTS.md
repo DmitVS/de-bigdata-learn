@@ -67,6 +67,8 @@ Gemini CLI и т.д.), работающего в этой папке. Конве
    `<тема>_video.py`, озвучка ElevenLabs (голос George; черновик — Piper, `VOICE=piper`), сборка
    `make video SCENE=…`. Ссылки — врезкой
    «Визуализация темы» в начале урока. Решение — [`memory/decisions/visual-explanations.md`](memory/decisions/visual-explanations.md).
+   Вспомогательные инструменты (решение от 2026-10-10): `make doc2md FILE=…` — книга или слайды
+   → Markdown (anydoc, без OCR); приёмы сценария и ревью — из `data/vendor/OpenMontage`, выборочно.
 
 ## Как устроен проект
 

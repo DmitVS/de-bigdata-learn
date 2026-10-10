@@ -3,6 +3,7 @@
 #     Образ — media/Dockerfile. Результат — в data/videos (вне git) и копия MP4 рядом со сценой.
 #   make page-check PAGE=modules/00_just_enough/visuals/networking.html — проверка HTML-страницы:
 #     chrome (headless, CDP) + page-check (Node). Скриншот — в data/shots (вне git).
+#   make doc2md FILE=… — источник (PDF, PPTX, DOCX, EPUB) → Markdown в data/sources (anydoc, без OCR).
 
 services:
   media:
